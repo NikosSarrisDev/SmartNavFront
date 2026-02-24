@@ -10,5 +10,26 @@
   "ΕΓΓΡΑΦΗ": "Sign Up",
   "ΑΛΛΑΓΗ_ΣΕ_ENGLISH": "Switch to English",
   "ΑΛΛΑΓΗ_ΣΕ_ΕΛΛΗΝΙΚΑ": "Αλλαγή σε Ελληνικά",
-  "ΕΠΙΛΟΓΗ_ΓΛΩΣΣΑΣ": "Language Selection"
+  "ΕΠΙΛΟΓΗ_ΓΛΩΣΣΑΣ": "Language Selection",
+  "ΕΓΓΡΑΦΗ_ΧΡΗΣΤΗ": "USER REGISTRATION",
+  "ΟΝΟΜΑ_ΧΡΗΣΤΗ": "Username",
+  "NAME_REQUIRED": "Username is required",
+  "NAME_MINLENGTH": "Username must be at least 4 characters long",
+  "EMAIL_INVALID": "Invalid email format",
+  "ΤΗΛΕΦΩΝΟ": "Contact Phone",
+  "PHONE_REQUIRED": "Contact phone is required",
+  "PHONE_PATTERN": "Phone number must consist of exactly 10 digits",
+  "PASSWORD_REQUIRED": "Password is required",
+  "PASS_REQ_LOWER": "At least one lowercase letter",
+  "PASS_REQ_UPPER": "At least one uppercase letter",
+  "PASS_REQ_NUMBER": "At least one number",
+  "PASS_REQ_LENGTH": "At least 8 characters",
+  "ΕΠΑΛΗΘΕΥΣΗ_ΚΩΔΙΚΟΥ": "Verify Password",
+  "VERIFY_PASSWORD_REQUIRED": "Password verification is required",
+  "PASSWORD_MISMATCH": "Passwords do not match",
+  "ΕΠΙΣΤΡΟΦΗ_ΣΤΗ_ΣΥΝΔΕΣΗ": "Back to Login",
+  "ΠΛΗΚΤΡΟΛΟΓΙΣΤΕ_EMAIL": "ENTER YOUR EMAIL ADDRESS",
+  "ΑΠΟΣΤΟΛΗ": "Send",
+  "RECOVERY_INFO_TEXT": "*To recover your password, the email address must exist in our system. Once you click \"Send\", a message will be sent to your email containing your password."
+
 }

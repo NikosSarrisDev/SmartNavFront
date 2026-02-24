@@ -13,12 +13,14 @@ import {Password} from 'primeng/password';
 import {Toast} from 'primeng/toast';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MenuModule } from 'primeng/menu';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-password-recovery',
   standalone: true,
   imports: [
     ButtonDirective,
+    ButtonModule,
     Checkbox,
     FloatLabel,
     FormsModule,

@@ -16,6 +16,7 @@ import {Divider} from 'primeng/divider';
 import { passwordStrengthValidator } from './customValidatorPassWordStrength';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MenuModule } from 'primeng/menu';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-register',
@@ -26,13 +27,18 @@ import { MenuModule } from 'primeng/menu';
     FloatLabel,
     FormsModule,
     InputText,
+    ButtonModule,
     NgIf,
     Password,
     MenuModule,
     ReactiveFormsModule,
     RouterLink,
     Toast,
-    Divider
+    Divider,
+    ButtonDirective,
+    TranslatePipe,
+    ButtonDirective,
+    TranslateDirective
   ],
   templateUrl: './register.html',
   styleUrl: './register.css',
