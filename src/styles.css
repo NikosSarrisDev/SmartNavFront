@@ -1,1 +1,18 @@
-/* You can add global styles to this file, and also import other style files */
+.app-color-theme {
+  background: #28bcd7;
+}
+
+.app-globe {
+  position: absolute;
+  top: 1.5rem;
+  right: 2rem;
+  cursor: pointer;
+  transition: transform 0.3s ease-in-out;
+}
+
+.app-globe:hover {
+  transform: scale(1.3);
+}
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

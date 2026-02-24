@@ -1,0 +1,14 @@
+{
+  "ΕΙΣΟΔΟΣ_ΜΕ_EMAIL": "LOGIN WITH EMAIL",
+  "EMAIL_REQUIRED": "Email field is required",
+  "ΚΩΔΙΚΟΣ": "Password",
+  "ΚΩΔΙΚΟΣ_REQUIRED": "Password field is required",
+  "ΞΕΧΑΣΕΣ_ΚΩΔΙΚΟ": "Forgot your password?",
+  "ΝΑ_ΜΕ_ΘΥΜΑΣΑΙ": "Remember me",
+  "ΕΙΣΟΔΟΣ": "Login",
+  "ΔΕΝ_ΕΧΕΙΣ_ΛΟΓΑΡΙΑΣΜΟ": "Don't have an account? Register here",
+  "ΕΓΓΡΑΦΗ": "Sign Up",
+  "ΑΛΛΑΓΗ_ΣΕ_ENGLISH": "Switch to English",
+  "ΑΛΛΑΓΗ_ΣΕ_ΕΛΛΗΝΙΚΑ": "Αλλαγή σε Ελληνικά",
+  "ΕΠΙΛΟΓΗ_ΓΛΩΣΣΑΣ": "Language Selection"
+}

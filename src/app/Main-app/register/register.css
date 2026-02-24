@@ -1,0 +1,92 @@
+.main-full-div {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-table {
+  border-radius: 10px;
+  padding: 30px;
+  background: #FFFFFF;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.3s ease;
+}
+
+.center-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.legend-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.legend {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.facebook-google-fonts{
+  font-size: 1rem;
+}
+
+.fb-gl-buttons {
+  background-color: #1f787e;
+  color: white;
+  border: none;
+  width: 100%;
+  padding: 1rem;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.fb-gl-buttons:hover {
+  background-color: #91d0d3 !important;
+  transform: scale(1.05);
+}
+
+.back-to-login {
+  text-decoration: none;
+  color: #2b38cc;
+}
+
+::ng-deep p-password input {
+  width: 100%;
+}
+
+.file-drop-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.file-info-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 80%;
+}
+
+.remove-btn {
+  background: red;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  cursor: pointer;
+  margin-left: 10px;
+  border-radius: 5px;
+}

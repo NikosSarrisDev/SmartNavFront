@@ -1,0 +1,54 @@
+<div class="main-full-div">
+  <div class="app-globe">
+     <p-button 
+    icon="pi pi-globe"
+    (click)="menu.toggle($event)" 
+    [rounded]="true" 
+    severity="secondary">
+    </p-button>
+  </div>
+  <p-menu #menu [model]="languages" [popup]="true"></p-menu>
+  <div class="login-table">
+    <div class="center-image">
+      <img src="assets/images/SmartNavLogo.png" alt="Login Image" class="login-image" width="400" height="400"/>
+    </div>
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div  style="font-size: 1rem; margin: 3rem 0 0.5rem 0.3rem; font-weight: bold">{{'ΕΙΣΟΔΟΣ_ΜΕ_EMAIL' | translate}}</div>
+      <div style="margin-bottom: 1rem">
+        <p-floatlabel variant="on">
+          <input pInputText style="width: 100%" id="email" type="text" formControlName="email"/>
+          <label for="email">Email</label>
+        </p-floatlabel>
+        <div *ngIf="loginForm.controls['email'].invalid && !loginForm.controls['email'].untouched">
+          <small  style="color: red" *ngIf="loginForm.controls['email'].hasError('required')">{{'EMAIL_REQUIRED' | translate}}</small>
+        </div>
+      </div>
+      <div style="margin-bottom: 1rem">
+        <p-floatlabel variant="on" [style]="{'height': '42px'}">
+          <p-password [style]="{'width': '100%'}" formControlName="password" inputId="over_label" [feedback]="false" [toggleMask]="true"/>
+          <label  for="over_label">{{'ΚΩΔΙΚΟΣ' | translate}}</label>
+        </p-floatlabel>
+        <div *ngIf="loginForm.controls['password'].invalid && !loginForm.controls['password'].untouched">
+          <small  style="color: red" *ngIf="loginForm.controls['password'].errors?.['required']">{{'ΚΩΔΙΚΟΣ_REQUIRED' | translate}}</small>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem">
+        <a  class="forget-pass-link" routerLink="/forgetPass">{{'ΞΕΧΑΣΕΣ_ΚΩΔΙΚΟ' | translate}}</a>
+        <div>
+          <label  style="padding-right: 0.5rem" class="ml-2">{{'ΝΑ_ΜΕ_ΘΥΜΑΣΑΙ' | translate}}</label>
+          <p-checkbox formControlName="rememberMe" value="rememberMe" binary="true"/>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 1rem">
+        <button  pButton class="fb-gl-buttons" type="submit" [disabled]="loginForm.invalid">{{'ΕΙΣΟΔΟΣ' | translate}} <i class="pi pi-arrow-right"></i></button>
+      </div>
+      <div class="legend-container">
+        <label  class="legend">{{'ΔΕΝ_ΕΧΕΙΣ_ΛΟΓΑΡΙΑΣΜΟ' | translate}}</label>
+        <p-toast />
+        <button  pButton class="fb-gl-buttons" (click)="navigateToRegister()">{{'ΕΓΓΡΑΦΗ' | translate}}</button>
+      </div>
+    </form>
+  </div>
+</div>
