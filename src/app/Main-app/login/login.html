@@ -1,4 +1,6 @@
-<div class="main-full-div">
+<div class="main-full-div" style="position: relative;">
+  <div *ngIf="loading" class="loader-background"></div>
+  <p-progress-spinner strokeWidth="8" fill="transparent" animationDuration=".5s" [style]="{ width: '70px', height: '70px', position: 'fixed', top: '50%', left: '50%', zIndex: 1000 }" *ngIf="loading"/>
   <div class="app-globe">
      <p-button 
     icon="pi pi-globe"

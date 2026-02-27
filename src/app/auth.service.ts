@@ -28,7 +28,7 @@ export class AuthenticationService {
     return this.user;
   }
   login(password: string ,email: string) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'loginUser',
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/login',
         {
           password: password,
           email: email,

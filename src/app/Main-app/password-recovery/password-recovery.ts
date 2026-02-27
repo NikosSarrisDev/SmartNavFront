@@ -14,6 +14,7 @@ import {Toast} from 'primeng/toast';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MenuModule } from 'primeng/menu';
 import { ButtonModule } from 'primeng/button';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-password-recovery',
@@ -28,6 +29,7 @@ import { ButtonModule } from 'primeng/button';
     NgIf,
     Password,
     ReactiveFormsModule,
+    ProgressSpinnerModule,
     RouterLink,
     MenuModule,
     Toast,
@@ -44,6 +46,7 @@ export class PasswordRecovery implements OnInit{
   email: string = '';
   submitted: boolean = false;
   languages: MenuItem[] | undefined;
+  loading: boolean = false;
 
   constructor(private formBuilder: FormBuilder,
               private messageService: MessageService,
@@ -99,14 +102,17 @@ export class PasswordRecovery implements OnInit{
       this.submitted = true;
       return;
     }
+    this.loading = true;
 
-     const email = this.recoveryForm.get('email')?.value
+    const email = this.recoveryForm.get('email')?.value
 
     this.dataService.recoverPassword({email: email}).subscribe((r: any) => {
       if(r.status == 'success') {
         this.messageService.add({severity: 'success', summary: 'Success!', detail: r.message});
+        this.loading = false;
       } else {
-        this.messageService.add({severity: 'error', summary: 'Error!', detail: r.message})
+        this.messageService.add({severity: 'error', summary: 'Error!', detail: r.message});
+        this.loading = false;
       }
     })
   }
