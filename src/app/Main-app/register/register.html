@@ -17,12 +17,31 @@
       
       <div style="margin-bottom: 1.5rem">
         <p-floatlabel variant="on">
+          <input pInputText style="width: 100%" id="username" type="text" formControlName="username"/>
+          <label for="username">{{'ΟΝΟΜΑ_ΧΡΗΣΤΗ' | translate}}</label>
+        </p-floatlabel>
+        <div *ngIf="creationForm.controls['username'].invalid && !creationForm.controls['username'].untouched">
+          <small style="color: red" *ngIf="creationForm.controls['username'].errors?.['required']">{{'USERNAME_REQUIRED' | translate}}</small>
+        </div>
+      </div>
+      <div style="margin-bottom: 1.5rem">
+        <p-floatlabel variant="on">
           <input pInputText style="width: 100%" id="name" type="text" formControlName="name"/>
-          <label for="name">{{'ΟΝΟΜΑ_ΧΡΗΣΤΗ' | translate}}</label>
+          <label for="name">{{'OΝΟΜΑ' | translate}}</label>
         </p-floatlabel>
         <div *ngIf="creationForm.controls['name'].invalid && !creationForm.controls['name'].untouched">
           <small style="color: red" *ngIf="creationForm.controls['name'].errors?.['required']">{{'NAME_REQUIRED' | translate}}</small>
           <small style="color: red" *ngIf="creationForm.controls['name'].errors?.['minLength']">{{'NAME_MINLENGTH' | translate}}</small>
+        </div>
+      </div>
+      <div style="margin-bottom: 1.5rem">
+        <p-floatlabel variant="on">
+          <input pInputText style="width: 100%" id="surname" type="text" formControlName="surname"/>
+          <label for="surname">{{'ΕΠΩΝΥΜΟ_ΧΡΗΣΤΗ' | translate}}</label>
+        </p-floatlabel>
+        <div *ngIf="creationForm.controls['surname'].invalid && !creationForm.controls['surname'].untouched">
+          <small style="color: red" *ngIf="creationForm.controls['surname'].errors?.['required']">{{'SURNAME_REQUIRED' | translate}}</small>
+          <small style="color: red" *ngIf="creationForm.controls['surname'].errors?.['minLength']">{{'SURNAME_MINLENGTH' | translate}}</small>
         </div>
       </div>
       <div style="margin-bottom: 1.5rem">

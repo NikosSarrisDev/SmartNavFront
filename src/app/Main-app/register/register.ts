@@ -46,9 +46,10 @@ import { ButtonModule } from 'primeng/button';
 })
 export class Register implements OnInit{
 
-  base64File: string | null = null;
   creationForm!: FormGroup;
   email: string = '';
+  username: string = '';
+  surname: string = '';
   name: string = '';
   phone: string = "";
   photo: string = "";
@@ -91,10 +92,11 @@ export class Register implements OnInit{
         ];
 
     this.creationForm = this.formBuilder.group({
+      username: [this.username, [Validators.required]],
       name: [this.name, [Validators.required, Validators.minLength(4)]],
+      surname: [this.surname, [Validators.required, Validators.minLength(4)]],
       email: [this.email, [Validators.required, Validators.email]],
       phone: [this.phone, [Validators.required, Validators.pattern(/^\d{10}$/)]],
-      photo: [this.photo],
       password: [this.password, [Validators.required, Validators.minLength(8) , passwordStrengthValidator ]],
       verifyPassword: [this.verifyPassword, Validators.required]
     }, {validator: this.passwordMatchValidator })
@@ -133,8 +135,10 @@ export class Register implements OnInit{
     const email = this.creationForm.get('email')?.value;
     const password = this.creationForm.get('password')?.value;
     const phone = this.creationForm.get('phone')?.value;
+    const username = this.creationForm.get('username')?.value;
+    const surname = this.creationForm.get('surname')?.value;
 
-    this.dataService.createUser({name: name, email: email, password: password, phone: phone}).subscribe((r: any) =>{
+    this.dataService.createUser({name: name, email: email, password: password, phone: phone, username: username, surname: surname}).subscribe((r: any) =>{
       if(r.status == 'success'){
         this.messageService.add({severity: 'success', summary: 'Success!', detail: r.message});
         this.router.navigate(['/login']);

@@ -13,8 +13,8 @@
   "ΕΠΙΛΟΓΗ_ΓΛΩΣΣΑΣ": "Language Selection",
   "ΕΓΓΡΑΦΗ_ΧΡΗΣΤΗ": "USER REGISTRATION",
   "ΟΝΟΜΑ_ΧΡΗΣΤΗ": "Username",
-  "NAME_REQUIRED": "Username is required",
-  "NAME_MINLENGTH": "Username must be at least 4 characters long",
+  "NAME_REQUIRED": "Name is required",
+  "NAME_MINLENGTH": "Name must be at least 4 characters long",
   "EMAIL_INVALID": "Invalid email format",
   "ΤΗΛΕΦΩΝΟ": "Contact Phone",
   "PHONE_REQUIRED": "Contact phone is required",
@@ -30,6 +30,10 @@
   "ΕΠΙΣΤΡΟΦΗ_ΣΤΗ_ΣΥΝΔΕΣΗ": "Back to Login",
   "ΠΛΗΚΤΡΟΛΟΓΙΣΤΕ_EMAIL": "ENTER YOUR EMAIL ADDRESS",
   "ΑΠΟΣΤΟΛΗ": "Send",
-  "RECOVERY_INFO_TEXT": "*To recover your password, the email address must exist in our system. Once you click \"Send\", a message will be sent to your email containing your password."
-
+  "RECOVERY_INFO_TEXT": "*To recover your password, the email address must exist in our system. Once you click \"Send\", a message will be sent to your email containing your password.",
+  "ΕΠΩΝΥΜΟ_ΧΡΗΣΤΗ": "Surname",
+  "SURNAME_REQUIRED": "Surname is required",
+  "SURNAME_MINLENGTH": "Surname must be at least 4 characters long",
+  "USERNAME_REQUIRED": "Username is required",
+  "OΝΟΜΑ": "Name"
 }

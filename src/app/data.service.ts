@@ -21,7 +21,7 @@ export class DataService {
   }
 
   recoverPassword(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'forgotPasswordSendEmail', data, httpOptions).pipe(
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/forgotPasswordSendEmail', data, httpOptions).pipe(
       map(
         (response: any) => {
           return response;
@@ -35,7 +35,7 @@ export class DataService {
   }
 
   createUser(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'createUser', data, httpOptions).pipe(
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/CreateUser', data, httpOptions).pipe(
       map(
         (response: any) => {
           return response;
@@ -49,7 +49,7 @@ export class DataService {
   }
 
   getUser(data: any){
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'getUser', data, httpOptions).pipe(
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/getUser', data, httpOptions).pipe(
       map(
         (response: any) => {
           return response;
@@ -63,7 +63,7 @@ export class DataService {
   }
 
   updateUserDetails(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'updateUserDetails', data, httpOptions).pipe(
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/updateUserDetails', data, httpOptions).pipe(
       map(
         (response: any) => {
           return response;
