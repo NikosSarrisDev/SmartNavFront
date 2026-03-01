@@ -107,13 +107,16 @@ export class PasswordRecovery implements OnInit{
     const email = this.recoveryForm.get('email')?.value
 
     this.dataService.recoverPassword({email: email}).subscribe((r: any) => {
+      this.loading = false;
       if(r.status == 'success') {
         this.messageService.add({severity: 'success', summary: 'Success!', detail: r.message});
-        this.loading = false;
       } else {
         this.messageService.add({severity: 'error', summary: 'Error!', detail: r.message});
         this.loading = false;
       }
+    }, (error: any) => {
+      this.messageService.add({severity: 'error', summary: 'Error!', detail: 'Κάτι πήγε λάθος, παρακαλώ προσπαθήστε ξανά αργότερα'});
+      this.loading = false;
     })
   }
 

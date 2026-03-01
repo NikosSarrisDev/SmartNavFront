@@ -143,14 +143,17 @@ export class Register implements OnInit{
     const surname = this.creationForm.get('surname')?.value;
 
     this.dataService.createUser({name: name, email: email, password: password, phone: phone, username: username, surname: surname}).subscribe((r: any) =>{
+      this.loading = false;
       if(r.status == 'success'){
         this.messageService.add({severity: 'success', summary: 'Success!', detail: r.message});
-        this.loading = false;
         this.router.navigate(['/login']);
       }else {
         this.messageService.add({severity: 'error', summary: 'Error!', detail: r.message});
         this.loading = false;
       }
+    }, (error: any) => {
+      this.messageService.add({severity: 'error', summary: 'Error!', detail: 'Κάτι πήγε λάθος, παρακαλώ προσπαθήστε ξανά αργότερα'});
+      this.loading = false;
     })
   }
 

@@ -34,9 +34,8 @@ export class AuthenticationService {
           email: email,
         } , httpOptions)
         .pipe(map(user => {
-          if (user && user.isVerified) {
+          if (user.data && user.data.isVerified) {
             this.user = user;
-            console.log(user.isVerified)
             this.currentUserSubject.next(this.user);
             this.cookieService.deleteCookie(this.remoteDataService.platform+'_user');
             this.cookieService.setCookie(this.remoteDataService.platform+'_user', JSON.stringify(user), 1);
