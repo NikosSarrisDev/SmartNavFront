@@ -1,1 +1,19 @@
-<p>home works!</p>
+<div class="container">
+      <google-map [center]="center" [zoom]="15" height="100vh" width="100%">
+        <map-directions-renderer 
+          *ngIf="routeData$ | async as data" 
+          [directions]="data.result!"> 
+        </map-directions-renderer>
+      </google-map>
+
+      <div class="overlay">
+        <input #goal type="text" placeholder="Πού πάμε; (π.χ. Πάμε παραλιακά για καφέ)">
+        <button (click)="findPath(goal.value)" [disabled]="navService.isLoading$ | async">
+          {{ (navService.isLoading$ | async) ? 'Αναμονή...' : 'AI Go' }}
+        </button>
+        
+        <div class="ai-box" *ngIf="explanation">
+          <p>{{ explanation }}</p>
+        </div>
+      </div>
+</div>
