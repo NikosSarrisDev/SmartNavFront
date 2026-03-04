@@ -10,6 +10,7 @@ import { GoogleMapsModule } from '@angular/google-maps';
   styleUrl: './home.css',
 })
 export class Home implements OnInit {
+  selectedChip: string = '';
 
   center: google.maps.LatLngLiteral = { lat: 37.98, lng: 23.72 };
   route?: google.maps.DirectionsResult;
@@ -22,7 +23,12 @@ export class Home implements OnInit {
   }
 
   findPath(query: string) {
-    this.navService.getSmartRoute(query, this.center).subscribe(data => {
+    if (!query) return;
+    
+    this.selectedChip = query;
+    this.explanation = "";
+
+    this.routeData$ = this.navService.getSmartRoute(query, this.center).subscribe(data => {
       this.route = data.result;
       this.explanation = data.explanation;
     });

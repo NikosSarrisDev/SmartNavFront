@@ -1,19 +1,67 @@
-<div class="container">
-      <google-map [center]="center" [zoom]="15" height="100vh" width="100%">
-        <map-directions-renderer 
-          *ngIf="routeData$ | async as data" 
-          [directions]="data.result!"> 
-        </map-directions-renderer>
-      </google-map>
+<div class="desktop-layout">
+  
+  <aside class="sidebar">
+    <div class="brand">
+      <h2>SmartNav <span class="ai-badge">AI</span></h2>
+    </div>
 
-      <div class="overlay">
-        <input #goal type="text" placeholder="Πού πάμε; (π.χ. Πάμε παραλιακά για καφέ)">
+    <div class="search-section">
+      <label>Πού θέλετε να πάτε;</label>
+      <div class="input-wrapper">
+        <input #goal type="text" placeholder="π.χ. Πάμε παραλιακά για καφέ...">
         <button (click)="findPath(goal.value)" [disabled]="navService.isLoading$ | async">
-          {{ (navService.isLoading$ | async) ? 'Αναμονή...' : 'AI Go' }}
+          <i class="pi pi-search"></i>
         </button>
-        
-        <div class="ai-box" *ngIf="explanation">
-          <p>{{ explanation }}</p>
-        </div>
       </div>
+    </div>
+
+    <div class="chips-grid">
+      <button class="chip" [class.active]="selectedChip.includes('πράσινο')" (click)="findPath('Θέλω μια οικολογική διαδρομή με πολύ πράσινο και πάρκα')">
+        🌿 Eco
+      </button>
+
+      <button class="chip" [class.active]="selectedChip.includes('θάλασσα')" (click)="findPath('Πάμε από την πιο γραφική διαδρομή με θέα στη θάλασσα')">
+        🌊 Scenic
+      </button>
+
+      <button class="chip" [class.active]="selectedChip.includes('ασφαλή')" (click)="findPath('Βρες μου την πιο ασφαλή διαδρομή με φωτισμό και κίνηση')">
+        🛡️ Safe
+      </button>
+
+      <button class="chip" [class.active]="selectedChip.includes('καφέ')" (click)="findPath('Θέλω μια διαδρομή που να κάνει στάση σε ένα καλό καφέ')">
+        ☕ Coffee
+      </button>
+    </div>
+
+    <hr>
+
+    <div class="ai-reasoning-results" *ngIf="explanation">
+      <div class="card-header">
+        <span class="robot-icon">🤖</span>
+        <h3>AI Route Reasoning</h3>
+      </div>
+      <p class="explanation-text">{{ explanation }}</p>
+      
+      <div class="route-stats">
+        <span><strong>Διάρκεια:</strong> 32 min</span>
+        <span><strong>Απόσταση:</strong> 14.5 km</span>
+      </div>
+
+      <button class="start-nav-btn">Έναρξη Πλοήγησης</button>
+    </div>
+
+    <div class="error-box" *ngIf="navService.errorMessage$ | async as errorMsg">
+      {{ errorMsg }}
+    </div>
+  </aside>
+
+  <main class="map-container">
+    <google-map [center]="center" [zoom]="15" height="100vh" width="100%">
+      <map-directions-renderer 
+        *ngIf="routeData$ | async as data"
+        [directions]="data.result!"> 
+      </map-directions-renderer>
+    </google-map>
+  </main>
+
 </div>
