@@ -1,16 +1,18 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NavigationService } from '../../navigation.service';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, NgIf } from '@angular/common';
 import { GoogleMapsModule } from '@angular/google-maps';
+import { Observable, tap } from 'rxjs';
 
 @Component({
   selector: 'app-home',
-  imports: [GoogleMapsModule, AsyncPipe],
+  imports: [GoogleMapsModule, AsyncPipe, NgIf],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
 export class Home implements OnInit {
   selectedChip: string = '';
+  public routeData$!: Observable<any>;
 
   center: google.maps.LatLngLiteral = { lat: 37.98, lng: 23.72 };
   route?: google.maps.DirectionsResult;
@@ -28,10 +30,12 @@ export class Home implements OnInit {
     this.selectedChip = query;
     this.explanation = "";
 
-    this.routeData$ = this.navService.getSmartRoute(query, this.center).subscribe(data => {
-      this.route = data.result;
-      this.explanation = data.explanation;
-    });
+    this.routeData$ = this.navService.getSmartRoute(query, this.center).pipe(tap(data => {
+        if (data && data.explanation) {
+          this.explanation = data.explanation;
+        }
+      })
+    );
   }
 
 }

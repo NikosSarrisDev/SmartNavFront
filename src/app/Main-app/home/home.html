@@ -16,19 +16,19 @@
     </div>
 
     <div class="chips-grid">
-      <button class="chip" [class.active]="selectedChip.includes('πράσινο')" (click)="findPath('Θέλω μια οικολογική διαδρομή με πολύ πράσινο και πάρκα')">
+      <button class="chip" [class.active]="selectedChip.includes('πράσινο')" [disabled]="navService.isLoading$ | async" (click)="findPath('Θέλω μια οικολογική διαδρομή με πολύ πράσινο και πάρκα')">
         🌿 Eco
       </button>
 
-      <button class="chip" [class.active]="selectedChip.includes('θάλασσα')" (click)="findPath('Πάμε από την πιο γραφική διαδρομή με θέα στη θάλασσα')">
+      <button class="chip" [class.active]="selectedChip.includes('θάλασσα')" [disabled]="navService.isLoading$ | async" (click)="findPath('Πάμε από την πιο γραφική διαδρομή με θέα στη θάλασσα')">
         🌊 Scenic
       </button>
 
-      <button class="chip" [class.active]="selectedChip.includes('ασφαλή')" (click)="findPath('Βρες μου την πιο ασφαλή διαδρομή με φωτισμό και κίνηση')">
+      <button class="chip" [class.active]="selectedChip.includes('ασφαλή')" [disabled]="navService.isLoading$ | async" (click)="findPath('Βρες μου την πιο ασφαλή διαδρομή με φωτισμό και κίνηση')">
         🛡️ Safe
       </button>
 
-      <button class="chip" [class.active]="selectedChip.includes('καφέ')" (click)="findPath('Θέλω μια διαδρομή που να κάνει στάση σε ένα καλό καφέ')">
+      <button class="chip" [class.active]="selectedChip.includes('καφέ')" [disabled]="navService.isLoading$ | async" (click)="findPath('Θέλω μια διαδρομή που να κάνει στάση σε ένα καλό καφέ')">
         ☕ Coffee
       </button>
     </div>
