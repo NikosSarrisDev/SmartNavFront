@@ -8,7 +8,7 @@ import { environment } from '../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class NavigationService {
   private readonly GEMINI_KEY = environment.geminiApiKey;
-  private readonly GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.GEMINI_KEY}`;
+  private readonly GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${this.GEMINI_KEY}`;
 
   public isLoading$ = new BehaviorSubject<boolean>(false);
   public errorMessage$ = new BehaviorSubject<string | null>(null);

@@ -3,6 +3,7 @@ import { NavigationService } from '../../navigation.service';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { Observable, tap } from 'rxjs';
+import { IsLoaderFullCompEnabled } from '../../is-loader-full-comp-enabled';
 
 @Component({
   selector: 'app-home',
@@ -11,6 +12,7 @@ import { Observable, tap } from 'rxjs';
   styleUrl: './home.css',
 })
 export class Home implements OnInit {
+  loading!:boolean;
   selectedChip: string = '';
   public routeData$!: Observable<any>;
 
@@ -18,13 +20,15 @@ export class Home implements OnInit {
   route?: google.maps.DirectionsResult;
   explanation: string = "";
 
-  constructor(public navService: NavigationService) {}
+  constructor(public navService: NavigationService, private isLoaderFullCompEnabled: IsLoaderFullCompEnabled) {}
 
   async ngOnInit() {
     this.center = await this.navService.getCurrentLocation();
   }
 
   findPath(query: string) {
+    this.isLoaderFullCompEnabled.setLoadingToTrue();
+    console.log(this.isLoaderFullCompEnabled.isLoading());
     if (!query) return;
     
     this.selectedChip = query;
@@ -34,6 +38,8 @@ export class Home implements OnInit {
         if (data && data.explanation) {
           this.explanation = data.explanation;
         }
+        this.isLoaderFullCompEnabled.setLoadingToFalse();
+        console.log(this.isLoaderFullCompEnabled.isLoading());
       })
     );
   }
