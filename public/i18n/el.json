@@ -35,5 +35,15 @@
   "SURNAME_REQUIRED": "Το πεδίο Επώνυμο χρήστη είναι υποχρεωτικό",
   "SURNAME_MINLENGTH": "Το επώνυμο χρήστη πρέπει να έχει τουλάχιστον 4 χαρακτήρες",
   "USERNAME_REQUIRED": "Το πεδίο Όνομα χρήστη είναι υποχρεωτικό",
-  "OΝΟΜΑ": "Όνομα"
+  "OΝΟΜΑ": "Όνομα",
+  "NAV_SEARCH_LABEL": "Πού θέλετε να πάτε;",
+  "NAV_SEARCH_PLACEHOLDER": "π.χ. Πάμε παραλιακά για καφέ...",
+  "NAV_CHIP_ECO": "Πράσινο",
+  "NAV_CHIP_SCENIC": "Θέα",
+  "NAV_CHIP_SAFE": "Ασφάλεια",
+  "NAV_CHIP_COFFEE": "Καφέ",
+  "NAV_AI_TITLE": "Αιτιολόγηση Διαδρομής AI",
+  "NAV_DURATION": "Διάρκεια",
+  "NAV_DISTANCE": "Απόσταση",
+  "NAV_START_BTN": "Έναρξη Πλοήγησης"
 }

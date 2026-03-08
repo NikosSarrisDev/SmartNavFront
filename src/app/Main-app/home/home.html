@@ -8,9 +8,9 @@
     <ng-content select="[menu]"></ng-content>
 
     <div class="search-section">
-      <label>Πού θέλετε να πάτε;</label>
+      <label>{{ 'NAV_SEARCH_LABEL' | translate }}</label>
       <div class="input-wrapper">
-        <input #goal type="text" placeholder="π.χ. Πάμε παραλιακά για καφέ...">
+        <input #goal type="text" [placeholder]="'NAV_SEARCH_PLACEHOLDER' | translate">
         <button (click)="findPath(goal.value)" [disabled]="navService.isLoading$ | async">
           <i class="pi pi-search"></i>
         </button>
@@ -19,19 +19,19 @@
 
     <div class="chips-grid">
       <button class="chip" [class.active]="selectedChip.includes('πράσινο')" [disabled]="navService.isLoading$ | async" (click)="findPath('Θέλω μια οικολογική διαδρομή με πολύ πράσινο και πάρκα')">
-        🌿 Eco
+        🌿 {{ 'NAV_CHIP_ECO' | translate }}
       </button>
 
       <button class="chip" [class.active]="selectedChip.includes('θάλασσα')" [disabled]="navService.isLoading$ | async" (click)="findPath('Πάμε από την πιο γραφική διαδρομή με θέα στη θάλασσα')">
-        🌊 Scenic
+        🌊 {{ 'NAV_CHIP_SCENIC' | translate }}
       </button>
 
       <button class="chip" [class.active]="selectedChip.includes('ασφαλή')" [disabled]="navService.isLoading$ | async" (click)="findPath('Βρες μου την πιο ασφαλή διαδρομή με φωτισμό και κίνηση')">
-        🛡️ Safe
+        🛡️ {{ 'NAV_CHIP_SAFE' | translate }}
       </button>
 
       <button class="chip" [class.active]="selectedChip.includes('καφέ')" [disabled]="navService.isLoading$ | async" (click)="findPath('Θέλω μια διαδρομή που να κάνει στάση σε ένα καλό καφέ')">
-        ☕ Coffee
+        ☕ {{ 'NAV_CHIP_COFFEE' | translate }}
       </button>
     </div>
 
@@ -42,16 +42,16 @@
     <div class="ai-reasoning-results" *ngIf="explanation">
       <div class="card-header">
         <span class="robot-icon">🤖</span>
-        <h3>AI Route Reasoning</h3>
+        <h3>{{ 'NAV_AI_TITLE' | translate }}</h3>
       </div>
       <p class="explanation-text">{{ explanation }}</p>
       
       <div class="route-stats">
-        <span><strong>Διάρκεια:</strong> 32 min</span>
-        <span><strong>Απόσταση:</strong> 14.5 km</span>
+        <span><strong>{{ 'NAV_DURATION' | translate }}:</strong> 32 min</span>
+        <span><strong>{{ 'NAV_DISTANCE' | translate }}:</strong> 14.5 km</span>
       </div>
 
-      <button class="start-nav-btn">Έναρξη Πλοήγησης</button>
+      <button class="start-nav-btn">{{ 'NAV_START_BTN' | translate }}</button>
     </div>
 
     <div class="error-box" *ngIf="navService.errorMessage$ | async as errorMsg">

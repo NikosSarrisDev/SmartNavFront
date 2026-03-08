@@ -4,10 +4,11 @@ import { AsyncPipe, NgIf } from '@angular/common';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { Observable, tap } from 'rxjs';
 import { IsLoaderFullCompEnabled } from '../../is-loader-full-comp-enabled';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-home',
-  imports: [GoogleMapsModule, AsyncPipe, NgIf],
+  imports: [GoogleMapsModule, AsyncPipe, NgIf, TranslatePipe],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
@@ -20,7 +21,7 @@ export class Home implements OnInit {
   route?: google.maps.DirectionsResult;
   explanation: string = "";
 
-  constructor(public navService: NavigationService, private isLoaderFullCompEnabled: IsLoaderFullCompEnabled) {}
+  constructor(public navService: NavigationService, private isLoaderFullCompEnabled: IsLoaderFullCompEnabled, private translate: TranslateService) {}
 
   async ngOnInit() {
     this.center = await this.navService.getCurrentLocation();

@@ -35,5 +35,15 @@
   "SURNAME_REQUIRED": "Surname is required",
   "SURNAME_MINLENGTH": "Surname must be at least 4 characters long",
   "USERNAME_REQUIRED": "Username is required",
-  "OΝΟΜΑ": "Name"
+  "OΝΟΜΑ": "Name",
+  "NAV_SEARCH_LABEL": "Where do you want to go?",
+  "NAV_SEARCH_PLACEHOLDER": "e.g. Let's go for coffee by the sea...",
+  "NAV_CHIP_ECO": "Eco",
+  "NAV_CHIP_SCENIC": "Scenic",
+  "NAV_CHIP_SAFE": "Safe",
+  "NAV_CHIP_COFFEE": "Coffee",
+  "NAV_AI_TITLE": "AI Route Reasoning",
+  "NAV_DURATION": "Duration",
+  "NAV_DISTANCE": "Distance",
+  "NAV_START_BTN": "Start Navigation"
 }

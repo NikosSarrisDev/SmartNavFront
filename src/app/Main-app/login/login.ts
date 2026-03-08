@@ -15,7 +15,7 @@ import {PasswordModule} from 'primeng/password';
 import {DividerModule} from 'primeng/divider';
 import {InputText} from 'primeng/inputtext';
 import { MenuModule } from 'primeng/menu';
-import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
@@ -37,8 +37,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
     InputText,
     Toast,
     MenuModule,
-    TranslatePipe,
-    TranslateDirective
+    TranslatePipe
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',
