@@ -28,7 +28,6 @@ export class Home implements OnInit {
 
   findPath(query: string) {
     this.isLoaderFullCompEnabled.setLoadingToTrue();
-    console.log(this.isLoaderFullCompEnabled.isLoading());
     if (!query) return;
     
     this.selectedChip = query;
@@ -39,7 +38,6 @@ export class Home implements OnInit {
           this.explanation = data.explanation;
         }
         this.isLoaderFullCompEnabled.setLoadingToFalse();
-        console.log(this.isLoaderFullCompEnabled.isLoading());
       })
     );
   }

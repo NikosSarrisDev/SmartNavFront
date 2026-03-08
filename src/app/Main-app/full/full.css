@@ -1,0 +1,10 @@
+.app-globe {
+  position: relative;
+  cursor: pointer;
+  top: -10px;
+  transition: transform 0.3s ease-in-out;
+}
+
+.app-globe:hover {
+  transform: scale(1.3);
+}

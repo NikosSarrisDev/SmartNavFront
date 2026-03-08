@@ -1,9 +1,11 @@
 <div class="desktop-layout">
   
   <aside class="sidebar">
-    <div class="brand">
+    <div class="brand" style="display: flex; justify-content: space-between; align-items: center;">
       <h2>SmartNav <span class="ai-badge">AI</span></h2>
+      <ng-content select="[globe]"></ng-content>
     </div>
+    <ng-content select="[menu]"></ng-content>
 
     <div class="search-section">
       <label>Πού θέλετε να πάτε;</label>
@@ -34,6 +36,8 @@
     </div>
 
     <hr>
+
+    <ng-content select="[spinner]"></ng-content>
 
     <div class="ai-reasoning-results" *ngIf="explanation">
       <div class="card-header">

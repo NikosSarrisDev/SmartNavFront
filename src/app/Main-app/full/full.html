@@ -1,14 +1,17 @@
-<div style="position: relative;">
-    <div *ngIf="loading" class="loader-background"></div>
-    <p-progress-spinner strokeWidth="8" fill="transparent" animationDuration=".5s" [style]="{ width: '70px', height: '70px', position: 'fixed', top: '50%', left: '50%', zIndex: 1000 }" *ngIf="loading"/>
-    <div class="app-globe">
-       <p-button 
-      icon="pi pi-globe"
-      (click)="menu.toggle($event)" 
-      [rounded]="true" 
-      severity="secondary">
-      </p-button>
+
+<app-home>
+    <div class="centerfy" spinner>
+        <p-progress-spinner strokeWidth="8" fill="transparent" animationDuration=".5s" [style]="{ width: '70px', height: '70px', diplay: 'flex' }" *ngIf="loading()"/>
     </div>
-    <p-menu #menu [model]="languages" [popup]="true"></p-menu>
-    <app-home></app-home>
-</div>
+    <ng-container globe>
+        <div class="app-globe">
+           <p-button 
+          icon="pi pi-globe"
+          (click)="menu.toggle($event)"
+          [rounded]="true"
+          severity="secondary">
+          </p-button>
+        </div>
+    </ng-container>
+    <p-menu menu #menu [model]="languages" [popup]="true"></p-menu>
+</app-home>

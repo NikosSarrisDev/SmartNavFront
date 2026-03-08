@@ -22,5 +22,21 @@
   height: 100%;
 } 
 
+.centerfy {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.centerfy-vertically {
+  display: flex;
+  align-items: center;
+}
+
+.spacer-between {
+  display: flex;
+  justify-content: space-between;
+}
+
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

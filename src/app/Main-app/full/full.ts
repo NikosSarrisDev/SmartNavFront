@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { computed, Component, OnInit } from '@angular/core';
 import { Home } from '../home/home';
 import { ProgressSpinner } from "primeng/progressspinner";
 import { Button } from "primeng/button";
@@ -6,21 +6,21 @@ import { Menu, MenuModule } from "primeng/menu";
 import { TranslateService } from '@ngx-translate/core';
 import {MenuItem, MessageService} from 'primeng/api';
 import { IsLoaderFullCompEnabled } from '../../is-loader-full-comp-enabled';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-full',
-  imports: [Home, ProgressSpinner, Button, Menu, MenuModule],
+  imports: [Home, ProgressSpinner, Button, Menu, MenuModule, NgIf],
   templateUrl: './full.html',
   styleUrl: './full.css',
 })
 export class Full implements OnInit {
   languages: MenuItem[] | undefined;
-  loading!: boolean;
+  // loading: boolean = false;
 
   constructor(private translate: TranslateService, private isLoaderFullCompEnabled: IsLoaderFullCompEnabled){}
 
   ngOnInit() {
-    this.loading = this.isLoaderFullCompEnabled.isLoading();
     this.translate.use('el');
     this.languages = [
             {
@@ -44,6 +44,9 @@ export class Full implements OnInit {
             }
         ];
   }
+
+  //Computed Signal to capture the current state of loading spinner
+  loading = computed(() => this.isLoaderFullCompEnabled.isLoading());
 
   changeLanguage(lang: string) {
     this.translate.use(lang);
