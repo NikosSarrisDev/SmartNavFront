@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NavigationService } from '../../navigation.service';
-import { AsyncPipe, NgIf } from '@angular/common';
+import { AsyncPipe, NgIf, NgClass } from '@angular/common';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { Observable, tap } from 'rxjs';
 import { IsLoaderFullCompEnabled } from '../../is-loader-full-comp-enabled';
@@ -8,7 +8,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-home',
-  imports: [GoogleMapsModule, AsyncPipe, NgIf, TranslatePipe],
+  imports: [GoogleMapsModule, AsyncPipe, NgIf, TranslatePipe, NgClass],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

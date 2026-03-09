@@ -47,15 +47,6 @@
   outline: none;
 }
 
-.input-wrapper button {
-  background: #6200ee;
-  color: white;
-  border: none;
-  padding: 0 15px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
 /* CHIPS */
 .chips-grid {
   display: grid;
@@ -85,6 +76,11 @@
   border: 1px solid #e0e0e0;
   padding: 20px;
   border-radius: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .card-header {
@@ -115,4 +111,26 @@
 
 .map-container {
   flex: 1;
+}
+
+.goal-button-disable {
+  background-color: #8f8e8e;
+  color: white;
+  border: none;
+  padding: 0 15px;
+  border-radius: 8px;
+}
+
+.goal-button-enable {
+  background: #6200ee;
+  color: white;
+  border: none;
+  padding: 0 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.goal-button-enable:hover {
+  transform: scale(1.05);
 }

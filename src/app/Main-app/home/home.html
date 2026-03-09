@@ -10,8 +10,8 @@
     <div class="search-section">
       <label>{{ 'NAV_SEARCH_LABEL' | translate }}</label>
       <div class="input-wrapper">
-        <input #goal type="text" [placeholder]="'NAV_SEARCH_PLACEHOLDER' | translate">
-        <button (click)="findPath(goal.value)" [disabled]="navService.isLoading$ | async">
+        <input #goal (input)="0" type="text" [placeholder]="'NAV_SEARCH_PLACEHOLDER' | translate" (keyup.enter)="goal.value && findPath(goal.value)">
+        <button [ngClass]="goal.value ? 'goal-button-enable' : 'goal-button-disable'" (click)="findPath(goal.value)" [disabled]="(navService.isLoading$ | async) || (goal.value === '')">
           <i class="pi pi-search"></i>
         </button>
       </div>
