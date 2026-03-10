@@ -5,6 +5,7 @@ import { authGuard } from './auth-guard';
 import { PasswordRecovery } from './Main-app/password-recovery/password-recovery';
 import { Full } from './Main-app/full/full';
 import { Home } from './Main-app/home/home';
+import { User } from './Main-app/full/user/user';
 
 export const routes: Routes = [
   {
@@ -31,6 +32,10 @@ export const routes: Routes = [
   {
     path: 'forgetPass',
     component: PasswordRecovery
+  },
+  {
+    path: 'user',
+    component: User
   },
   {
     path: '**',

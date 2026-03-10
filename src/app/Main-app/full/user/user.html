@@ -1,0 +1,71 @@
+<div class="dashboard-container">
+  <aside class="user-sidebar">
+    <div class="profile-card">
+      <div class="avatar-wrapper">
+        <img [src]="user().avatar" alt="User Avatar">
+        <span class="badge">{{ user().role }}</span>
+      </div>
+      <h2>{{ user().name }}</h2>
+      <p class="email">{{ user().email }}</p>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="value">{{ user().trips }}</span>
+          <span class="label">Trips</span>
+        </div>
+        <div class="stat-item">
+          <span class="value">{{ user().distance }}km</span>
+          <span class="label">Distance</span>
+        </div>
+        <div class="stat-item">
+          <span class="value">{{ user().ecoScore }}</span>
+          <span class="label">Eco Score</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <section class="section">
+      <h3>AI Routing Preferences</h3>
+      <div class="chips-container">
+        @for (pref of preferences(); track pref.id) {
+          <button 
+            [class.active]="pref.active" 
+            (click)="togglePreference(pref.id)"
+            class="chip">
+            {{ pref.icon }} {{ pref.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="section">
+      <h3>Recent Trip History</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Destination</th>
+              <th>KM</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (trip of history(); track trip.dest) {
+              <tr>
+                <td>{{ trip.date }}</td>
+                <td>{{ trip.dest }}</td>
+                <td>{{ trip.dist }}</td>
+                <td>⭐ {{ trip.score }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+    
+    <button class="save-btn">SAVE CHANGES</button>
+  </main>
+</div>
