@@ -15,6 +15,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 export class Home implements OnInit {
   loading!:boolean;
   selectedChip: string = '';
+  duration: string = '';
+  distance: string = '';
   public routeData$!: Observable<any>;
 
   center: google.maps.LatLngLiteral = { lat: 37.98, lng: 23.72 };
@@ -36,6 +38,19 @@ export class Home implements OnInit {
 
     this.routeData$ = this.navService.getSmartRoute(query, this.center).pipe(tap(data => {
         if (data && data.explanation) {
+
+          const route = data.result.routes[0];
+          let totalDistance = 0;
+          let totalDuration = 0;
+
+          route.legs.forEach((leg: any) => {
+            totalDistance += leg.distance.value; // σε μέτρα
+            totalDuration += leg.duration.value; // σε δευτερόλεπτα
+          });
+        
+          this.distance = (totalDistance / 1000).toFixed(1) + ' km';
+          this.duration = Math.round(totalDuration / 60) + ' min';
+
           this.explanation = data.explanation;
         }
         this.isLoaderFullCompEnabled.setLoadingToFalse();
