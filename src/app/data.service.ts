@@ -76,6 +76,34 @@ export class DataService {
 
   }
 
+  getAvatars(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Avatars', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error); // Rethrow the error to be handled by the caller
+      }));
+
+  }
+
+  getRoles(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Roles', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error); // Rethrow the error to be handled by the caller
+      }));
+
+  }
+
   private handleError(error:any) {
     var status = error.error.status;
     if (status == undefined) {

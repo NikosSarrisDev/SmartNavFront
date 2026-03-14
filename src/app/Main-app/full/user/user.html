@@ -30,7 +30,7 @@
       <h3>AI Routing Preferences</h3>
       <div class="chips-container">
         @for (pref of preferences(); track pref.id) {
-          <button 
+          <button style="margin: 0.5rem"
             [class.active]="pref.active" 
             (click)="togglePreference(pref.id)"
             class="chip">

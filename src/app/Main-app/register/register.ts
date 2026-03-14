@@ -60,6 +60,10 @@ export class Register implements OnInit{
   submitted: boolean = false;
   languages: MenuItem[] | undefined;
   loading: boolean = false;
+  selectedRole: any = '';
+  roles: any[] = [];
+  avatars: any[] = [];
+  activeIndex: number = 0;
 
   constructor(private formBuilder: FormBuilder,
               private remoteDataService: RemoteDataService,
@@ -71,6 +75,8 @@ export class Register implements OnInit{
   }
 
   ngOnInit() {
+    this.getAvatars();
+    this.getRoles();
     this.translate.use('el');
     this.languages = [
             {
@@ -95,7 +101,9 @@ export class Register implements OnInit{
         ];
 
     this.creationForm = this.formBuilder.group({
-      username: [this.username, [Validators.required]],
+      avatar: [this.selectedAvatar],
+      role: [this.selectedRole],
+      username: [this.username],
       name: [this.name, [Validators.required, Validators.minLength(4)]],
       surname: [this.surname, [Validators.required, Validators.minLength(4)]],
       email: [this.email, [Validators.required, Validators.email]],
@@ -103,6 +111,30 @@ export class Register implements OnInit{
       password: [this.password, [Validators.required, Validators.minLength(8) , passwordStrengthValidator ]],
       verifyPassword: [this.verifyPassword, Validators.required]
     }, {validator: this.passwordMatchValidator })
+  }
+
+  getRoles(){
+    this.dataService.getRoles({}).subscribe((response) => {
+      this.roles = response.data
+    })
+  }
+
+  getAvatars(){
+    this.dataService.getAvatars({}).subscribe((response) => {
+      this.avatars = response.data
+    })
+  }
+
+  nextAvatar() {
+    this.activeIndex = (this.activeIndex + 1) % this.avatars.length;
+  }
+
+  prevAvatar() {
+    this.activeIndex = (this.activeIndex - 1 + this.avatars.length) % this.avatars.length;
+  }
+
+  get selectedAvatar() {
+    return this.avatars[this.activeIndex];
   }
 
   validateAllFromFields(formGroup: FormGroup| any){
@@ -135,6 +167,8 @@ export class Register implements OnInit{
     }
     this.loading = true;
 
+    const selectedRole = this.creationForm.get('role')?.value;
+    const selectedAvatar = this.creationForm.get('avatar')?.value;
     const name = this.creationForm.get('name')?.value;
     const email = this.creationForm.get('email')?.value;
     const password = this.creationForm.get('password')?.value;
@@ -142,7 +176,7 @@ export class Register implements OnInit{
     const username = this.creationForm.get('username')?.value;
     const surname = this.creationForm.get('surname')?.value;
 
-    this.dataService.createUser({name: name, email: email, password: password, phone: phone, username: username, surname: surname}).subscribe((r: any) =>{
+    this.dataService.createUser({selectedAvatar: selectedAvatar, selectedRole: selectedRole, name: name, email: email, password: password, phone: phone, username: username, surname: surname}).subscribe((r: any) =>{
       this.loading = false;
       if(r.status == 'success'){
         this.messageService.add({severity: 'success', summary: 'Success!', detail: r.message});

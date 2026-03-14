@@ -1,112 +1,243 @@
-<div class="main-full-div" style="position: relative;">
+<div class="main-full-div" style="position: relative">
   <div *ngIf="loading" class="loader-background"></div>
-  <p-progress-spinner strokeWidth="8" fill="transparent" animationDuration=".5s" [style]="{ width: '70px', height: '70px', position: 'fixed', top: '50%', left: '50%', zIndex: 1000 }" *ngIf="loading"/>
+  <p-progress-spinner
+    strokeWidth="8"
+    fill="transparent"
+    animationDuration=".5s"
+    [style]="{
+      width: '70px',
+      height: '70px',
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      zIndex: 1000,
+    }"
+    *ngIf="loading"
+  />
   <div class="app-globe">
     <p-button
       icon="pi pi-globe"
       (click)="menu.toggle($event)"
-      [rounded]="true" 
-      severity="secondary">
-      </p-button>
+      [rounded]="true"
+      severity="secondary"
+    >
+    </p-button>
   </div>
   <p-menu #menu [model]="languages" [popup]="true"></p-menu>
   <div class="login-table">
     <div class="center-image">
-      <img src="assets/images/SmartNavLogo.png" alt="SmartNav Logo" width="400" height="400"/>
+      <div class="carousel-container">
+        <button
+          pButton
+          icon="pi pi-chevron-left"
+          class="p-button-rounded p-button-text nav-btn"
+          (click)="prevAvatar()"
+          type="button"
+        ></button>
+
+        <div class="avatar-display">
+          @for (avatar of avatars; track avatar.id) {
+            @if ($index === activeIndex) {
+              <div class="avatar-wrapper">
+                <img [src]="avatar.avatarURL" alt="User Avatar" />
+              </div>
+            }
+          }
+        </div>
+
+        <button
+          pButton
+          icon="pi pi-chevron-right"
+          class="p-button-rounded p-button-text nav-btn"
+          (click)="nextAvatar()"
+          type="button"
+        ></button>
+      </div>
     </div>
     <form [formGroup]="creationForm" (ngSubmit)="submit()">
-      <div style="font-size: 1rem; margin: 3rem 0 0.5rem 0.3rem; font-weight: bold">{{'ΕΓΓΡΑΦΗ_ΧΡΗΣΤΗ' | translate}}</div>
-      
+      <div style="font-size: 1rem; margin: 3rem 0 0.5rem 0.3rem; font-weight: bold">
+        {{ 'ΕΓΓΡΑΦΗ_ΧΡΗΣΤΗ' | translate }}
+      </div>
+
       <div style="margin-bottom: 1.5rem">
         <p-floatlabel variant="on">
-          <input pInputText style="width: 100%" id="username" type="text" formControlName="username"/>
-          <label for="username">{{'ΟΝΟΜΑ_ΧΡΗΣΤΗ' | translate}}</label>
+          <input
+            pInputText
+            style="width: 100%"
+            id="username"
+            type="text"
+            formControlName="username"
+          />
+          <label for="username">{{ 'ΟΝΟΜΑ_ΧΡΗΣΤΗ' | translate }}</label>
         </p-floatlabel>
-        <div *ngIf="creationForm.controls['username'].invalid && !creationForm.controls['username'].untouched">
-          <small style="color: red" *ngIf="creationForm.controls['username'].errors?.['required']">{{'USERNAME_REQUIRED' | translate}}</small>
+        <div
+          *ngIf="
+            creationForm.controls['username'].invalid &&
+            !creationForm.controls['username'].untouched
+          "
+        >
+          <small
+            style="color: red"
+            *ngIf="creationForm.controls['username'].errors?.['required']"
+            >{{ 'USERNAME_REQUIRED' | translate }}</small
+          >
         </div>
       </div>
       <div style="margin-bottom: 1.5rem">
         <p-floatlabel variant="on">
-          <input pInputText style="width: 100%" id="name" type="text" formControlName="name"/>
-          <label for="name">{{'OΝΟΜΑ' | translate}}</label>
+          <input pInputText style="width: 100%" id="name" type="text" formControlName="name" />
+          <label for="name">{{ 'OΝΟΜΑ' | translate }}</label>
         </p-floatlabel>
-        <div *ngIf="creationForm.controls['name'].invalid && !creationForm.controls['name'].untouched">
-          <small style="color: red" *ngIf="creationForm.controls['name'].errors?.['required']">{{'NAME_REQUIRED' | translate}}</small>
-          <small style="color: red" *ngIf="creationForm.controls['name'].errors?.['minLength']">{{'NAME_MINLENGTH' | translate}}</small>
+        <div
+          *ngIf="creationForm.controls['name'].invalid && !creationForm.controls['name'].untouched"
+        >
+          <small style="color: red" *ngIf="creationForm.controls['name'].errors?.['required']">{{
+            'NAME_REQUIRED' | translate
+          }}</small>
+          <small style="color: red" *ngIf="creationForm.controls['name'].errors?.['minLength']">{{
+            'NAME_MINLENGTH' | translate
+          }}</small>
         </div>
       </div>
       <div style="margin-bottom: 1.5rem">
         <p-floatlabel variant="on">
-          <input pInputText style="width: 100%" id="surname" type="text" formControlName="surname"/>
-          <label for="surname">{{'ΕΠΩΝΥΜΟ_ΧΡΗΣΤΗ' | translate}}</label>
+          <input
+            pInputText
+            style="width: 100%"
+            id="surname"
+            type="text"
+            formControlName="surname"
+          />
+          <label for="surname">{{ 'ΕΠΩΝΥΜΟ_ΧΡΗΣΤΗ' | translate }}</label>
         </p-floatlabel>
-        <div *ngIf="creationForm.controls['surname'].invalid && !creationForm.controls['surname'].untouched">
-          <small style="color: red" *ngIf="creationForm.controls['surname'].errors?.['required']">{{'SURNAME_REQUIRED' | translate}}</small>
-          <small style="color: red" *ngIf="creationForm.controls['surname'].errors?.['minLength']">{{'SURNAME_MINLENGTH' | translate}}</small>
+        <div
+          *ngIf="
+            creationForm.controls['surname'].invalid && !creationForm.controls['surname'].untouched
+          "
+        >
+          <small style="color: red" *ngIf="creationForm.controls['surname'].errors?.['required']">{{
+            'SURNAME_REQUIRED' | translate
+          }}</small>
+          <small
+            style="color: red"
+            *ngIf="creationForm.controls['surname'].errors?.['minLength']"
+            >{{ 'SURNAME_MINLENGTH' | translate }}</small
+          >
         </div>
       </div>
       <div style="margin-bottom: 1.5rem">
         <p-floatlabel variant="on">
-          <input pInputText style="width: 100%" id="email" type="text" formControlName="email"/>
+          <input pInputText style="width: 100%" id="email" type="text" formControlName="email" />
           <label for="email">Email</label>
         </p-floatlabel>
-        <div *ngIf="creationForm.controls['email'].invalid && !creationForm.controls['email'].untouched">
-          <small style="color: red" *ngIf="creationForm.controls['email'].hasError('required')">{{'EMAIL_REQUIRED' | translate}}</small>
-          <small style="color: red" *ngIf="creationForm.controls['email'].hasError('email')">{{'EMAIL_INVALID' | translate}}</small>
+        <div
+          *ngIf="
+            creationForm.controls['email'].invalid && !creationForm.controls['email'].untouched
+          "
+        >
+          <small style="color: red" *ngIf="creationForm.controls['email'].hasError('required')">{{
+            'EMAIL_REQUIRED' | translate
+          }}</small>
+          <small style="color: red" *ngIf="creationForm.controls['email'].hasError('email')">{{
+            'EMAIL_INVALID' | translate
+          }}</small>
         </div>
       </div>
       <div style="margin-bottom: 1.5rem">
         <p-floatlabel variant="on">
-          <input pInputText style="width: 100%" id="phone" type="text" formControlName="phone"/>
-          <label for="phone">{{'ΤΗΛΕΦΩΝΟ' | translate}}</label>
+          <input pInputText style="width: 100%" id="phone" type="text" formControlName="phone" />
+          <label for="phone">{{ 'ΤΗΛΕΦΩΝΟ' | translate }}</label>
         </p-floatlabel>
-        <div *ngIf="creationForm.controls['phone'].invalid && !creationForm.controls['phone'].untouched">
-          <small style="color: red" *ngIf="creationForm.controls['phone'].hasError('required')">{{'PHONE_REQUIRED' | translate}}</small>
-          <small style="color: red" *ngIf="creationForm.controls['phone'].hasError('pattern')">{{'PHONE_PATTERN' | translate}}</small>
+        <div
+          *ngIf="
+            creationForm.controls['phone'].invalid && !creationForm.controls['phone'].untouched
+          "
+        >
+          <small style="color: red" *ngIf="creationForm.controls['phone'].hasError('required')">{{
+            'PHONE_REQUIRED' | translate
+          }}</small>
+          <small style="color: red" *ngIf="creationForm.controls['phone'].hasError('pattern')">{{
+            'PHONE_PATTERN' | translate
+          }}</small>
         </div>
       </div>
       <div style="margin-bottom: 1.5rem">
-        <p-floatlabel variant="on" [style]="{'height': '42px'}">
-          <p-password [style]="{'width': '100%'}" formControlName="password" inputId="on_label" autocomplete="off" [toggleMask]="true"></p-password>
-          <label for="on_label">{{'ΚΩΔΙΚΟΣ' | translate}}</label>
+        <p-floatlabel variant="on" [style]="{ height: '42px' }">
+          <p-password
+            [style]="{ width: '100%' }"
+            formControlName="password"
+            inputId="on_label"
+            autocomplete="off"
+            [toggleMask]="true"
+          ></p-password>
+          <label for="on_label">{{ 'ΚΩΔΙΚΟΣ' | translate }}</label>
         </p-floatlabel>
-        <div *ngIf="creationForm.controls['password'].invalid && !creationForm.controls['password'].untouched">
-          <small style="color: red" *ngIf="creationForm.controls['password'].errors?.['required']">{{'PASSWORD_REQUIRED' | translate}}</small>
-          <small style="color: red" *ngIf="creationForm.controls['password'].errors?.['passwordStrength']">
+        <div
+          *ngIf="
+            creationForm.controls['password'].invalid &&
+            !creationForm.controls['password'].untouched
+          "
+        >
+          <small
+            style="color: red"
+            *ngIf="creationForm.controls['password'].errors?.['required']"
+            >{{ 'PASSWORD_REQUIRED' | translate }}</small
+          >
+          <small
+            style="color: red"
+            *ngIf="creationForm.controls['password'].errors?.['passwordStrength']"
+          >
             <ul class="pl-2 ml-2 my-0 leading-normal">
-              <li>{{'PASS_REQ_LOWER' | translate}}</li>
-              <li>{{'PASS_REQ_UPPER' | translate}}</li>
-              <li>{{'PASS_REQ_NUMBER' | translate}}</li>
-              <li>{{'PASS_REQ_LENGTH' | translate}}</li>
+              <li>{{ 'PASS_REQ_LOWER' | translate }}</li>
+              <li>{{ 'PASS_REQ_UPPER' | translate }}</li>
+              <li>{{ 'PASS_REQ_NUMBER' | translate }}</li>
+              <li>{{ 'PASS_REQ_LENGTH' | translate }}</li>
             </ul>
           </small>
         </div>
       </div>
       <div style="margin-bottom: 1.5rem">
-        <p-floatlabel variant="on" [style]="{'height': '42px'}">
-          <p-password [style]="{'width': '100%'}" formControlName="verifyPassword" inputId="verify_label" [feedback]="false" [toggleMask]="true"/>
-          <label for="verify_label">{{'ΕΠΑΛΗΘΕΥΣΗ_ΚΩΔΙΚΟΥ' | translate}}</label>
+        <p-floatlabel variant="on" [style]="{ height: '42px' }">
+          <p-password
+            [style]="{ width: '100%' }"
+            formControlName="verifyPassword"
+            inputId="verify_label"
+            [feedback]="false"
+            [toggleMask]="true"
+          />
+          <label for="verify_label">{{ 'ΕΠΑΛΗΘΕΥΣΗ_ΚΩΔΙΚΟΥ' | translate }}</label>
         </p-floatlabel>
-        <div *ngIf="creationForm.controls['verifyPassword'].invalid && !creationForm.controls['verifyPassword'].untouched">
-          <small style="color: red" *ngIf="creationForm.controls['verifyPassword'].errors?.['required']">{{'VERIFY_PASSWORD_REQUIRED' | translate}}</small>
-          <small style="color: red" *ngIf="creationForm.controls['verifyPassword'].errors?.['mismatch']">{{'PASSWORD_MISMATCH' | translate}}</small>
+        <div
+          *ngIf="
+            creationForm.controls['verifyPassword'].invalid &&
+            !creationForm.controls['verifyPassword'].untouched
+          "
+        >
+          <small
+            style="color: red"
+            *ngIf="creationForm.controls['verifyPassword'].errors?.['required']"
+            >{{ 'VERIFY_PASSWORD_REQUIRED' | translate }}</small
+          >
+          <small
+            style="color: red"
+            *ngIf="creationForm.controls['verifyPassword'].errors?.['mismatch']"
+            >{{ 'PASSWORD_MISMATCH' | translate }}</small
+          >
         </div>
       </div>
 
       <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 1rem">
-        <p-toast [preventDuplicates]="true" [autoZIndex]="false"/>
+        <p-toast [preventDuplicates]="true" [autoZIndex]="false" />
         <button pButton class="fb-gl-buttons" type="submit" [disabled]="creationForm.invalid">
-          {{'ΕΓΓΡΑΦΗ' | translate}} <i class="pi pi-arrow-right"></i>
+          {{ 'ΕΓΓΡΑΦΗ' | translate }} <i class="pi pi-arrow-right"></i>
         </button>
       </div>
 
       <div style="display: flex; align-items: center; margin-bottom: 1rem">
         <a class="back-to-login" routerLink="/login">
-          <i class="pi pi-arrow-left"></i> {{'ΕΠΙΣΤΡΟΦΗ_ΣΤΗ_ΣΥΝΔΕΣΗ' | translate}}
+          <i class="pi pi-arrow-left"></i> {{ 'ΕΠΙΣΤΡΟΦΗ_ΣΤΗ_ΣΥΝΔΕΣΗ' | translate }}
         </a>
       </div>
-
     </form>
   </div>
 </div>
