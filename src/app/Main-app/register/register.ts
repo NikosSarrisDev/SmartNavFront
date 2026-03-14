@@ -18,6 +18,8 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { MenuModule } from 'primeng/menu';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SelectModule } from 'primeng/select';
+import { thumbnailsContent } from '@primeuix/themes/aura/galleria';
 
 @Component({
   selector: 'app-register',
@@ -25,6 +27,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
   imports: [
     ButtonDirective,
     Checkbox,
+    SelectModule,
     FloatLabel,
     FormsModule,
     InputText,
@@ -60,7 +63,8 @@ export class Register implements OnInit{
   submitted: boolean = false;
   languages: MenuItem[] | undefined;
   loading: boolean = false;
-  selectedRole: any = '';
+  selectedRole: number = 1;
+  selectedAvatar!: any;
   roles: any[] = [];
   avatars: any[] = [];
   activeIndex: number = 0;
@@ -115,26 +119,31 @@ export class Register implements OnInit{
 
   getRoles(){
     this.dataService.getRoles({}).subscribe((response) => {
-      this.roles = response.data
+      this.roles = response.data?.map((role:any) => { return { label: role.roleName, code: role.roleID } });
+      this.creationForm.patchValue({ role: 1 });
     })
   }
 
   getAvatars(){
     this.dataService.getAvatars({}).subscribe((response) => {
       this.avatars = response.data
+      this.syncAvatarWithForm();
     })
   }
 
   nextAvatar() {
     this.activeIndex = (this.activeIndex + 1) % this.avatars.length;
+    this.syncAvatarWithForm();
   }
 
   prevAvatar() {
     this.activeIndex = (this.activeIndex - 1 + this.avatars.length) % this.avatars.length;
+    this.syncAvatarWithForm();
   }
 
-  get selectedAvatar() {
-    return this.avatars[this.activeIndex];
+  syncAvatarWithForm() {
+    const selectedId = this.avatars[this.activeIndex].id;
+    this.creationForm.patchValue({ avatar: selectedId });
   }
 
   validateAllFromFields(formGroup: FormGroup| any){
@@ -176,7 +185,7 @@ export class Register implements OnInit{
     const username = this.creationForm.get('username')?.value;
     const surname = this.creationForm.get('surname')?.value;
 
-    this.dataService.createUser({selectedAvatar: selectedAvatar, selectedRole: selectedRole, name: name, email: email, password: password, phone: phone, username: username, surname: surname}).subscribe((r: any) =>{
+    this.dataService.createUser({avatarId: selectedAvatar, roleId: selectedRole, name: name, email: email, password: password, phone: phone, username: username, surname: surname}).subscribe((r: any) =>{
       this.loading = false;
       if(r.status == 'success'){
         this.messageService.add({severity: 'success', summary: 'Success!', detail: r.message});

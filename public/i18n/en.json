@@ -45,5 +45,6 @@
   "NAV_AI_TITLE": "AI Route Reasoning",
   "NAV_DURATION": "Duration",
   "NAV_DISTANCE": "Distance",
-  "NAV_START_BTN": "Start Navigation"
+  "NAV_START_BTN": "Start Navigation",
+  "ROLE": "Select role"
 }

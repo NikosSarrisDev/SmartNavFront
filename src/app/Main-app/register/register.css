@@ -17,7 +17,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-inline: 8rem;
+  flex-direction: column;
+  padding-inline: 2rem;
 }
 
 .legend-container {
@@ -121,15 +122,45 @@
 }
 
 .nav-btn {
-  color: #6750a4 !important; /* Matches your avatar border color */
+  color: #6750a4 !important;
 }
 
 .avatar-display {
   text-align: center;
-  min-width: 150px; /* Prevents layout jump when switching */
+  min-width: 150px;
 }
 
-/* Ensure the avatar wrapper inside the carousel doesn't have extra padding */
-.center-image {
-  padding-inline: 2rem; /* Reduced from 8rem to fit buttons */
+.badge-dropdown-container {
+  display: block;
+  background: #eeeaf7; /* Same as your badge */
+  color: #6750A4;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 0 12px; /* Reduced vertical padding since dropdown has its own */
+  border-radius: 20px;
+  width: fit-content;
+  margin: 0 auto 10px;
+  border: 1px solid transparent;
+  transition: border 0.3s;
+}
+
+.badge-dropdown-container:hover {
+  border: 1px solid #6750A4; /* Subtle hint that it's clickable */
+}
+
+::ng-deep .custom-badge-dropdown {
+  background: transparent !important;
+  border: none !important;
+}
+
+::ng-deep .custom-badge-dropdown .p-dropdown-label {
+  color: #6750A4 !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  padding: 4px 0 !important;
+}
+
+::ng-deep .custom-badge-dropdown .p-dropdown-trigger {
+  width: 2rem !important;
+  color: #6750A4 !important;
 }

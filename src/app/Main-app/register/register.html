@@ -25,36 +25,49 @@
   </div>
   <p-menu #menu [model]="languages" [popup]="true"></p-menu>
   <div class="login-table">
-    <div class="center-image">
-      <div class="carousel-container">
-        <button
-          pButton
-          icon="pi pi-chevron-left"
-          class="p-button-rounded p-button-text nav-btn"
-          (click)="prevAvatar()"
-          type="button"
-        ></button>
-
-        <div class="avatar-display">
-          @for (avatar of avatars; track avatar.id) {
-            @if ($index === activeIndex) {
-              <div class="avatar-wrapper">
-                <img [src]="avatar.avatarURL" alt="User Avatar" />
-              </div>
-            }
-          }
-        </div>
-
-        <button
-          pButton
-          icon="pi pi-chevron-right"
-          class="p-button-rounded p-button-text nav-btn"
-          (click)="nextAvatar()"
-          type="button"
-        ></button>
-      </div>
-    </div>
     <form [formGroup]="creationForm" (ngSubmit)="submit()">
+      <div class="center-image">
+        <div class="carousel-container">
+          <button
+            pButton
+            icon="pi pi-chevron-left"
+            class="p-button-rounded p-button-text nav-btn"
+            (click)="prevAvatar()"
+            type="button"
+          ></button>
+
+          <div class="avatar-display">
+            @for (avatar of avatars; track avatar.id) {
+              @if ($index === activeIndex) {
+                <div class="avatar-wrapper">
+                  <img [src]="avatar.avatarURL" alt="User Avatar" />
+                </div>
+              }
+            }
+          </div>
+
+          <button
+            pButton
+            icon="pi pi-chevron-right"
+            class="p-button-rounded p-button-text nav-btn"
+            (click)="nextAvatar()"
+            type="button"
+          ></button>
+        </div>
+        <div class="badge-dropdown-container">
+          <p-select
+            [options]="roles"
+            formControlName="role"
+            optionLabel="label"
+            optionValue="code"
+            [placeholder]="'ROLE' | translate"
+            [style]="{ width: '100%' }"
+            appendTo="body"
+            styleClass="custom-badge-dropdown"
+          >
+          </p-select>
+        </div>
+      </div>
       <div style="font-size: 1rem; margin: 3rem 0 0.5rem 0.3rem; font-weight: bold">
         {{ 'ΕΓΓΡΑΦΗ_ΧΡΗΣΤΗ' | translate }}
       </div>
