@@ -1,13 +1,18 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { DataService } from '../../../data.service';
 import { AuthenticationService } from '../../../auth.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { Menu, MenuModule } from "primeng/menu";
+import {MenuItem, MessageService} from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-user',
-  imports: [ProgressSpinnerModule],
+  imports: [ProgressSpinnerModule, TranslatePipe, DatePipe, MenuModule, ButtonModule],
   templateUrl: './user.html',
   styleUrl: './user.css',
 })
@@ -22,11 +27,35 @@ export class User implements OnInit {
   totalDistance!: number
   loadingRoleAvatar = signal(false);
   loadingTrips = signal(false);
+  languages: MenuItem[] | undefined;
 
 
-  constructor(private dataService: DataService, private auth: AuthenticationService){}
+  constructor(private dataService: DataService, private auth: AuthenticationService, private translate: TranslateService, private router: Router){}
 
   ngOnInit(): void {
+    this.translate.use('el');
+    this.languages = [
+            {
+                label: 'Γλώσσα - Language',
+                items: [
+                    {
+                        label: 'Ελληνικά (ΕΛ)',
+                        icon: '',
+                        command: () => {
+                          this.changeLanguage('el');
+                        }
+                    },
+                    {
+                        label: 'English (EN)',
+                        icon: '',
+                        command: () => {
+                          this.changeLanguage('en');
+                        }
+                    }
+                ]
+            }
+        ];
+
     if(!!this.auth.user && !!this.auth.user.data){
       this.loadingRoleAvatar.set(true);
       this.loadingTrips.set(true);
@@ -81,6 +110,14 @@ export class User implements OnInit {
     this.preferences.update(prefs => 
       prefs.map(p => p.id === id ? { ...p, active: !p.active } : p)
     );
+  }
+
+  changeLanguage(lang: string) {
+    this.translate.use(lang);
+  }
+
+  backToHome() {
+    this.router.navigate(['/home']);
   }
 
 }

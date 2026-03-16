@@ -46,5 +46,18 @@
   "NAV_DURATION": "Duration",
   "NAV_DISTANCE": "Distance",
   "NAV_START_BTN": "Start Navigation",
-  "ROLE": "Select role"
+  "ROLE": "Select role",
+  "AVATAR_ALT": "User Avatar",
+  "STATS_TRIPS": "Trips",
+  "STATS_DISTANCE": "Distance",
+  "STATS_ECO_SCORE": "Eco Score",
+  "AI_PREFERENCES_TITLE": "AI Routing Preferences",
+  "TRIP_HISTORY_TITLE": "Recent Trip History",
+  "TABLE_DATE": "Date",
+  "TABLE_DESTINATION": "Destination",
+  "TABLE_KM": "KM",
+  "TABLE_SCORE": "Score",
+  "TABLE_NO_TRIPS": "No trips found.",
+  "SAVE_BTN": "SAVE CHANGES",
+  "BACK_TO_HOME": "Back to home"
 }

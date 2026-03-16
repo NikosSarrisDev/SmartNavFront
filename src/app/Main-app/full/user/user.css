@@ -110,3 +110,9 @@ th, td {
   cursor: pointer;
   margin-top: 20px;
 }
+
+.back-to-home {
+  text-decoration: none;
+  color: #2b38cc;
+  cursor: pointer;
+}

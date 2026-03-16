@@ -9,10 +9,20 @@
   </div>
 } @else if (!loadingRoleAvatar() && !loadingTrips()) {
   <div class="dashboard-container">
+    <div style="position: unset">
+      <p-button
+        icon="pi pi-globe"
+        (click)="menu.toggle($event)"
+        [rounded]="true"
+        severity="secondary"
+      >
+      </p-button>
+    </div>
+    <p-menu #menu [model]="languages" [popup]="true"></p-menu>
     <aside class="user-sidebar">
       <div class="profile-card">
         <div class="avatar-wrapper">
-          <img [src]="currentAvatar" alt="User Avatar" />
+          <img [src]="currentAvatar" [alt]="'AVATAR_ALT' | translate" />
           <span class="badge">{{ currentRole }}</span>
         </div>
         <h2>{{ currentUserName }}</h2>
@@ -21,23 +31,28 @@
         <div class="stats-grid">
           <div class="stat-item">
             <span class="value">{{ totalTrips }}</span>
-            <span class="label">Trips</span>
+            <span class="label">{{ 'STATS_TRIPS' | translate }}</span>
           </div>
           <div class="stat-item">
             <span class="value">{{ totalDistance }}km</span>
-            <span class="label">Distance</span>
+            <span class="label">{{ 'STATS_DISTANCE' | translate }}</span>
           </div>
           <div class="stat-item">
             <span class="value">34</span>
-            <span class="label">Eco Score</span>
+            <span class="label">{{ 'STATS_ECO_SCORE' | translate }}</span>
           </div>
         </div>
+      </div>
+      <div style="display: flex; align-items: center; margin-top: 2rem">
+        <a class="back-to-home" (click)="backToHome()">
+          <i class="pi pi-arrow-left"></i> {{ 'BACK_TO_HOME' | translate }}
+        </a>
       </div>
     </aside>
 
     <main class="main-content">
       <section class="section">
-        <h3>AI Routing Preferences</h3>
+        <h3>{{ 'AI_PREFERENCES_TITLE' | translate }}</h3>
         <div class="chips-container">
           @for (pref of preferences(); track pref.id) {
             <button
@@ -46,35 +61,35 @@
               (click)="togglePreference(pref.id)"
               class="chip"
             >
-              {{ pref.icon }} {{ pref.label }}
+              {{ pref.icon }} {{ pref.label | translate }}
             </button>
           }
         </div>
       </section>
 
       <section class="section">
-        <h3>Recent Trip History</h3>
+        <h3>{{ 'TRIP_HISTORY_TITLE' | translate }}</h3>
         <div class="table-wrapper">
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Destination</th>
-                <th>KM</th>
-                <th>Score</th>
+                <th>{{ 'TABLE_DATE' | translate }}</th>
+                <th>{{ 'TABLE_DESTINATION' | translate }}</th>
+                <th>{{ 'TABLE_KM' | translate }}</th>
+                <th>{{ 'TABLE_SCORE' | translate }}</th>
               </tr>
             </thead>
             <tbody>
               @for (trip of trips; track trip.id) {
                 <tr>
-                  <td>{{ trip.tripDate }}</td>
+                  <td>{{ trip.tripDate | date: 'mediumDate' }}</td>
                   <td>{{ trip.destination }}</td>
                   <td>{{ trip.distanceKM }}</td>
                   <td>⭐ {{ trip.score }}</td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4">No trips found.</td>
+                  <td colspan="4">{{ 'TABLE_NO_TRIPS' | translate }}</td>
                 </tr>
               }
             </tbody>
@@ -82,7 +97,7 @@
         </div>
       </section>
 
-      <button class="save-btn">SAVE CHANGES</button>
+      <button class="save-btn">{{ 'SAVE_BTN' | translate }}</button>
     </main>
   </div>
 }

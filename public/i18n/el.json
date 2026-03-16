@@ -46,5 +46,18 @@
   "NAV_DURATION": "Διάρκεια",
   "NAV_DISTANCE": "Απόσταση",
   "NAV_START_BTN": "Έναρξη Πλοήγησης",
-  "ROLE": "Επιλογή ρόλου"
+  "ROLE": "Επιλογή ρόλου",
+  "AVATAR_ALT": "Avatar Χρήστη",
+  "STATS_TRIPS": "Διαδρομές",
+  "STATS_DISTANCE": "Απόσταση",
+  "STATS_ECO_SCORE": "Eco Score",
+  "AI_PREFERENCES_TITLE": "AI Προτιμήσεις Δρομολόγησης",
+  "TRIP_HISTORY_TITLE": "Πρόσφατο Ιστορικό Διαδρομών",
+  "TABLE_DATE": "Ημερομηνία",
+  "TABLE_DESTINATION": "Προορισμός",
+  "TABLE_KM": "Χλμ",
+  "TABLE_SCORE": "Βαθμολογία",
+  "TABLE_NO_TRIPS": "Δεν βρέθηκαν διαδρομές.",
+  "SAVE_BTN": "ΑΠΟΘΗΚΕΥΣΗ ΑΛΛΑΓΩΝ",
+  "BACK_TO_HOME": "Επιστροφή στη κεντρική"
 }
