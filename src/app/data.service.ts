@@ -104,6 +104,76 @@ export class DataService {
 
   }
 
+  getCurrentUserRoleAndAvatar(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/CurrentUserRoleAndAvatar', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error); // Rethrow the error to be handled by the caller
+      }));
+
+  }
+
+  getUserTripDetails(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/GetUserTripDetails', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error); // Rethrow the error to be handled by the caller
+      }));
+
+  }
+
+  tripCreate(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/Create', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error); // Rethrow the error to be handled by the caller
+      }));
+
+  }
+
+  tripUpdate(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/Update', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error); // Rethrow the error to be handled by the caller
+      }));
+
+  }
+
+  tripDelete(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/Delete', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error); // Rethrow the error to be handled by the caller
+      }));
+
+  }
+
   private handleError(error:any) {
     var status = error.error.status;
     if (status == undefined) {
