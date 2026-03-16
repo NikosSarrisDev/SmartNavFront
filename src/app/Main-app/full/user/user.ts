@@ -29,9 +29,7 @@ export class User implements OnInit {
   ngOnInit(): void {
     if(!!this.auth.user && !!this.auth.user.data){
       this.loadingRoleAvatar.set(true);
-      this.loadingTrips.set(true); 
-      console.log(this.loadingRoleAvatar)
-      console.log(this.loadingTrips)
+      this.loadingTrips.set(true);
       this.currentUserId = this.auth.user.data.id
       this.currentEmail = this.auth.user.data.email
       this.currentUserName = this.auth.user.data.userName

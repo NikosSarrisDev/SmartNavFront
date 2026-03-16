@@ -1,71 +1,117 @@
-<div class="desktop-layout">
-  
-  <aside class="sidebar">
-    <div class="brand" style="display: flex; justify-content: space-between; align-items: center;">
-      <h2>SmartNav <span class="ai-badge">AI</span></h2>
-      <ng-content select="[globe]"></ng-content>
-    </div>
-    <ng-content select="[menu]"></ng-content>
+@if (loadingAvatar()) {
+  <div class="centerfy">
+    <p-progress-spinner
+      strokeWidth="8"
+      fill="transparent"
+      animationDuration=".5s"
+      [style]="{ width: '50px', height: '50px' }"
+    />
+  </div>
+} @else {
+  <div class="desktop-layout">
+    <aside class="sidebar">
+      <div class="brand" style="display: flex; justify-content: space-between; align-items: center">
+        <div class="centerfy-vertically">
+          <div class="avatar-wrapper" style="cursor: pointer" (click)="navigateToUserDashboard()">
+            <img [src]="currentAvatar" alt="User Avatar" style="width: 40px; height: 40px" />
+          </div>
+          <h2>SmartNav <span class="ai-badge">AI</span></h2>
+        </div>
+        <ng-content select="[globe]"></ng-content>
+      </div>
+      <ng-content select="[menu]"></ng-content>
 
-    <div class="search-section">
-      <label>{{ 'NAV_SEARCH_LABEL' | translate }}</label>
-      <div class="input-wrapper">
-        <input #goal (input)="0" type="text" [placeholder]="'NAV_SEARCH_PLACEHOLDER' | translate" (keyup.enter)="goal.value && findPath(goal.value)">
-        <button [ngClass]="goal.value ? 'goal-button-enable' : 'goal-button-disable'" (click)="findPath(goal.value)" [disabled]="(navService.isLoading$ | async) || (goal.value === '')">
-          <i class="pi pi-search"></i>
+      <div class="search-section">
+        <label>{{ 'NAV_SEARCH_LABEL' | translate }}</label>
+        <div class="input-wrapper">
+          <input
+            #goal
+            (input)="(0)"
+            type="text"
+            [placeholder]="'NAV_SEARCH_PLACEHOLDER' | translate"
+            (keyup.enter)="goal.value && findPath(goal.value)"
+          />
+          <button
+            [ngClass]="goal.value ? 'goal-button-enable' : 'goal-button-disable'"
+            (click)="findPath(goal.value)"
+            [disabled]="(navService.isLoading$ | async) || goal.value === ''"
+          >
+            <i class="pi pi-search"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="chips-grid">
+        <button
+          class="chip"
+          [class.active]="selectedChip.includes('πράσινο')"
+          [disabled]="navService.isLoading$ | async"
+          (click)="findPath('Θέλω μια οικολογική διαδρομή με πολύ πράσινο και πάρκα')"
+        >
+          🌿 {{ 'NAV_CHIP_ECO' | translate }}
+        </button>
+
+        <button
+          class="chip"
+          [class.active]="selectedChip.includes('θάλασσα')"
+          [disabled]="navService.isLoading$ | async"
+          (click)="findPath('Πάμε από την πιο γραφική διαδρομή με θέα στη θάλασσα')"
+        >
+          🌊 {{ 'NAV_CHIP_SCENIC' | translate }}
+        </button>
+
+        <button
+          class="chip"
+          [class.active]="selectedChip.includes('ασφαλή')"
+          [disabled]="navService.isLoading$ | async"
+          (click)="findPath('Βρες μου την πιο ασφαλή διαδρομή με φωτισμό και κίνηση')"
+        >
+          🛡️ {{ 'NAV_CHIP_SAFE' | translate }}
+        </button>
+
+        <button
+          class="chip"
+          [class.active]="selectedChip.includes('καφέ')"
+          [disabled]="navService.isLoading$ | async"
+          (click)="findPath('Θέλω μια διαδρομή που να κάνει στάση σε ένα καλό καφέ')"
+        >
+          ☕ {{ 'NAV_CHIP_COFFEE' | translate }}
         </button>
       </div>
-    </div>
 
-    <div class="chips-grid">
-      <button class="chip" [class.active]="selectedChip.includes('πράσινο')" [disabled]="navService.isLoading$ | async" (click)="findPath('Θέλω μια οικολογική διαδρομή με πολύ πράσινο και πάρκα')">
-        🌿 {{ 'NAV_CHIP_ECO' | translate }}
-      </button>
+      <hr />
 
-      <button class="chip" [class.active]="selectedChip.includes('θάλασσα')" [disabled]="navService.isLoading$ | async" (click)="findPath('Πάμε από την πιο γραφική διαδρομή με θέα στη θάλασσα')">
-        🌊 {{ 'NAV_CHIP_SCENIC' | translate }}
-      </button>
+      <ng-content select="[spinner]"></ng-content>
 
-      <button class="chip" [class.active]="selectedChip.includes('ασφαλή')" [disabled]="navService.isLoading$ | async" (click)="findPath('Βρες μου την πιο ασφαλή διαδρομή με φωτισμό και κίνηση')">
-        🛡️ {{ 'NAV_CHIP_SAFE' | translate }}
-      </button>
+      <div class="ai-reasoning-results" *ngIf="explanation">
+        <div class="card-header">
+          <span class="robot-icon">🤖</span>
+          <h3>{{ 'NAV_AI_TITLE' | translate }}</h3>
+        </div>
+        <p class="explanation-text">{{ explanation }}</p>
 
-      <button class="chip" [class.active]="selectedChip.includes('καφέ')" [disabled]="navService.isLoading$ | async" (click)="findPath('Θέλω μια διαδρομή που να κάνει στάση σε ένα καλό καφέ')">
-        ☕ {{ 'NAV_CHIP_COFFEE' | translate }}
-      </button>
-    </div>
+        <div class="route-stats">
+          <span
+            ><strong>{{ 'NAV_DURATION' | translate }}:</strong> {{ duration }}</span
+          >
+          <span
+            ><strong>{{ 'NAV_DISTANCE' | translate }}:</strong> {{ distance }}</span
+          >
+        </div>
 
-    <hr>
-
-    <ng-content select="[spinner]"></ng-content>
-
-    <div class="ai-reasoning-results" *ngIf="explanation">
-      <div class="card-header">
-        <span class="robot-icon">🤖</span>
-        <h3>{{ 'NAV_AI_TITLE' | translate }}</h3>
-      </div>
-      <p class="explanation-text">{{ explanation }}</p>
-      
-      <div class="route-stats">
-        <span><strong>{{ 'NAV_DURATION' | translate }}:</strong> {{ duration }}</span>
-        <span><strong>{{ 'NAV_DISTANCE' | translate }}:</strong> {{ distance }}</span>
+        <button class="start-nav-btn">{{ 'NAV_START_BTN' | translate }}</button>
       </div>
 
-      <button class="start-nav-btn">{{ 'NAV_START_BTN' | translate }}</button>
-    </div>
+      <div class="error-box" *ngIf="navService.errorMessage$ | async as errorMsg">
+        {{ errorMsg }}
+      </div>
+    </aside>
 
-    <div class="error-box" *ngIf="navService.errorMessage$ | async as errorMsg">
-      {{ errorMsg }}
-    </div>
-  </aside>
-
-  <main class="map-container">
-    <google-map [center]="center" [zoom]="15" height="100vh" width="100%">
-      <map-directions-renderer 
-        *ngIf="routeData$ | async as data"
-        [directions]="data.result!"> 
-      </map-directions-renderer>
-    </google-map>
-  </main>
-
-</div>
+    <main class="map-container">
+      <google-map [center]="center" [zoom]="15" height="100vh" width="100%">
+        <map-directions-renderer *ngIf="routeData$ | async as data" [directions]="data.result!">
+        </map-directions-renderer>
+      </google-map>
+    </main>
+  </div>
+}
