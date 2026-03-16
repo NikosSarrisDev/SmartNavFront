@@ -20,16 +20,18 @@ export class User implements OnInit {
   trips: any[] = []
   totalTrips!: number
   totalDistance!: number
-  loadingRoleAvatar!: boolean;
-  loadingTrips!: boolean;
+  loadingRoleAvatar = signal(false);
+  loadingTrips = signal(false);
 
 
   constructor(private dataService: DataService, private auth: AuthenticationService){}
 
   ngOnInit(): void {
-    if(this.auth.user && this.auth.user.data){
-      this.loadingRoleAvatar = true;
-      this.loadingTrips = true;
+    if(!!this.auth.user && !!this.auth.user.data){
+      this.loadingRoleAvatar.set(true);
+      this.loadingTrips.set(true); 
+      console.log(this.loadingRoleAvatar)
+      console.log(this.loadingTrips)
       this.currentUserId = this.auth.user.data.id
       this.currentEmail = this.auth.user.data.email
       this.currentUserName = this.auth.user.data.userName
@@ -37,16 +39,19 @@ export class User implements OnInit {
       this.getCurrentUserRoleAndAvatar(this.currentUserId);
       this.getTrips(this.currentUserId);
     }
-    this.loadingRoleAvatar = false;
-    this.loadingTrips = false;
+    else{
+      this.loadingRoleAvatar.set(false);
+      this.loadingTrips.set(false);
+    }
     
   }
 
   getCurrentUserRoleAndAvatar(userId: number) {
     this.dataService.getCurrentUserRoleAndAvatar({ userId })
-      .pipe(finalize(() => this.loadingRoleAvatar = false))
+      .pipe(finalize(() => this.loadingRoleAvatar.set(false)))
       .subscribe({
         next: (response: any) => {
+          this.loadingRoleAvatar.set(false);
           this.currentRole = response.data.roleName;
           this.currentAvatar = response.data.avatarURL;
         },
@@ -56,9 +61,10 @@ export class User implements OnInit {
 
   getTrips(userId: number) {
   this.dataService.getUserTripDetails({ userId })
-    .pipe(finalize(() => this.loadingTrips = false))
+    .pipe(finalize(() => this.loadingTrips.set(false)))
     .subscribe({
       next: (response: any) => {
+        this.loadingTrips.set(false);
         this.trips = response.data;
         this.totalTrips = response.statistics.totalTrips;
         this.totalDistance = response.statistics.totalDistance;
