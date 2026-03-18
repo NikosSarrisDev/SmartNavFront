@@ -96,6 +96,7 @@
             <thead>
               <tr>
                 <th>{{ 'TABLE_DATE' | translate }}</th>
+                <th>{{ 'TABLE_DEPARTURE' | translate }}</th>
                 <th>{{ 'TABLE_DESTINATION' | translate }}</th>
                 <th>{{ 'TABLE_KM' | translate }}</th>
                 <th>{{ 'TABLE_SCORE' | translate }}</th>
@@ -105,6 +106,7 @@
               @for (trip of trips; track trip.id) {
                 <tr>
                   <td>{{ trip.tripDate | date: 'mediumDate' }}</td>
+                  <td>{{ trip.departure }}</td>
                   <td>{{ trip.destination }}</td>
                   <td>{{ trip.distanceKM }}</td>
                   <td>⭐ {{ trip.score }}</td>

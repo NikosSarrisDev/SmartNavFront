@@ -60,5 +60,6 @@
   "TABLE_NO_TRIPS": "No trips found.",
   "SAVE_BTN": "SAVE CHANGES",
   "BACK_TO_HOME": "Back to home",
-  "LOGOUT": "Logout"
+  "LOGOUT": "Logout",
+  "TABLE_DEPARTURE": "Departure"
 }
