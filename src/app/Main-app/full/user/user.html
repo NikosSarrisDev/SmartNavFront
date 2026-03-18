@@ -1,5 +1,5 @@
 @if (loadingRoleAvatar() || loadingTrips()) {
-  <div class="centerfy">
+  <div class="centerfy" style="min-height: 100vh">
     <p-progress-spinner
       strokeWidth="8"
       fill="transparent"
@@ -21,13 +21,30 @@
     <p-menu #menu [model]="languages" [popup]="true"></p-menu>
     <aside class="user-sidebar">
       <div class="profile-card">
+        <div class="pencil" (click)="switchMode()">
+          <i class="pi pi-pencil" style="font-size: 1.2rem"></i>
+        </div>
         <div class="avatar-wrapper">
-          <img [src]="currentAvatar" [alt]="'AVATAR_ALT' | translate" />
+          <img [src]="currentAvatar" (click)="showDialog()" [alt]="'AVATAR_ALT' | translate" />
           <span class="badge">{{ currentRole }}</span>
         </div>
-        <h2>{{ currentUserName }}</h2>
-        <p class="email">{{ currentEmail }}</p>
-
+        <form [formGroup]="userUpdateForm">
+          @if (!isEditMode()) {
+            <h2>{{ currentUserName }}</h2>
+          } @else {
+            <p-floatlabel variant="on">
+              <input
+                pInputText
+                style="width: 100%"
+                id="username"
+                type="text"
+                formControlName="username"
+              />
+              <label for="username">{{ 'ΟΝΟΜΑ_ΧΡΗΣΤΗ' | translate }}</label>
+            </p-floatlabel>
+          }
+          <p class="email">{{ currentEmail }}</p>
+        </form>
         <div class="stats-grid">
           <div class="stat-item">
             <span class="value">{{ totalTrips }}</span>
@@ -97,7 +114,18 @@
         </div>
       </section>
 
-      <button class="save-btn">{{ 'SAVE_BTN' | translate }}</button>
+      @if (isEditMode()) {
+        <button (click)="saveChanges()" class="save-btn">{{ 'SAVE_BTN' | translate }}</button>
+      }
     </main>
+    <p-dialog [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '30rem' }">
+      <div style="display: flex; align-items: center">
+        @for (avatar of dialogAvatars; track avatar.id) {
+          <div (click)="selectNewAvatar(avatar.id, avatar.avatarURL)" style="cursor: pointer">
+            <p-avatar [image]="avatar.avatarURL" class="mr-2" size="xlarge" shape="circle" />
+          </div>
+        }
+      </div>
+    </p-dialog>
   </div>
 }

@@ -16,7 +16,6 @@ import { NgIf } from '@angular/common';
 })
 export class Full implements OnInit {
   languages: MenuItem[] | undefined;
-  // loading: boolean = false;
 
   constructor(private translate: TranslateService, private isLoaderFullCompEnabled: IsLoaderFullCompEnabled){}
 

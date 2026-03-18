@@ -9,14 +9,24 @@ import { ButtonModule } from 'primeng/button';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { FormBuilder, FormControl, FormGroup, Validators, ɵInternalFormsSharedModule, ReactiveFormsModule } from '@angular/forms';
+import { DialogModule } from 'primeng/dialog';
+import {FloatLabel} from 'primeng/floatlabel';
+import {InputText} from 'primeng/inputtext';
+import { AvatarModule } from 'primeng/avatar';
 
 @Component({
   selector: 'app-user',
-  imports: [ProgressSpinnerModule, TranslatePipe, DatePipe, MenuModule, ButtonModule],
+  imports: [ProgressSpinnerModule, TranslatePipe, DatePipe, MenuModule, ButtonModule, DialogModule, FloatLabel, InputText, ɵInternalFormsSharedModule, ReactiveFormsModule, CommonModule, AvatarModule],
   templateUrl: './user.html',
   styleUrl: './user.css',
+  providers: [MessageService]
 })
 export class User implements OnInit {
+  public userUpdateForm!: FormGroup;
+  submitted: boolean = false;
+  loading: boolean = false;
+  visibleDialog: boolean = false;
   currentUserId!: any
   currentRole!: string
   currentAvatar!: string
@@ -27,12 +37,19 @@ export class User implements OnInit {
   totalDistance!: number
   loadingRoleAvatar = signal(false);
   loadingTrips = signal(false);
+  isEditMode = signal(false);
   languages: MenuItem[] | undefined;
+  dialogAvatars: any[] = [];
 
 
-  constructor(private dataService: DataService, private auth: AuthenticationService, private translate: TranslateService, private router: Router){}
+  constructor(private formBuilder: FormBuilder, private dataService: DataService, private auth: AuthenticationService, private translate: TranslateService, private router: Router, private messageService: MessageService){}
 
   ngOnInit(): void {
+    this.userUpdateForm = this.formBuilder.group({
+      avatar: [this.currentAvatar, Validators.required],
+      username: [this.currentUserName, Validators.required],
+    })
+
     this.translate.use('el');
     this.languages = [
             {
@@ -62,8 +79,10 @@ export class User implements OnInit {
       this.currentUserId = this.auth.user.data.id
       this.currentEmail = this.auth.user.data.email
       this.currentUserName = this.auth.user.data.userName
+      this.userUpdateForm.patchValue({ username: this.currentUserName })
 
       this.getCurrentUserRoleAndAvatar(this.currentUserId);
+      this.getAvatars();
       this.getTrips(this.currentUserId);
     }
     else{
@@ -71,6 +90,17 @@ export class User implements OnInit {
       this.loadingTrips.set(false);
     }
     
+  }
+
+  validateAllFromFields(formGroup: FormGroup| any){
+    Object.keys(formGroup.controls).forEach(field => {
+      const control = formGroup.get(field);
+      if (control instanceof FormControl) {
+        control.markAsDirty({onlySelf: true});
+      }else if (control instanceof FormGroup){
+        this.validateAllFromFields(control);
+      }
+    })
   }
 
   getCurrentUserRoleAndAvatar(userId: number) {
@@ -84,6 +114,12 @@ export class User implements OnInit {
         },
         error: (err) => console.error("Avatar Load Failed", err)
       });
+  }
+
+  getAvatars(){
+    this.dataService.getAvatars({}).subscribe((response) => {
+      this.dialogAvatars = response.data
+    })
   }
 
   getTrips(userId: number) {
@@ -112,12 +148,54 @@ export class User implements OnInit {
     );
   }
 
+  saveChanges(){
+    if (this.userUpdateForm.invalid){
+      this.messageService.add({severity: 'success', summary: 'Success!', detail: 'Η φόρμα σας δεν είναι έγκυρη, παρακαλώ όλα τα υποχρεωτικά όλα τα υποχρεωτικά πεδία'})
+      this.validateAllFromFields(this.userUpdateForm);
+      this.submitted = true;
+      return;
+    }
+    this.loadingRoleAvatar.set(true);
+
+    const selectedUserName = this.userUpdateForm.get('username')?.value;
+    const selectedAvatarId = this.userUpdateForm.get('avatar')?.value;
+
+    this.dataService.updateUserDetails({ id: this.currentUserId, userName: selectedUserName, avatarId: selectedAvatarId }).subscribe((r: any) =>{
+      this.isEditMode.set(false);
+      if(r.status == 'success'){
+        this.messageService.add({severity: 'success', summary: 'Success!', detail: r.message});
+        this.getCurrentUserRoleAndAvatar(this.currentUserId);
+      }else {
+        this.messageService.add({severity: 'error', summary: 'Error!', detail: r.message});
+        this.loadingRoleAvatar.set(false);
+      }
+    }, (error: any) => {
+      this.messageService.add({severity: 'error', summary: 'Error!', detail: 'Κάτι πήγε λάθος, παρακαλώ προσπαθήστε ξανά αργότερα'});
+      this.loadingRoleAvatar.set(false);
+    })
+  }
+
   changeLanguage(lang: string) {
     this.translate.use(lang);
+  }
+
+  showDialog() {
+    if(this.isEditMode() && this.dialogAvatars.length > 0){
+      this.visibleDialog = true;
+    }
   }
 
   backToHome() {
     this.router.navigate(['/home']);
   }
 
+  switchMode(){
+    this.isEditMode.update(prev => !prev);
+  }
+
+  selectNewAvatar(avatarId: number, avatarUrl: string) {
+    this.visibleDialog = false;
+    this.currentAvatar = avatarUrl;
+    this.userUpdateForm.patchValue({ avatar: avatarId });
+  }
 }
