@@ -30,7 +30,7 @@
         </div>
         <form [formGroup]="userUpdateForm">
           @if (!isEditMode()) {
-            <h2>{{ currentUserName }}</h2>
+            <h2>{{ currentUserName() }}</h2>
           } @else {
             <p-floatlabel variant="on">
               <input
@@ -63,6 +63,11 @@
       <div style="display: flex; align-items: center; margin-top: 2rem">
         <a class="back-to-home" (click)="backToHome()">
           <i class="pi pi-arrow-left"></i> {{ 'BACK_TO_HOME' | translate }}
+        </a>
+      </div>
+      <div style="display: flex; align-items: center; margin-top: 2rem">
+        <a class="back-to-home" (click)="logout()">
+          <i class="pi pi-sign-out"></i> {{ 'LOGOUT' | translate }}
         </a>
       </div>
     </aside>

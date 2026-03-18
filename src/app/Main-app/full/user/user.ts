@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, WritableSignal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { DataService } from '../../../data.service';
 import { AuthenticationService } from '../../../auth.service';
@@ -31,7 +31,7 @@ export class User implements OnInit {
   currentRole!: string
   currentAvatar!: string
   currentEmail!: string
-  currentUserName!: string
+  currentUserName = signal<string>('');
   trips: any[] = []
   totalTrips!: number
   totalDistance!: number
@@ -46,8 +46,8 @@ export class User implements OnInit {
 
   ngOnInit(): void {
     this.userUpdateForm = this.formBuilder.group({
-      avatar: [this.currentAvatar, Validators.required],
-      username: [this.currentUserName, Validators.required],
+      avatar: [this.currentAvatar],
+      username: [this.currentUserName()],
     })
 
     this.translate.use('el');
@@ -73,23 +73,23 @@ export class User implements OnInit {
             }
         ];
 
-    if(!!this.auth.user && !!this.auth.user.data){
-      this.loadingRoleAvatar.set(true);
-      this.loadingTrips.set(true);
-      this.currentUserId = this.auth.user.data.id
-      this.currentEmail = this.auth.user.data.email
-      this.currentUserName = this.auth.user.data.userName
-      this.userUpdateForm.patchValue({ username: this.currentUserName })
+    setTimeout(() => {
+        if(!!this.auth.user && !!this.auth.user.data){
+        this.loadingRoleAvatar.set(true);
+        this.loadingTrips.set(true);
+        this.currentUserId = this.auth.user.data.id
+        this.currentEmail = this.auth.user.data.email
+        this.getUser(this.currentUserId);
 
-      this.getCurrentUserRoleAndAvatar(this.currentUserId);
-      this.getAvatars();
-      this.getTrips(this.currentUserId);
-    }
-    else{
-      this.loadingRoleAvatar.set(false);
-      this.loadingTrips.set(false);
-    }
-    
+        this.getCurrentUserRoleAndAvatar(this.currentUserId);
+        this.getAvatars();
+        this.getTrips(this.currentUserId);
+      }
+      else{
+        this.loadingRoleAvatar.set(false);
+        this.loadingTrips.set(false);
+      }
+    }, 0)
   }
 
   validateAllFromFields(formGroup: FormGroup| any){
@@ -100,6 +100,13 @@ export class User implements OnInit {
       }else if (control instanceof FormGroup){
         this.validateAllFromFields(control);
       }
+    })
+  }
+
+  getUser(currentUserId: number){
+    this.dataService.getUser(currentUserId).subscribe((response: any) => {
+      this.currentUserName.set(response.data.userName);
+      this.userUpdateForm.patchValue({ username: this.currentUserName() })
     })
   }
 
@@ -163,8 +170,11 @@ export class User implements OnInit {
     this.dataService.updateUserDetails({ id: this.currentUserId, userName: selectedUserName, avatarId: selectedAvatarId }).subscribe((r: any) =>{
       this.isEditMode.set(false);
       if(r.status == 'success'){
+        //Update the template immidiatelly after success : selected User Name
+        this.currentUserName.set(selectedUserName);
         this.messageService.add({severity: 'success', summary: 'Success!', detail: r.message});
         this.getCurrentUserRoleAndAvatar(this.currentUserId);
+        this.getUser(this.currentUserId);
       }else {
         this.messageService.add({severity: 'error', summary: 'Error!', detail: r.message});
         this.loadingRoleAvatar.set(false);
@@ -197,5 +207,10 @@ export class User implements OnInit {
     this.visibleDialog = false;
     this.currentAvatar = avatarUrl;
     this.userUpdateForm.patchValue({ avatar: avatarId });
+  }
+
+  logout(){
+    this.auth.logout();
+    window.location.reload();
   }
 }

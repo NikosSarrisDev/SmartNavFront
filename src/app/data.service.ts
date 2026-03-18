@@ -48,8 +48,8 @@ export class DataService {
 
   }
 
-  getUser(data: any){
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/getUser', data, httpOptions).pipe(
+  getUser(id: any){
+    return this.http.get<any>(this.remoteDataService.serviceURL + 'user/GetUser/' + id, httpOptions).pipe(
       map(
         (response: any) => {
           return response;
