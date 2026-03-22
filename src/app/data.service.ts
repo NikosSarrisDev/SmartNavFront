@@ -104,6 +104,34 @@ export class DataService {
 
   }
 
+  getPreferences(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Preference', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error); // Rethrow the error to be handled by the caller
+      }));
+
+  }
+
+  getCurrentUserActivePreference(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/CurrentUserActivePreference', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error); // Rethrow the error to be handled by the caller
+      }));
+
+  }
+
   getCurrentUserRoleAndAvatar(data:any) {
     return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/CurrentUserRoleAndAvatar', data, httpOptions).pipe(
       map(

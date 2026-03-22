@@ -40,6 +40,8 @@ export class User implements OnInit {
   isEditMode = signal(false);
   languages: MenuItem[] | undefined;
   dialogAvatars: any[] = [];
+  preferences = signal<any[]>([]);
+  activePreference: any[] = [];
 
 
   constructor(private formBuilder: FormBuilder, private dataService: DataService, private auth: AuthenticationService, private translate: TranslateService, private router: Router, private messageService: MessageService){}
@@ -83,6 +85,8 @@ export class User implements OnInit {
 
         this.getCurrentUserRoleAndAvatar(this.currentUserId);
         this.getAvatars();
+        this.getPreferences();
+        this.getActivePreference(this.currentUserId);
         this.getTrips(this.currentUserId);
       }
       else{
@@ -143,15 +147,25 @@ export class User implements OnInit {
     });
   }
 
-  preferences = signal([
-    { id: 'eco', label: 'Eco-friendly', active: true, icon: '🌱' },
-    { id: 'scenic', label: 'Scenic', active: false, icon: '☀️' },
-    { id: 'fast', label: 'Fastest', active: true, icon: '⚡' }
-  ]);
+  getPreferences(){
+    this.dataService.getPreferences({}).subscribe((response) => {
+      this.preferences = signal(response.data)
+    })
+  }
+
+  getActivePreference(userId: number){
+    this.dataService.getCurrentUserActivePreference({ userId }).subscribe((response) => {
+      this.activePreference = response.data;
+      this.togglePreference(this.activePreference[0]?.activePreference)
+    })
+  }
 
   togglePreference(id: string) {
     this.preferences.update(prefs => 
-      prefs.map(p => p.id === id ? { ...p, active: !p.active } : p)
+      prefs.map(p => ({
+        ...p,
+        active: p.id === id ? true : false
+      }))
     );
   }
 

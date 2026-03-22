@@ -74,6 +74,7 @@
   background: white;
   cursor: pointer;
   transition: all 0.3s;
+  color: #000000;
 }
 
 .chip.active {
