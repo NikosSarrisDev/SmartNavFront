@@ -167,6 +167,9 @@ export class User implements OnInit {
         active: p.id === id ? true : false
       }))
     );
+    this.dataService.updateUserDetails({ id: this.currentUserId, preferenceId: id }).subscribe((r: any) => {
+        this.messageService.add({severity: 'success', summary: 'Success!', detail: r.message});
+    })
   }
 
   saveChanges(){
