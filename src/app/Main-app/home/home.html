@@ -33,11 +33,16 @@
           />
           <button
             [ngClass]="
-              goal.value.trim() && selectedChip ? 'goal-button-enable' : 'goal-button-disable'
+              goal.value.trim() && selectedChip && !navigationStarted
+                ? 'goal-button-enable'
+                : 'goal-button-disable'
             "
             (click)="findPath(goal.value)"
             [disabled]="
-              (navService.isLoading$ | async) || goal.value.trim() === '' || !selectedChip
+              (navService.isLoading$ | async) ||
+              goal.value.trim() === '' ||
+              !selectedChip ||
+              navigationStarted
             "
           >
             <i class="pi pi-search"></i>
@@ -50,7 +55,7 @@
           *ngFor="let chip of chips"
           class="chip"
           [class.active]="selectedChip === chip.code"
-          [disabled]="navService.isLoading$ | async"
+          [disabled]="(navService.isLoading$ | async) || navigationStarted"
           (click)="selectChip(chip)"
         >
           {{ chip.icon }} {{ chip.translationField | translate }}
@@ -70,8 +75,8 @@
 
         <div class="route-stats">
           <span
-            ><strong>{{ 'NAV_DURATION' | translate }}:</strong> {{ duration }}</span
-          >
+            ><strong>{{ 'NAV_DURATION' | translate }}:</strong> {{ duration }}
+          </span>
           <span
             ><strong>{{ 'NAV_DISTANCE' | translate }}:</strong> {{ distance }}</span
           >
@@ -81,13 +86,23 @@
           class="start-nav-btn"
           (click)="startNavigation()"
           [disabled]="!canStartNavigation()"
+          *ngIf="!navigationStarted"
         >
           {{ 'NAV_START_BTN' | translate }}
+        </button>
+
+        <button
+          class="cancel-nav-btn"
+          (click)="cancelNavigation()"
+          [disabled]="!canStartNavigation()"
+          *ngIf="navigationStarted"
+        >
+          {{ 'NAV_CANCEL_BTN' | translate }}
         </button>
       </div>
 
       <div class="nav-started-box" *ngIf="navigationStarted">
-        <strong>Navigation started</strong>
+        <strong>{{ 'NAVIGATION_STARTED' | translate }}</strong>
         <span *ngIf="navigationStartAt">at {{ navigationStartAt | date: 'shortTime' }}</span>
       </div>
 
@@ -98,6 +113,7 @@
 
     <main class="map-container">
       <google-map [center]="center" [zoom]="15" height="100vh" width="100%">
+        <p-toast />
         <map-directions-renderer *ngIf="routeData$ | async as data" [directions]="data.result!">
         </map-directions-renderer>
         <map-marker
@@ -105,7 +121,9 @@
           [position]="destinationMarker"
         ></map-marker>
       </google-map>
-      <div class="map-navigation-state" *ngIf="navigationStarted">Navigation in progress</div>
+      <div class="map-navigation-state" *ngIf="navigationStarted">
+        {{ 'NAVIGATION_IN_PROGRESS' | translate }}
+      </div>
     </main>
   </div>
 }

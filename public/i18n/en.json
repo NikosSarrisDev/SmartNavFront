@@ -62,5 +62,9 @@
   "SAVE_BTN": "SAVE CHANGES",
   "BACK_TO_HOME": "Back to home",
   "LOGOUT": "Logout",
-  "TABLE_DEPARTURE": "Departure"
+  "TABLE_DEPARTURE": "Departure",
+  "NAVIGATION_IN_PROGRESS": "Navigation in progress",
+  "NAVIGATION_STARTED": "Navigation started",
+  "NAV_CANCEL_BTN": "Cancel navigation",
+  "EXISTING_NAVIGATION_IN_PROGRESS": "Navigation already in progress. Please cancel it to start a new one."
 }

@@ -115,6 +115,19 @@
   margin-top: 1rem;
 }
 
+.cancel-nav-btn {
+  width: 100%;
+  padding: 12px;
+  background: #f30404;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(98, 0, 238, 0.3);
+  margin-top: 1rem;
+}
+
 .map-container {
   flex: 1;
   position: relative;
@@ -163,7 +176,7 @@
 
 .map-navigation-state {
   position: absolute;
-  top: 18px;
+  top: 60px;
   left: 18px;
   background: rgba(30, 106, 57, 0.92);
   color: #ffffff;

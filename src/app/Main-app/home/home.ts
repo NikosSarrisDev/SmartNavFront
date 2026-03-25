@@ -4,18 +4,21 @@ import { AsyncPipe, DatePipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { Observable, tap } from 'rxjs';
 import { IsLoaderFullCompEnabled } from '../../is-loader-full-comp-enabled';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthenticationService } from '../../auth.service';
 import { DataService } from '../../data.service';
 import { finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import {MenuItem, MessageService} from 'primeng/api';
+import { Toast } from "primeng/toast";
 
 @Component({
   selector: 'app-home',
-  imports: [GoogleMapsModule, AsyncPipe, NgIf, NgFor, DatePipe, TranslatePipe, NgClass,ProgressSpinnerModule],
+  imports: [GoogleMapsModule, AsyncPipe, NgIf, NgFor, DatePipe, TranslatePipe, NgClass, ProgressSpinnerModule, Toast],
   templateUrl: './home.html',
   styleUrl: './home.css',
+  providers: [MessageService]
 })
 export class Home implements OnInit {
   currentUserId!: any;
@@ -39,7 +42,7 @@ export class Home implements OnInit {
   explanation: string = "";
   chips: any[] = [];
 
-  constructor(public navService: NavigationService, private isLoaderFullCompEnabled: IsLoaderFullCompEnabled, private auth: AuthenticationService, private dataService: DataService, private router: Router) {}
+  constructor(public navService: NavigationService, private isLoaderFullCompEnabled: IsLoaderFullCompEnabled, private auth: AuthenticationService, private dataService: DataService, private router: Router, private messageService: MessageService, private translate: TranslateService) {}
 
   async ngOnInit() {
     this.loadingAvatar.set(true);
@@ -173,6 +176,10 @@ export class Home implements OnInit {
         this.navService.errorMessage$.next('Navigation could not be started. Please try again.');
       }
     });
+  }
+
+  cancelNavigation(){
+    this.navigationStarted = false;
   }
 
   canStartNavigation(): boolean {
