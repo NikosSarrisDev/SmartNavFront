@@ -29,12 +29,16 @@
             (input)="(0)"
             type="text"
             [placeholder]="'NAV_SEARCH_PLACEHOLDER' | translate"
-            (keyup.enter)="goal.value && findPath(goal.value)"
+            (keyup.enter)="findPath(goal.value)"
           />
           <button
-            [ngClass]="goal.value ? 'goal-button-enable' : 'goal-button-disable'"
+            [ngClass]="
+              goal.value.trim() && selectedChip ? 'goal-button-enable' : 'goal-button-disable'
+            "
             (click)="findPath(goal.value)"
-            [disabled]="(navService.isLoading$ | async) || goal.value === ''"
+            [disabled]="
+              (navService.isLoading$ | async) || goal.value.trim() === '' || !selectedChip
+            "
           >
             <i class="pi pi-search"></i>
           </button>
@@ -43,39 +47,13 @@
 
       <div class="chips-grid">
         <button
+          *ngFor="let chip of chips"
           class="chip"
-          [class.active]="selectedChip.includes('πράσινο')"
+          [class.active]="selectedChip === chip.code"
           [disabled]="navService.isLoading$ | async"
-          (click)="findPath('Θέλω μια οικολογική διαδρομή με πολύ πράσινο και πάρκα')"
+          (click)="selectChip(chip)"
         >
-          🌿 {{ 'NAV_CHIP_ECO' | translate }}
-        </button>
-
-        <button
-          class="chip"
-          [class.active]="selectedChip.includes('θάλασσα')"
-          [disabled]="navService.isLoading$ | async"
-          (click)="findPath('Πάμε από την πιο γραφική διαδρομή με θέα στη θάλασσα')"
-        >
-          🌊 {{ 'NAV_CHIP_SCENIC' | translate }}
-        </button>
-
-        <button
-          class="chip"
-          [class.active]="selectedChip.includes('ασφαλή')"
-          [disabled]="navService.isLoading$ | async"
-          (click)="findPath('Βρες μου την πιο ασφαλή διαδρομή με φωτισμό και κίνηση')"
-        >
-          🛡️ {{ 'NAV_CHIP_SAFE' | translate }}
-        </button>
-
-        <button
-          class="chip"
-          [class.active]="selectedChip.includes('καφέ')"
-          [disabled]="navService.isLoading$ | async"
-          (click)="findPath('Θέλω μια διαδρομή που να κάνει στάση σε ένα καλό καφέ')"
-        >
-          ☕ {{ 'NAV_CHIP_COFFEE' | translate }}
+          {{ chip.icon }} {{ chip.translationField | translate }}
         </button>
       </div>
 
@@ -85,7 +63,7 @@
 
       <div class="ai-reasoning-results" *ngIf="explanation">
         <div class="card-header">
-          <span class="robot-icon">🤖</span>
+          <span class="robot-icon"><i class="pi pi-sparkles"></i></span>
           <h3>{{ 'NAV_AI_TITLE' | translate }}</h3>
         </div>
         <p class="explanation-text">{{ explanation }}</p>
@@ -99,7 +77,18 @@
           >
         </div>
 
-        <button class="start-nav-btn">{{ 'NAV_START_BTN' | translate }}</button>
+        <button
+          class="start-nav-btn"
+          (click)="startNavigation()"
+          [disabled]="!canStartNavigation()"
+        >
+          {{ 'NAV_START_BTN' | translate }}
+        </button>
+      </div>
+
+      <div class="nav-started-box" *ngIf="navigationStarted">
+        <strong>Navigation started</strong>
+        <span *ngIf="navigationStartAt">at {{ navigationStartAt | date: 'shortTime' }}</span>
       </div>
 
       <div class="error-box" *ngIf="navService.errorMessage$ | async as errorMsg">
@@ -111,7 +100,12 @@
       <google-map [center]="center" [zoom]="15" height="100vh" width="100%">
         <map-directions-renderer *ngIf="routeData$ | async as data" [directions]="data.result!">
         </map-directions-renderer>
+        <map-marker
+          *ngIf="navigationStarted && destinationMarker"
+          [position]="destinationMarker"
+        ></map-marker>
       </google-map>
+      <div class="map-navigation-state" *ngIf="navigationStarted">Navigation in progress</div>
     </main>
   </div>
 }

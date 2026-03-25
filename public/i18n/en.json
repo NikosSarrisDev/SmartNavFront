@@ -42,6 +42,7 @@
   "NAV_CHIP_SCENIC": "Scenic",
   "NAV_CHIP_SAFE": "Safe",
   "NAV_CHIP_COFFEE": "Coffee",
+  "NAV_CHIP_FASTEST": "Fastest",
   "NAV_AI_TITLE": "AI Route Reasoning",
   "NAV_DURATION": "Duration",
   "NAV_DISTANCE": "Distance",

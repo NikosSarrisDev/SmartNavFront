@@ -87,11 +87,22 @@ export class Login implements OnInit{
             }
         ];
 
+    const emailStorageKey = this.remoteDataService.platform + '_rememberMe_email';
+    const passwordStorageKey = this.remoteDataService.platform + '_rememberMe_password';
+    const storedUserEmail = localStorage.getItem(emailStorageKey);
+    const storedUserPassword = localStorage.getItem(passwordStorageKey);
+
+    if (storedUserEmail && storedUserPassword) {
+      this.email = storedUserEmail;
+      this.password = storedUserPassword;
+      this.rememberMe = true;
+    }
+
     this.loginForm = this.formBuilder.group({
       email: [this.email, [Validators.required, Validators.email]],
       password : [this.password, Validators.required],
       rememberMe : [this.rememberMe],
-    })
+    });
 
     //Add the Event listener to disable the Enter key because of wrong focus
     addEventListener("keydown", (event:any) => {
@@ -105,14 +116,6 @@ export class Login implements OnInit{
       this.router.navigate([''])
     }
 
-    //Handle the local storage values for remember password option
-    const storedUserEmail : any = localStorage.getItem(this.remoteDataService.platform + '_rememberMe_email');
-    const storedUserPassword : any = localStorage.getItem(this.remoteDataService.platform + '_rememberMe_password');
-
-    if (localStorage.getItem(storedUserEmail) != null && localStorage.getItem(storedUserPassword) != null){
-      this.password = storedUserPassword;
-      this.email = storedUserEmail;
-    }
   }
 
   onSubmit(){
@@ -135,8 +138,11 @@ export class Login implements OnInit{
           if (httpResponse.status == "success"){
 
             if(rememberMe){
-              localStorage.setItem(this.remoteDataService.platform + '_rememberMe_password', this.password)
-              localStorage.setItem(this.remoteDataService.platform + '_rememberMe_email',this.email)
+              localStorage.setItem(this.remoteDataService.platform + '_rememberMe_password', password)
+              localStorage.setItem(this.remoteDataService.platform + '_rememberMe_email', email)
+            } else {
+              localStorage.removeItem(this.remoteDataService.platform + '_rememberMe_password');
+              localStorage.removeItem(this.remoteDataService.platform + '_rememberMe_email');
             }
             this.messageService.add({severity: 'success', summary: 'Success!', detail: httpResponse.message});
             this.router.navigate([''])

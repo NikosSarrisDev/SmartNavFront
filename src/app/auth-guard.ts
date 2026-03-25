@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { Router, ActivatedRouteSnapshot, RouterStateSnapshot, CanActivateFn } from '@angular/router';
 import { AuthenticationService } from "./auth.service";
 import { DataService } from "./data.service";
-import { RemoteDataService } from "./remotedata.service";
+import { firstValueFrom } from 'rxjs';
 
 export const authGuard: CanActivateFn = async (
     route: ActivatedRouteSnapshot, 
@@ -11,14 +11,26 @@ export const authGuard: CanActivateFn = async (
     const authenticationService = inject(AuthenticationService);
     const router = inject(Router);
     const dataService = inject(DataService);
-    const remoteDataService = inject(RemoteDataService);
 
     const currentUser = authenticationService.currentUser();
 
     if (currentUser) {
-        return true;
-    } else {
-        authenticationService.logout();
-        return router.createUrlTree(['login']);
+        try {
+            const userId = currentUser?.data?.id;
+            if (!userId) {
+                authenticationService.logout();
+                return router.createUrlTree(['login']);
+            }
+
+            const userResponse = await firstValueFrom(dataService.getUser(userId));
+            if (userResponse?.status === 'success') {
+                return true;
+            }
+        } catch {
+            // Invalid/stale session.
+        }
     }
+
+    authenticationService.logout();
+    return router.createUrlTree(['login']);
 };

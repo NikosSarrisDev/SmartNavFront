@@ -18,6 +18,10 @@ export const routes: Routes = [
         path: '',
         component: Home,
         pathMatch: 'full',
+      },
+      {
+        path: 'home',
+        component: Home,
       }
     ]
   },

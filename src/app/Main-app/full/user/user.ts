@@ -213,7 +213,7 @@ export class User implements OnInit {
   }
 
   backToHome() {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/']);
   }
 
   switchMode(){
