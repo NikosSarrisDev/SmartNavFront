@@ -66,5 +66,11 @@
   "NAVIGATION_IN_PROGRESS": "Navigation in progress",
   "NAVIGATION_STARTED": "Navigation started",
   "NAV_CANCEL_BTN": "Cancel navigation",
+  "NAV_PANEL_TITLE": "Navigation Panel",
+  "NAV_PANEL_AI_BADGE": "🤖 AI Optimized",
+  "NAV_PANEL_REMAINING": "Remaining",
+  "NAV_PANEL_DISTANCE": "Distance",
+  "NAV_PANEL_ETA": "ETA",
+  "NAV_PANEL_PROGRESS": "Trip Progress",
   "EXISTING_NAVIGATION_IN_PROGRESS": "Navigation already in progress. Please cancel it to start a new one."
 }

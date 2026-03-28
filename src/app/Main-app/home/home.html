@@ -120,8 +120,25 @@
         width="100%"
       >
         <p-toast />
-        <map-directions-renderer *ngIf="routeData$ | async as data" [directions]="data.result!">
-        </map-directions-renderer>
+        <ng-container *ngIf="routeData$ | async as data">
+          <map-directions-renderer *ngIf="!navigationStarted" [directions]="data.result!">
+          </map-directions-renderer>
+        </ng-container>
+        <map-polyline
+          *ngIf="navigationStarted && activeRoutePath.length"
+          [path]="activeRoutePath"
+          [options]="activeRouteGlowOptions"
+        ></map-polyline>
+        <map-polyline
+          *ngIf="navigationStarted && activeRoutePath.length"
+          [path]="activeRoutePath"
+          [options]="activeRouteBaseOptions"
+        ></map-polyline>
+        <map-polyline
+          *ngIf="navigationStarted && activeRoutePath.length"
+          [path]="activeRoutePath"
+          [options]="activeRouteDashOptions"
+        ></map-polyline>
         <map-marker
           *ngIf="navigationStarted && destinationMarker"
           [position]="destinationMarker"
@@ -135,6 +152,35 @@
       <div class="map-navigation-state" *ngIf="navigationStarted">
         {{ 'NAVIGATION_IN_PROGRESS' | translate }}
       </div>
+      <section class="navigation-panel" [class.visible]="navigationPanelVisible">
+        <div class="panel-title">
+          <span>{{ 'NAV_PANEL_TITLE' | translate }}</span>
+          <span class="ai-optimized">{{ 'NAV_PANEL_AI_BADGE' | translate }}</span>
+        </div>
+        <div class="panel-stats">
+          <div>
+            <label>{{ 'NAV_PANEL_REMAINING' | translate }}</label>
+            <strong>{{ remainingDurationMinutes }} min</strong>
+          </div>
+          <div>
+            <label>{{ 'NAV_PANEL_DISTANCE' | translate }}</label>
+            <strong>{{ remainingDistanceKm | number: '1.1-1' }} km</strong>
+          </div>
+          <div>
+            <label>{{ 'NAV_PANEL_ETA' | translate }}</label>
+            <strong>{{ navigationEta ? (navigationEta | date: 'shortTime') : '--:--' }}</strong>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-head">
+            <span>{{ 'NAV_PANEL_PROGRESS' | translate }}</span>
+            <span>{{ navigationProgress }}%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" [style.width.%]="navigationProgress"></div>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 }

@@ -66,5 +66,11 @@
   "NAVIGATION_IN_PROGRESS": "Πλοήγηση σε εξέλιξη",
   "NAVIGATION_STARTED": "Η πλοήγηση ξεκίνησε",
   "NAV_CANCEL_BTN": "Ακύρωση πλοήγησης",
-  "EXISTING_NAVIGATION_IN_PROGRESS": "Υπάρχει ήδη μια πλοήγηση που ξεκίνησε θα πρέπει να την ακυρώσετε για να επιλέξετε άλλη"
+  "EXISTING_NAVIGATION_IN_PROGRESS": "Υπάρχει ήδη μια πλοήγηση που ξεκίνησε θα πρέπει να την ακυρώσετε για να επιλέξετε άλλη",
+  "NAV_PANEL_TITLE": "Πίνακας Πλοήγησης",
+  "NAV_PANEL_AI_BADGE": "🤖 Βελτιστοποίηση AI",
+  "NAV_PANEL_REMAINING": "Υπόλοιπο",
+  "NAV_PANEL_DISTANCE": "Απόσταση",
+  "NAV_PANEL_ETA": "Εκτιμώμενη Άφιξη",
+  "NAV_PANEL_PROGRESS": "Πρόοδος Διαδρομής"
 }

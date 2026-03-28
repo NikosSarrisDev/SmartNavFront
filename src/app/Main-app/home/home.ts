@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { NavigationService } from '../../navigation.service';
-import { AsyncPipe, DatePipe, NgFor, NgIf, NgClass } from '@angular/common';
+import { AsyncPipe, DatePipe, DecimalPipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { Observable, tap } from 'rxjs';
 import { IsLoaderFullCompEnabled } from '../../is-loader-full-comp-enabled';
@@ -21,6 +21,7 @@ import { Toast } from 'primeng/toast';
     NgIf,
     NgFor,
     DatePipe,
+    DecimalPipe,
     TranslatePipe,
     NgClass,
     ProgressSpinnerModule,
@@ -42,8 +43,16 @@ export class Home implements OnInit, OnDestroy {
   currentUserName!: string;
   navigationStarted: boolean = false;
   navigationStartAt: Date | null = null;
+  navigationPanelVisible = false;
+  navigationProgress = 0;
+  totalDistanceKm = 0;
+  totalDurationMinutes = 0;
+  remainingDistanceKm = 0;
+  remainingDurationMinutes = 0;
+  navigationEta: Date | null = null;
   destinationMarker?: google.maps.LatLngLiteral;
   navigationArrow?: google.maps.LatLngLiteral;
+  activeRoutePath: google.maps.LatLngLiteral[] = [];
   navigationArrowOptions: google.maps.MarkerOptions = {
     clickable: false,
     zIndex: 1000,
@@ -63,6 +72,27 @@ export class Home implements OnInit, OnDestroy {
   private navigationPath: google.maps.LatLng[] = [];
   private navigationPathIndex = 0;
   private navigationAnimationTimer: number | null = null;
+  private cameraAnimationTimer: number | null = null;
+  private antOffset = 0;
+
+  activeRouteBaseOptions: google.maps.PolylineOptions = {
+    strokeColor: '#a855f7',
+    strokeOpacity: 0.95,
+    strokeWeight: 8,
+    zIndex: 20,
+  };
+  activeRouteGlowOptions: google.maps.PolylineOptions = {
+    strokeColor: '#e9d5ff',
+    strokeOpacity: 0.45,
+    strokeWeight: 14,
+    zIndex: 19,
+  };
+  activeRouteDashOptions: google.maps.PolylineOptions = {
+    strokeOpacity: 0,
+    strokeWeight: 8,
+    zIndex: 21,
+    icons: [],
+  };
 
   center: google.maps.LatLngLiteral = { lat: 37.98, lng: 23.72 };
   mapZoom = 15;
@@ -156,7 +186,15 @@ export class Home implements OnInit, OnDestroy {
     this.explanation = '';
     this.navigationStarted = false;
     this.navigationStartAt = null;
+    this.navigationPanelVisible = false;
+    this.navigationProgress = 0;
+    this.totalDistanceKm = 0;
+    this.totalDurationMinutes = 0;
+    this.remainingDistanceKm = 0;
+    this.remainingDurationMinutes = 0;
+    this.navigationEta = null;
     this.destinationMarker = undefined;
+    this.activeRoutePath = [];
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
 
@@ -199,8 +237,15 @@ export class Home implements OnInit, OnDestroy {
 
     const firstLeg = selectedRoute.legs[0];
     const lastLeg = selectedRoute.legs[selectedRoute.legs.length - 1];
-    const totalDistanceKm =
-      selectedRoute.legs.reduce((sum, leg) => sum + (leg.distance?.value ?? 0), 0) / 1000;
+    const totalDistanceMeters = selectedRoute.legs.reduce(
+      (sum, leg) => sum + (leg.distance?.value ?? 0),
+      0,
+    );
+    const totalDurationSeconds = selectedRoute.legs.reduce(
+      (sum, leg) => sum + (leg.duration?.value ?? 0),
+      0,
+    );
+    const totalDistanceKm = totalDistanceMeters / 1000;
 
     const payload = {
       userID: this.currentUserId,
@@ -217,6 +262,19 @@ export class Home implements OnInit, OnDestroy {
       next: () => {
         this.navigationStarted = true;
         this.navigationStartAt = new Date();
+        this.navigationPanelVisible = true;
+        this.totalDistanceKm = Number(totalDistanceKm.toFixed(2));
+        this.totalDurationMinutes = Math.max(1, Math.round(totalDurationSeconds / 60));
+        this.remainingDistanceKm = this.totalDistanceKm;
+        this.remainingDurationMinutes = this.totalDurationMinutes;
+        this.navigationProgress = 0;
+        this.navigationEta = new Date(Date.now() + this.totalDurationMinutes * 60000);
+        this.activeRoutePath = (selectedRoute.overview_path ?? []).map((point) => ({
+          lat: point.lat(),
+          lng: point.lng(),
+        }));
+        this.antOffset = 0;
+        this.updateAntPathStyle();
         this.destinationMarker = {
           lat: lastLeg.end_location.lat(),
           lng: lastLeg.end_location.lng(),
@@ -233,6 +291,14 @@ export class Home implements OnInit, OnDestroy {
   cancelNavigation() {
     this.navigationStarted = false;
     this.navigationStartAt = null;
+    this.navigationPanelVisible = false;
+    this.navigationProgress = 0;
+    this.totalDistanceKm = 0;
+    this.totalDurationMinutes = 0;
+    this.remainingDistanceKm = 0;
+    this.remainingDurationMinutes = 0;
+    this.navigationEta = null;
+    this.activeRoutePath = [];
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
   }
@@ -242,6 +308,7 @@ export class Home implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopCameraAnimation();
     this.stopNavigationSimulation();
   }
 
@@ -320,13 +387,6 @@ export class Home implements OnInit, OnDestroy {
   }
 
   private enableNavigationView(route: google.maps.DirectionsRoute): void {
-    this.mapZoom = 19;
-    this.mapOptions = {
-      ...this.mapOptions,
-      tilt: 67.5,
-      heading: 0,
-    };
-
     this.navigationPath = route.overview_path ?? [];
     this.navigationPathIndex = 0;
 
@@ -336,7 +396,7 @@ export class Home implements OnInit, OnDestroy {
 
     const startPosition = this.navigationPath[0];
     this.navigationArrow = { lat: startPosition.lat(), lng: startPosition.lng() };
-    this.center = this.navigationArrow;
+    this.runCinematicZoom(this.navigationArrow, 18, 65);
 
     this.startNavigationSimulation();
   }
@@ -377,6 +437,16 @@ export class Home implements OnInit, OnDestroy {
       };
 
       this.navigationPathIndex++;
+      const ratio = this.navigationPathIndex / (this.navigationPath.length - 1);
+      this.navigationProgress = Math.min(100, Math.round(ratio * 100));
+      this.remainingDistanceKm = Number((this.totalDistanceKm * (1 - ratio)).toFixed(2));
+      this.remainingDurationMinutes = Math.max(
+        0,
+        Math.round(this.totalDurationMinutes * (1 - ratio)),
+      );
+      this.navigationEta = new Date(Date.now() + this.remainingDurationMinutes * 60000);
+      this.antOffset = (this.antOffset + 4) % 100;
+      this.updateAntPathStyle();
     }, 900);
   }
 
@@ -391,6 +461,7 @@ export class Home implements OnInit, OnDestroy {
   }
 
   private resetMapToClassicView(): void {
+    this.stopCameraAnimation();
     this.mapZoom = 15;
     this.mapOptions = {
       ...this.mapOptions,
@@ -409,5 +480,64 @@ export class Home implements OnInit, OnDestroy {
 
     const bearing = (Math.atan2(y, x) * 180) / Math.PI;
     return (bearing + 360) % 360;
+  }
+
+  private runCinematicZoom(
+    targetCenter: google.maps.LatLngLiteral,
+    targetZoom: number,
+    targetTilt: number,
+  ): void {
+    this.stopCameraAnimation();
+
+    const startCenter = this.center;
+    const startZoom = this.mapZoom;
+    const startTilt = this.mapOptions.tilt ?? 0;
+    const totalFrames = 32;
+    let frame = 0;
+
+    this.cameraAnimationTimer = window.setInterval(() => {
+      frame++;
+      const t = frame / totalFrames;
+      const eased = 1 - Math.pow(1 - t, 3);
+
+      this.center = {
+        lat: startCenter.lat + (targetCenter.lat - startCenter.lat) * eased,
+        lng: startCenter.lng + (targetCenter.lng - startCenter.lng) * eased,
+      };
+      this.mapZoom = startZoom + (targetZoom - startZoom) * eased;
+      this.mapOptions = {
+        ...this.mapOptions,
+        tilt: startTilt + (targetTilt - startTilt) * eased,
+      };
+
+      if (t >= 1) {
+        this.stopCameraAnimation();
+      }
+    }, 20);
+  }
+
+  private stopCameraAnimation(): void {
+    if (this.cameraAnimationTimer != null) {
+      window.clearInterval(this.cameraAnimationTimer);
+      this.cameraAnimationTimer = null;
+    }
+  }
+
+  private updateAntPathStyle(): void {
+    this.activeRouteDashOptions = {
+      ...this.activeRouteDashOptions,
+      icons: [
+        {
+          icon: {
+            path: 'M 0,-1 0,1',
+            strokeOpacity: 1,
+            strokeColor: '#ffffff',
+            scale: 4,
+          },
+          offset: `${this.antOffset}%`,
+          repeat: '26px',
+        },
+      ],
+    };
   }
 }
