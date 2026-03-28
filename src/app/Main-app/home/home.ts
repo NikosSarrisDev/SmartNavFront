@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { NavigationService } from '../../navigation.service';
 import { AsyncPipe, DatePipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMapsModule } from '@angular/google-maps';
@@ -20,7 +20,7 @@ import { Toast } from "primeng/toast";
   styleUrl: './home.css',
   providers: [MessageService]
 })
-export class Home implements OnInit {
+export class Home implements OnInit, OnDestroy {
   currentUserId!: any;
   currentUserPreference!: any;
   selectedChip: string = '';
@@ -33,11 +33,36 @@ export class Home implements OnInit {
   navigationStarted: boolean = false;
   navigationStartAt: Date | null = null;
   destinationMarker?: google.maps.LatLngLiteral;
+  navigationArrow?: google.maps.LatLngLiteral;
+  navigationArrowOptions: google.maps.MarkerOptions = {
+    clickable: false,
+    zIndex: 1000,
+    icon: {
+      path: 'M 0 -2 L 1.5 2 L 0 1 L -1.5 2 Z',
+      fillColor: '#007bff',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 1,
+      scale: 6,
+      rotation: 0
+    }
+  };
   loadingAvatar = signal(false);
   public routeData$!: Observable<any>;
   private latestDirections?: google.maps.DirectionsResult;
+  private navigationPath: google.maps.LatLng[] = [];
+  private navigationPathIndex = 0;
+  private navigationAnimationTimer: number | null = null;
 
   center: google.maps.LatLngLiteral = { lat: 37.98, lng: 23.72 };
+  mapZoom = 15;
+  mapOptions: google.maps.MapOptions = {
+    tilt: 0,
+    heading: 0,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false
+  };
   route?: google.maps.DirectionsResult;
   explanation: string = "";
   chips: any[] = [];
@@ -97,6 +122,10 @@ export class Home implements OnInit {
       this.navService.errorMessage$.next('Please fill in the destination details first.');
       return;
     }
+    if (!this.isNavigationQuery(trimmedQuery)) {
+      this.navService.errorMessage$.next('Only navigation-related requests are allowed.');
+      return;
+    }
 
     if (!this.selectedChipPrompt) {
       this.navService.errorMessage$.next('Please choose one route preference chip first.');
@@ -109,6 +138,8 @@ export class Home implements OnInit {
     this.navigationStarted = false;
     this.navigationStartAt = null;
     this.destinationMarker = undefined;
+    this.stopNavigationSimulation();
+    this.resetMapToClassicView();
 
     const geminiPrompt = `${this.selectedChipPrompt}. User request: "${trimmedQuery}"`;
 
@@ -170,6 +201,7 @@ export class Home implements OnInit {
           lat: lastLeg.end_location.lat(),
           lng: lastLeg.end_location.lng()
         };
+        this.enableNavigationView(selectedRoute);
         this.navService.errorMessage$.next(null);
       },
       error: () => {
@@ -180,9 +212,129 @@ export class Home implements OnInit {
 
   cancelNavigation(){
     this.navigationStarted = false;
+    this.navigationStartAt = null;
+    this.stopNavigationSimulation();
+    this.resetMapToClassicView();
   }
 
   canStartNavigation(): boolean {
     return !!this.latestDirections?.routes?.length;
   }
+
+  ngOnDestroy(): void {
+    this.stopNavigationSimulation();
+  }
+
+  private isNavigationQuery(input: string): boolean {
+  const query = input.toLowerCase().trim();
+
+  const navigationKeywords = [
+    'route', 'navigate', 'navigation', 'direction', 'directions', 'destination', 'trip', 'drive', 'driving',
+    'avoid traffic', 'fastest', 'shortest', 'highway', 'street', 'road', 'avenue', 'boulevard', 'lane',
+    'to ', 'from ', 'nearby', 'parking', 'fuel', 'gas station', 'bus', 'train station', 'airport',
+    'ruta', 'navigatie', 'directie', 'catre', 'de la', 'strada', 'sosea',
+    'διαδρομή', 'πλοήγηση', 'κατεύθυνση', 'κατευθύνσεις', 'προορισμός', 'ταξίδι', 'οδήγηση',
+    'κίνηση', 'γρηγορότερη', 'συντομότερη', 'εθνική', 'οδός', 'δρόμος', 'λεωφόρος', 'στενό',
+    'προς', 'από', 'κοντά', 'πάρκινγκ', 'βενζίνη', 'βενζινάδικο', 'λεωφορείο', 'σταθμός', 'αεροδρόμιο'
+  ];
+
+  const hasKeyword = navigationKeywords.some(keyword => query.includes(keyword));
+  const hasCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query);
+  const hasAddressPattern = /\b(st|street|rd|road|ave|avenue|blvd|boulevard|ln|lane|hwy|highway|nr|no|οδ|οδος|λεωφ|λεωφορος|πλατ|πλατεια|αγ)\b/.test(query);
+
+  return hasKeyword || hasCoordinates || hasAddressPattern;
+  }
+
+  private enableNavigationView(route: google.maps.DirectionsRoute): void {
+    this.mapZoom = 19;
+    this.mapOptions = {
+      ...this.mapOptions,
+      tilt: 67.5,
+      heading: 0
+    };
+
+    this.navigationPath = route.overview_path ?? [];
+    this.navigationPathIndex = 0;
+
+    if (!this.navigationPath.length) {
+      return;
+    }
+
+    const startPosition = this.navigationPath[0];
+    this.navigationArrow = { lat: startPosition.lat(), lng: startPosition.lng() };
+    this.center = this.navigationArrow;
+
+    this.startNavigationSimulation();
+  }
+
+  private startNavigationSimulation(): void {
+    this.stopNavigationSimulation();
+
+    if (this.navigationPath.length < 2) {
+      return;
+    }
+
+    this.navigationAnimationTimer = window.setInterval(() => {
+      if (!this.navigationStarted || this.navigationPathIndex >= this.navigationPath.length - 1) {
+        this.stopNavigationSimulation();
+        return;
+      }
+
+      const current = this.navigationPath[this.navigationPathIndex];
+      const next = this.navigationPath[this.navigationPathIndex + 1];
+
+      const currentPoint = { lat: current.lat(), lng: current.lng() };
+      const heading = this.calculateHeading(currentPoint, { lat: next.lat(), lng: next.lng() });
+
+      this.navigationArrow = currentPoint;
+      this.center = currentPoint;
+      this.mapOptions = {
+        ...this.mapOptions,
+        heading
+      };
+
+      const icon = this.navigationArrowOptions.icon as google.maps.Symbol;
+      this.navigationArrowOptions = {
+        ...this.navigationArrowOptions,
+        icon: {
+          ...icon,
+          rotation: heading
+        }
+      };
+
+      this.navigationPathIndex++;
+    }, 900);
+  }
+
+  private stopNavigationSimulation(): void {
+    if (this.navigationAnimationTimer != null) {
+      window.clearInterval(this.navigationAnimationTimer);
+      this.navigationAnimationTimer = null;
+    }
+    this.navigationPath = [];
+    this.navigationPathIndex = 0;
+    this.navigationArrow = undefined;
+  }
+
+  private resetMapToClassicView(): void {
+    this.mapZoom = 15;
+    this.mapOptions = {
+      ...this.mapOptions,
+      tilt: 0,
+      heading: 0
+    };
+  }
+
+  private calculateHeading(from: google.maps.LatLngLiteral, to: google.maps.LatLngLiteral): number {
+    const lat1 = (from.lat * Math.PI) / 180;
+    const lat2 = (to.lat * Math.PI) / 180;
+    const dLng = ((to.lng - from.lng) * Math.PI) / 180;
+
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+
+    const bearing = (Math.atan2(y, x) * 180) / Math.PI;
+    return (bearing + 360) % 360;
+  }
 }
+
