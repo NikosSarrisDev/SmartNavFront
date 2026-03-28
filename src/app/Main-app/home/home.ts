@@ -175,9 +175,27 @@ export class Home implements OnInit, OnDestroy {
   }
 
   getActivePreference(userId: number) {
-    this.dataService.getCurrentUserActivePreference({ userId }).subscribe((response) => {
-      this.currentUserPreference = response.data[0].code;
-    });
+    this.dataService.getCurrentUserActivePreference({ userId }).subscribe(
+      (response) => {
+        const fallbackPreference = response?.data?.[0]?.code;
+        this.currentUserPreference = fallbackPreference;
+
+        this.dataService.getAiSuggestions({ userId }).subscribe({
+          next: (aiResponse: any) => {
+            const aiSuggested = aiResponse?.data?.suggestedPreference;
+            if (aiSuggested) {
+              this.currentUserPreference = aiSuggested;
+            }
+          },
+          error: () => {
+            this.currentUserPreference = fallbackPreference;
+          },
+        });
+      },
+      () => {
+        this.currentUserPreference = null;
+      },
+    );
   }
 
   findPath(query: string) {
@@ -327,80 +345,6 @@ export class Home implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.stopCameraAnimation();
     this.stopNavigationSimulation();
-  }
-
-  private isNavigationQuery(input: string): boolean {
-    const query = input.toLowerCase().trim();
-
-    const navigationKeywords = [
-      'route',
-      'navigate',
-      'navigation',
-      'direction',
-      'directions',
-      'destination',
-      'trip',
-      'drive',
-      'driving',
-      'avoid traffic',
-      'fastest',
-      'shortest',
-      'highway',
-      'street',
-      'road',
-      'avenue',
-      'boulevard',
-      'lane',
-      'to ',
-      'from ',
-      'nearby',
-      'parking',
-      'fuel',
-      'gas station',
-      'bus',
-      'train station',
-      'airport',
-      'ruta',
-      'navigatie',
-      'directie',
-      'catre',
-      'de la',
-      'strada',
-      'sosea',
-      'διαδρομή',
-      'πλοήγηση',
-      'κατεύθυνση',
-      'κατευθύνσεις',
-      'προορισμός',
-      'ταξίδι',
-      'οδήγηση',
-      'κίνηση',
-      'γρηγορότερη',
-      'συντομότερη',
-      'εθνική',
-      'οδός',
-      'δρόμος',
-      'λεωφόρος',
-      'στενό',
-      'προς',
-      'από',
-      'κοντά',
-      'πάρκινγκ',
-      'βενζίνη',
-      'βενζινάδικο',
-      'λεωφορείο',
-      'σταθμός',
-      'αεροδρόμιο',
-    ];
-
-    const hasKeyword = navigationKeywords.some((keyword) => query.includes(keyword));
-    const hasCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query);
-    const hasAddressPattern =
-      /\b(st|street|rd|road|ave|avenue|blvd|boulevard|ln|lane|hwy|highway|nr|no|οδ|οδος|λεωφ|λεωφορος|πλατ|πλατεια|αγ)\b/.test(
-        query,
-      );
-
-    return hasKeyword || hasCoordinates || hasAddressPattern;
   }
 
   private enableNavigationView(route: google.maps.DirectionsRoute): void {
