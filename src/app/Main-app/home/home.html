@@ -144,6 +144,11 @@
           [position]="destinationMarker"
         ></map-marker>
         <map-marker
+          *ngIf="navigationStarted && userStartMarker"
+          [position]="userStartMarker"
+          [options]="userStartMarkerOptions"
+        ></map-marker>
+        <map-marker
           *ngIf="navigationStarted && navigationArrow"
           [position]="navigationArrow"
           [options]="navigationArrowOptions"

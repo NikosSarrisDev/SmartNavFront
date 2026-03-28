@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
 import { NavigationService } from '../../navigation.service';
 import { AsyncPipe, DatePipe, DecimalPipe, NgFor, NgIf, NgClass } from '@angular/common';
-import { GoogleMapsModule } from '@angular/google-maps';
+import { GoogleMap, GoogleMapsModule } from '@angular/google-maps';
 import { Observable, tap } from 'rxjs';
 import { IsLoaderFullCompEnabled } from '../../is-loader-full-comp-enabled';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -32,6 +32,8 @@ import { Toast } from 'primeng/toast';
   providers: [MessageService],
 })
 export class Home implements OnInit, OnDestroy {
+  @ViewChild(GoogleMap) mapRef?: GoogleMap;
+
   currentUserId!: any;
   currentUserPreference!: any;
   selectedChip: string = '';
@@ -51,6 +53,7 @@ export class Home implements OnInit, OnDestroy {
   remainingDurationMinutes = 0;
   navigationEta: Date | null = null;
   destinationMarker?: google.maps.LatLngLiteral;
+  userStartMarker?: google.maps.LatLngLiteral;
   navigationArrow?: google.maps.LatLngLiteral;
   activeRoutePath: google.maps.LatLngLiteral[] = [];
   navigationArrowOptions: google.maps.MarkerOptions = {
@@ -64,6 +67,18 @@ export class Home implements OnInit, OnDestroy {
       strokeWeight: 1,
       scale: 6,
       rotation: 0,
+    },
+  };
+  userStartMarkerOptions: google.maps.MarkerOptions = {
+    zIndex: 998,
+    clickable: false,
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: '#1d4ed8',
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 2,
+      scale: 7,
     },
   };
   loadingAvatar = signal(false);
@@ -171,10 +186,6 @@ export class Home implements OnInit, OnDestroy {
       this.navService.errorMessage$.next('Please fill in the destination details first.');
       return;
     }
-    // if (!this.isNavigationQuery(trimmedQuery)) {
-    //   this.navService.errorMessage$.next('Only navigation-related requests are allowed.');
-    //   return;
-    // }
 
     if (!this.selectedChipPrompt) {
       this.navService.errorMessage$.next('Please choose one route preference chip first.');
@@ -194,6 +205,7 @@ export class Home implements OnInit, OnDestroy {
     this.remainingDurationMinutes = 0;
     this.navigationEta = null;
     this.destinationMarker = undefined;
+    this.userStartMarker = undefined;
     this.activeRoutePath = [];
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
@@ -279,6 +291,10 @@ export class Home implements OnInit, OnDestroy {
           lat: lastLeg.end_location.lat(),
           lng: lastLeg.end_location.lng(),
         };
+        this.userStartMarker = {
+          lat: firstLeg.start_location.lat(),
+          lng: firstLeg.start_location.lng(),
+        };
         this.enableNavigationView(selectedRoute);
         this.navService.errorMessage$.next(null);
       },
@@ -298,6 +314,7 @@ export class Home implements OnInit, OnDestroy {
     this.remainingDistanceKm = 0;
     this.remainingDurationMinutes = 0;
     this.navigationEta = null;
+    this.userStartMarker = undefined;
     this.activeRoutePath = [];
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
@@ -509,6 +526,13 @@ export class Home implements OnInit, OnDestroy {
         ...this.mapOptions,
         tilt: startTilt + (targetTilt - startTilt) * eased,
       };
+
+      const map = this.mapRef?.googleMap;
+      if (map) {
+        map.panTo(this.center);
+        map.setZoom(this.mapZoom);
+        map.setTilt(this.mapOptions.tilt ?? 0);
+      }
 
       if (t >= 1) {
         this.stopCameraAnimation();
