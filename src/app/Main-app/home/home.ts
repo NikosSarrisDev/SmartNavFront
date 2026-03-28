@@ -10,15 +10,25 @@ import { DataService } from '../../data.service';
 import { finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import {MenuItem, MessageService} from 'primeng/api';
-import { Toast } from "primeng/toast";
+import { MenuItem, MessageService } from 'primeng/api';
+import { Toast } from 'primeng/toast';
 
 @Component({
   selector: 'app-home',
-  imports: [GoogleMapsModule, AsyncPipe, NgIf, NgFor, DatePipe, TranslatePipe, NgClass, ProgressSpinnerModule, Toast],
+  imports: [
+    GoogleMapsModule,
+    AsyncPipe,
+    NgIf,
+    NgFor,
+    DatePipe,
+    TranslatePipe,
+    NgClass,
+    ProgressSpinnerModule,
+    Toast,
+  ],
   templateUrl: './home.html',
   styleUrl: './home.css',
-  providers: [MessageService]
+  providers: [MessageService],
 })
 export class Home implements OnInit, OnDestroy {
   currentUserId!: any;
@@ -44,8 +54,8 @@ export class Home implements OnInit, OnDestroy {
       strokeColor: '#ffffff',
       strokeWeight: 1,
       scale: 6,
-      rotation: 0
-    }
+      rotation: 0,
+    },
   };
   loadingAvatar = signal(false);
   public routeData$!: Observable<any>;
@@ -61,13 +71,21 @@ export class Home implements OnInit, OnDestroy {
     heading: 0,
     mapTypeControl: false,
     streetViewControl: false,
-    fullscreenControl: false
+    fullscreenControl: false,
   };
   route?: google.maps.DirectionsResult;
-  explanation: string = "";
+  explanation: string = '';
   chips: any[] = [];
 
-  constructor(public navService: NavigationService, private isLoaderFullCompEnabled: IsLoaderFullCompEnabled, private auth: AuthenticationService, private dataService: DataService, private router: Router, private messageService: MessageService, private translate: TranslateService) {}
+  constructor(
+    public navService: NavigationService,
+    private isLoaderFullCompEnabled: IsLoaderFullCompEnabled,
+    private auth: AuthenticationService,
+    private dataService: DataService,
+    private router: Router,
+    private messageService: MessageService,
+    private translate: TranslateService,
+  ) {}
 
   async ngOnInit() {
     this.loadingAvatar.set(true);
@@ -81,15 +99,16 @@ export class Home implements OnInit, OnDestroy {
   }
 
   getCurrentUserRoleAndAvatar(userId: number) {
-      this.dataService.getCurrentUserRoleAndAvatar({ userId })
-        .pipe(finalize(() => this.loadingAvatar.set(false)))
-        .subscribe({
-          next: (response: any) => {
-            this.loadingAvatar.set(false);
-            this.currentAvatar = response.data.avatarURL;
-          },
-          error: (err) => console.error("Avatar Load Failed", err)
-        });
+    this.dataService
+      .getCurrentUserRoleAndAvatar({ userId })
+      .pipe(finalize(() => this.loadingAvatar.set(false)))
+      .subscribe({
+        next: (response: any) => {
+          this.loadingAvatar.set(false);
+          this.currentAvatar = response.data.avatarURL;
+        },
+        error: (err) => console.error('Avatar Load Failed', err),
+      });
   }
 
   navigateToUserDashboard() {
@@ -104,16 +123,16 @@ export class Home implements OnInit, OnDestroy {
     this.navService.errorMessage$.next(null);
   }
 
-  getPreferences(){
+  getPreferences() {
     this.dataService.getPreferences({}).subscribe((res: any) => {
       this.chips = res.data;
-    })
+    });
   }
 
-  getActivePreference(userId: number){
+  getActivePreference(userId: number) {
     this.dataService.getCurrentUserActivePreference({ userId }).subscribe((response) => {
       this.currentUserPreference = response.data[0].code;
-    })
+    });
   }
 
   findPath(query: string) {
@@ -122,10 +141,10 @@ export class Home implements OnInit, OnDestroy {
       this.navService.errorMessage$.next('Please fill in the destination details first.');
       return;
     }
-    if (!this.isNavigationQuery(trimmedQuery)) {
-      this.navService.errorMessage$.next('Only navigation-related requests are allowed.');
-      return;
-    }
+    // if (!this.isNavigationQuery(trimmedQuery)) {
+    //   this.navService.errorMessage$.next('Only navigation-related requests are allowed.');
+    //   return;
+    // }
 
     if (!this.selectedChipPrompt) {
       this.navService.errorMessage$.next('Please choose one route preference chip first.');
@@ -134,7 +153,7 @@ export class Home implements OnInit, OnDestroy {
 
     this.isLoaderFullCompEnabled.setLoadingToTrue();
     this.currentSearchText = trimmedQuery;
-    this.explanation = "";
+    this.explanation = '';
     this.navigationStarted = false;
     this.navigationStartAt = null;
     this.destinationMarker = undefined;
@@ -143,9 +162,9 @@ export class Home implements OnInit, OnDestroy {
 
     const geminiPrompt = `${this.selectedChipPrompt}. User request: "${trimmedQuery}"`;
 
-    this.routeData$ = this.navService.getSmartRoute(geminiPrompt, this.center).pipe(tap(data => {
+    this.routeData$ = this.navService.getSmartRoute(geminiPrompt, this.center).pipe(
+      tap((data) => {
         if (data && data.explanation) {
-
           this.latestDirections = data.result;
           const route = data.result.routes[0];
           let totalDistance = 0;
@@ -162,7 +181,7 @@ export class Home implements OnInit, OnDestroy {
           this.explanation = data.explanation;
         }
       }),
-      finalize(() => this.isLoaderFullCompEnabled.setLoadingToFalse())
+      finalize(() => this.isLoaderFullCompEnabled.setLoadingToFalse()),
     );
   }
 
@@ -180,7 +199,8 @@ export class Home implements OnInit, OnDestroy {
 
     const firstLeg = selectedRoute.legs[0];
     const lastLeg = selectedRoute.legs[selectedRoute.legs.length - 1];
-    const totalDistanceKm = selectedRoute.legs.reduce((sum, leg) => sum + (leg.distance?.value ?? 0), 0) / 1000;
+    const totalDistanceKm =
+      selectedRoute.legs.reduce((sum, leg) => sum + (leg.distance?.value ?? 0), 0) / 1000;
 
     const payload = {
       userID: this.currentUserId,
@@ -190,7 +210,7 @@ export class Home implements OnInit, OnDestroy {
       score: 0,
       suggestedPreference: this.currentUserPreference,
       chosenPreference: this.selectedChip,
-      tripDate: new Date().toISOString()
+      tripDate: new Date().toISOString(),
     };
 
     this.dataService.tripCreate(payload).subscribe({
@@ -199,18 +219,18 @@ export class Home implements OnInit, OnDestroy {
         this.navigationStartAt = new Date();
         this.destinationMarker = {
           lat: lastLeg.end_location.lat(),
-          lng: lastLeg.end_location.lng()
+          lng: lastLeg.end_location.lng(),
         };
         this.enableNavigationView(selectedRoute);
         this.navService.errorMessage$.next(null);
       },
       error: () => {
         this.navService.errorMessage$.next('Navigation could not be started. Please try again.');
-      }
+      },
     });
   }
 
-  cancelNavigation(){
+  cancelNavigation() {
     this.navigationStarted = false;
     this.navigationStartAt = null;
     this.stopNavigationSimulation();
@@ -226,23 +246,77 @@ export class Home implements OnInit, OnDestroy {
   }
 
   private isNavigationQuery(input: string): boolean {
-  const query = input.toLowerCase().trim();
+    const query = input.toLowerCase().trim();
 
-  const navigationKeywords = [
-    'route', 'navigate', 'navigation', 'direction', 'directions', 'destination', 'trip', 'drive', 'driving',
-    'avoid traffic', 'fastest', 'shortest', 'highway', 'street', 'road', 'avenue', 'boulevard', 'lane',
-    'to ', 'from ', 'nearby', 'parking', 'fuel', 'gas station', 'bus', 'train station', 'airport',
-    'ruta', 'navigatie', 'directie', 'catre', 'de la', 'strada', 'sosea',
-    'διαδρομή', 'πλοήγηση', 'κατεύθυνση', 'κατευθύνσεις', 'προορισμός', 'ταξίδι', 'οδήγηση',
-    'κίνηση', 'γρηγορότερη', 'συντομότερη', 'εθνική', 'οδός', 'δρόμος', 'λεωφόρος', 'στενό',
-    'προς', 'από', 'κοντά', 'πάρκινγκ', 'βενζίνη', 'βενζινάδικο', 'λεωφορείο', 'σταθμός', 'αεροδρόμιο'
-  ];
+    const navigationKeywords = [
+      'route',
+      'navigate',
+      'navigation',
+      'direction',
+      'directions',
+      'destination',
+      'trip',
+      'drive',
+      'driving',
+      'avoid traffic',
+      'fastest',
+      'shortest',
+      'highway',
+      'street',
+      'road',
+      'avenue',
+      'boulevard',
+      'lane',
+      'to ',
+      'from ',
+      'nearby',
+      'parking',
+      'fuel',
+      'gas station',
+      'bus',
+      'train station',
+      'airport',
+      'ruta',
+      'navigatie',
+      'directie',
+      'catre',
+      'de la',
+      'strada',
+      'sosea',
+      'διαδρομή',
+      'πλοήγηση',
+      'κατεύθυνση',
+      'κατευθύνσεις',
+      'προορισμός',
+      'ταξίδι',
+      'οδήγηση',
+      'κίνηση',
+      'γρηγορότερη',
+      'συντομότερη',
+      'εθνική',
+      'οδός',
+      'δρόμος',
+      'λεωφόρος',
+      'στενό',
+      'προς',
+      'από',
+      'κοντά',
+      'πάρκινγκ',
+      'βενζίνη',
+      'βενζινάδικο',
+      'λεωφορείο',
+      'σταθμός',
+      'αεροδρόμιο',
+    ];
 
-  const hasKeyword = navigationKeywords.some(keyword => query.includes(keyword));
-  const hasCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query);
-  const hasAddressPattern = /\b(st|street|rd|road|ave|avenue|blvd|boulevard|ln|lane|hwy|highway|nr|no|οδ|οδος|λεωφ|λεωφορος|πλατ|πλατεια|αγ)\b/.test(query);
+    const hasKeyword = navigationKeywords.some((keyword) => query.includes(keyword));
+    const hasCoordinates = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(query);
+    const hasAddressPattern =
+      /\b(st|street|rd|road|ave|avenue|blvd|boulevard|ln|lane|hwy|highway|nr|no|οδ|οδος|λεωφ|λεωφορος|πλατ|πλατεια|αγ)\b/.test(
+        query,
+      );
 
-  return hasKeyword || hasCoordinates || hasAddressPattern;
+    return hasKeyword || hasCoordinates || hasAddressPattern;
   }
 
   private enableNavigationView(route: google.maps.DirectionsRoute): void {
@@ -250,7 +324,7 @@ export class Home implements OnInit, OnDestroy {
     this.mapOptions = {
       ...this.mapOptions,
       tilt: 67.5,
-      heading: 0
+      heading: 0,
     };
 
     this.navigationPath = route.overview_path ?? [];
@@ -290,7 +364,7 @@ export class Home implements OnInit, OnDestroy {
       this.center = currentPoint;
       this.mapOptions = {
         ...this.mapOptions,
-        heading
+        heading,
       };
 
       const icon = this.navigationArrowOptions.icon as google.maps.Symbol;
@@ -298,8 +372,8 @@ export class Home implements OnInit, OnDestroy {
         ...this.navigationArrowOptions,
         icon: {
           ...icon,
-          rotation: heading
-        }
+          rotation: heading,
+        },
       };
 
       this.navigationPathIndex++;
@@ -321,7 +395,7 @@ export class Home implements OnInit, OnDestroy {
     this.mapOptions = {
       ...this.mapOptions,
       tilt: 0,
-      heading: 0
+      heading: 0,
     };
   }
 
@@ -337,4 +411,3 @@ export class Home implements OnInit, OnDestroy {
     return (bearing + 360) % 360;
   }
 }
-
