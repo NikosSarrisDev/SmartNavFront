@@ -1,0 +1,103 @@
+<div class="filter-page">
+  <section class="filter-card">
+    <div class="filter-topbar">
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <div class="app-globe">
+          <p-button
+            icon="pi pi-globe"
+            (click)="menu.toggle($event)"
+            [rounded]="true"
+            severity="secondary"
+          >
+          </p-button>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-header">
+      <div>
+        <h1>{{ 'FILTER_TITLE' | translate }}</h1>
+        <p>{{ 'FILTER_SUBTITLE' | translate }}</p>
+      </div>
+      <button type="button" class="add-station-button" (click)="addStation()">
+        <span>+</span>
+        {{ 'FILTER_ADD_STATION' | translate }}
+      </button>
+    </div>
+
+    <form [formGroup]="stationForms" class="filter-form">
+      <div formArrayName="stations" class="station-list">
+        @for (station of stations.controls; track $index) {
+          <section class="station-card" [formGroupName]="$index">
+            <div class="station-head">
+              <h2>{{ getStationTitle($index) }}</h2>
+              @if (station.get('type')?.value === 'station') {
+                <span class="station-chip">{{ 'FILTER_INTERMEDIATE' | translate }}</span>
+              }
+            </div>
+
+            <label [for]="'station-street-' + $index">{{
+              'FILTER_STREET_LABEL' | translate
+            }}</label>
+            <input
+              [id]="'station-street-' + $index"
+              type="text"
+              formControlName="street"
+              [placeholder]="'FILTER_STREET_PLACEHOLDER' | translate"
+            />
+
+            <div class="field-grid">
+              <div>
+                <label [for]="'station-number-' + $index">{{
+                  'FILTER_NUMBER_LABEL' | translate
+                }}</label>
+                <input
+                  [id]="'station-number-' + $index"
+                  type="text"
+                  formControlName="number"
+                  [placeholder]="'FILTER_NUMBER_PLACEHOLDER' | translate"
+                />
+              </div>
+
+              <div>
+                <label [for]="'station-city-' + $index">{{
+                  'FILTER_CITY_LABEL' | translate
+                }}</label>
+                <input
+                  [id]="'station-city-' + $index"
+                  type="text"
+                  formControlName="cityArea"
+                  [placeholder]="'FILTER_CITY_PLACEHOLDER' | translate"
+                />
+              </div>
+
+              <div>
+                <label [for]="'station-postal-' + $index">{{
+                  'FILTER_POSTAL_LABEL' | translate
+                }}</label>
+                <input
+                  [id]="'station-postal-' + $index"
+                  type="text"
+                  formControlName="postalCode"
+                  [placeholder]="'FILTER_POSTAL_PLACEHOLDER' | translate"
+                />
+              </div>
+            </div>
+          </section>
+        }
+      </div>
+    </form>
+
+    <div class="footer-actions">
+      <button type="button" class="cancel-button" (click)="cancel()">
+        {{ 'FILTER_CANCEL' | translate }}
+      </button>
+      <button type="button" class="apply-button" (click)="apply()">
+        {{ 'FILTER_APPLY' | translate }}
+      </button>
+    </div>
+  </section>
+
+  <p-menu #menu [model]="languages" [popup]="true"></p-menu>
+</div>
