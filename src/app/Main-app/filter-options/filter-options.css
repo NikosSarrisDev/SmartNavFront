@@ -1,4 +1,5 @@
 .filter-page {
+  position: relative;
   min-height: 100vh;
   padding: 2rem;
   background:
@@ -32,7 +33,6 @@
 }
 
 .app-globe {
-  position: relative;
   cursor: pointer;
   transition: transform 0.3s ease-in-out;
 }
@@ -203,4 +203,10 @@
   .apply-button {
     width: 100%;
   }
+}
+
+.trash-button {
+  border: none;
+  background: none;
+  cursor: pointer;
 }

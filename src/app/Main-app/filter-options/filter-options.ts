@@ -53,6 +53,12 @@ export class FilterOptions implements OnInit {
     );
   }
 
+  removeStation(index: number): void {
+    if (this.stations.at(index).get('type')?.value === 'station') {
+      this.stations.removeAt(index);
+    }
+  }
+
   cancel(): void {
     this.router.navigate(['/home']);
   }
