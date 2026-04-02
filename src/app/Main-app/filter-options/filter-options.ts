@@ -6,7 +6,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MenuItem } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Menu, MenuModule } from 'primeng/menu';
-import { JourneyFilterStation, NavigationService } from '../../navigation.service';
+import { JourneyFilterStation, NavigationService, VehicleSize } from '../../navigation.service';
 
 type JourneyStationForm = FormGroup;
 
@@ -19,6 +19,12 @@ type JourneyStationForm = FormGroup;
 export class FilterOptions implements OnInit {
   readonly stationForms: FormGroup;
   languages: MenuItem[] | undefined;
+  readonly vehicleSizeOptions: { value: VehicleSize; labelKey: string }[] = [
+    { value: 'small', labelKey: 'FILTER_VEHICLE_SIZE_SMALL' },
+    { value: 'medium', labelKey: 'FILTER_VEHICLE_SIZE_MEDIUM' },
+    { value: 'large', labelKey: 'FILTER_VEHICLE_SIZE_LARGE' },
+    { value: 'truck', labelKey: 'FILTER_VEHICLE_SIZE_TRUCK' },
+  ];
 
   constructor(
     private formBuilder: FormBuilder,
@@ -28,12 +34,13 @@ export class FilterOptions implements OnInit {
   ) {
     this.stationForms = this.formBuilder.group({
       stations: this.formBuilder.array([] as JourneyStationForm[]),
+      vehicleSize: [''],
     });
 
-    const existingFilters = this.navigationService.getJourneyFiltersSnapshot();
-    const filtersToLoad = existingFilters.length ? existingFilters : this.buildDefaultFilters();
-
-    filtersToLoad.forEach((filter) => this.stations.push(this.createStationGroup(filter)));
+    const existingStations = this.navigationService.getJourneyFiltersSnapshot();
+    const existingVehicleSize = this.navigationService.getVehicleSizeSnapshot();
+    this.stationForms.patchValue({ vehicleSize: existingVehicleSize ?? '' });
+    existingStations.forEach((filter) => this.stations.push(this.createStationGroup(filter)));
   }
 
   ngOnInit(): void {
@@ -47,14 +54,11 @@ export class FilterOptions implements OnInit {
   }
 
   addStation(): void {
-    this.stations.insert(
-      this.stations.length - 1,
-      this.createStationGroup({ type: 'station', ...this.createBlankStation() }),
-    );
+    this.stations.push(this.createStationGroup(this.createBlankStation()));
   }
 
   removeStation(index: number): void {
-    if (this.stations.at(index).get('type')?.value === 'station') {
+    if (index >= 0 && index < this.stations.length) {
       this.stations.removeAt(index);
     }
   }
@@ -65,22 +69,15 @@ export class FilterOptions implements OnInit {
 
   apply(): void {
     const filters = this.stations.getRawValue() as JourneyFilterStation[];
+    const vehicleSizeRaw = `${this.stationForms.get('vehicleSize')?.value ?? ''}`.trim();
+    const vehicleSize = this.isVehicleSize(vehicleSizeRaw) ? vehicleSizeRaw : null;
     this.navigationService.setJourneyFilters(filters);
+    this.navigationService.setVehicleSize(vehicleSize);
     this.router.navigate(['/home']);
   }
 
   getStationTitle(index: number): string {
-    const type = this.stations.at(index).get('type')?.value;
-
-    if (type === 'start') {
-      return this.translate.instant('FILTER_START');
-    }
-
-    if (type === 'finish') {
-      return this.translate.instant('FILTER_FINISH');
-    }
-
-    return `${this.translate.instant('FILTER_STATION')} ${index}`;
+    return `${this.translate.instant('FILTER_STATION')} ${index + 1}`;
   }
 
   changeLanguage(lang: string): void {
@@ -112,7 +109,6 @@ export class FilterOptions implements OnInit {
 
   private createStationGroup(filter: JourneyFilterStation): JourneyStationForm {
     return this.formBuilder.group({
-      type: [filter.type],
       street: [filter.street],
       number: [filter.number],
       cityArea: [filter.cityArea],
@@ -120,19 +116,16 @@ export class FilterOptions implements OnInit {
     });
   }
 
-  private buildDefaultFilters(): JourneyFilterStation[] {
-    return [
-      { type: 'start', ...this.createBlankStation() },
-      { type: 'finish', ...this.createBlankStation() },
-    ];
-  }
-
-  private createBlankStation(): Omit<JourneyFilterStation, 'type'> {
+  private createBlankStation(): JourneyFilterStation {
     return {
       street: '',
       number: '',
       cityArea: '',
       postalCode: '',
     };
+  }
+
+  private isVehicleSize(value: string): value is VehicleSize {
+    return value === 'small' || value === 'medium' || value === 'large' || value === 'truck';
   }
 }
