@@ -1,4 +1,4 @@
-<app-home>
+<app-home #homeCmp>
   <div class="centerfy" spinner>
     <p-progress-spinner
       strokeWidth="8"
@@ -10,7 +10,7 @@
   </div>
   <ng-container globe>
     <div class="header-actions">
-      <div class="app-globe">
+      <div class="app-globe" *ngIf="!homeCmp.navigationStarted">
         <p-button
           icon="pi pi-filter"
           (click)="navigateToFilters()"
