@@ -227,15 +227,18 @@ export class Home implements OnInit, OnDestroy {
       return;
     }
 
+    this.isLoaderFullCompEnabled.setLoadingToTrue();
+
     let latestPosition: google.maps.LatLngLiteral;
+    latestPosition = this.center;
     try {
-      latestPosition = await this.navService.getCurrentLocation();
+      const freshPosition = await this.navService.getCurrentLocation();
+      latestPosition = freshPosition;
       this.center = latestPosition;
     } catch {
-      return;
+      // Keep current center as fallback so one click still runs the route search.
     }
 
-    this.isLoaderFullCompEnabled.setLoadingToTrue();
     this.currentSearchText = trimmedQuery;
     this.persistHomeDraft();
     this.explanation = '';
