@@ -25,22 +25,23 @@
         <label>{{ 'NAV_SEARCH_LABEL' | translate }}</label>
         <div class="input-wrapper">
           <input
-            #goal
-            (input)="(0)"
             type="text"
+            [(ngModel)]="currentSearchText"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onSearchTextChange($event)"
             [placeholder]="'NAV_SEARCH_PLACEHOLDER' | translate"
-            (keyup.enter)="findPath(goal.value)"
+            (keyup.enter)="findPath()"
           />
           <button
             [ngClass]="
-              goal.value.trim() && selectedChip && !navigationStarted
+              currentSearchText.trim() && selectedChip && !navigationStarted
                 ? 'goal-button-enable'
                 : 'goal-button-disable'
             "
-            (click)="findPath(goal.value)"
+            (click)="findPath()"
             [disabled]="
               (navService.isLoading$ | async) ||
-              goal.value.trim() === '' ||
+              currentSearchText.trim() === '' ||
               !selectedChip ||
               navigationStarted
             "

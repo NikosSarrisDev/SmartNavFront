@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MenuItem, MessageService } from 'primeng/api';
 import { Toast } from 'primeng/toast';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-home',
@@ -24,6 +25,7 @@ import { Toast } from 'primeng/toast';
     DecimalPipe,
     TranslatePipe,
     NgClass,
+    FormsModule,
     ProgressSpinnerModule,
     Toast,
   ],
@@ -137,7 +139,16 @@ export class Home implements OnInit, OnDestroy {
     const currentUser = this.auth.currentUser();
     this.currentUserId = currentUser?.data?.id;
     this.currentUserName = currentUser?.data?.userName;
-    this.center = await this.navService.getCurrentLocation();
+    const homeDraft = this.navService.getHomeDraftSnapshot();
+    this.currentSearchText = homeDraft.searchText;
+    this.selectedChip = homeDraft.selectedChip;
+    this.selectedChipPrompt = homeDraft.selectedChipPrompt;
+
+    try {
+      this.center = await this.navService.getCurrentLocation();
+    } catch {
+      // Keep the current center fallback and rely on errorMessage$ for UI feedback.
+    }
     this.getCurrentUserRoleAndAvatar(this.currentUserId);
     this.getPreferences();
     this.getActivePreference(this.currentUserId);
@@ -166,6 +177,12 @@ export class Home implements OnInit, OnDestroy {
     this.navigationStarted = false;
     this.navigationStartAt = null;
     this.navService.errorMessage$.next(null);
+    this.persistHomeDraft();
+  }
+
+  onSearchTextChange(value: string): void {
+    this.currentSearchText = value;
+    this.persistHomeDraft();
   }
 
   getPreferences() {
@@ -198,8 +215,8 @@ export class Home implements OnInit, OnDestroy {
     );
   }
 
-  findPath(query: string) {
-    const trimmedQuery = (query || '').trim();
+  async findPath() {
+    const trimmedQuery = (this.currentSearchText || '').trim();
     if (!trimmedQuery) {
       this.navService.errorMessage$.next('Please fill in the destination details first.');
       return;
@@ -210,8 +227,17 @@ export class Home implements OnInit, OnDestroy {
       return;
     }
 
+    let latestPosition: google.maps.LatLngLiteral;
+    try {
+      latestPosition = await this.navService.getCurrentLocation();
+      this.center = latestPosition;
+    } catch {
+      return;
+    }
+
     this.isLoaderFullCompEnabled.setLoadingToTrue();
     this.currentSearchText = trimmedQuery;
+    this.persistHomeDraft();
     this.explanation = '';
     this.navigationStarted = false;
     this.navigationStartAt = null;
@@ -230,7 +256,7 @@ export class Home implements OnInit, OnDestroy {
 
     const geminiPrompt = `${this.selectedChipPrompt}. User request: "${trimmedQuery}"`;
 
-    this.routeData$ = this.navService.getSmartRoute(geminiPrompt, this.center).pipe(
+    this.routeData$ = this.navService.getSmartRoute(geminiPrompt, latestPosition).pipe(
       tap((data) => {
         if (data && data.explanation) {
           this.latestDirections = data.result;
@@ -343,6 +369,7 @@ export class Home implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.persistHomeDraft();
     this.stopCameraAnimation();
     this.stopNavigationSimulation();
   }
@@ -507,5 +534,13 @@ export class Home implements OnInit, OnDestroy {
         },
       ],
     };
+  }
+
+  private persistHomeDraft(): void {
+    this.navService.setHomeDraft({
+      searchText: this.currentSearchText,
+      selectedChip: this.selectedChip,
+      selectedChipPrompt: this.selectedChipPrompt,
+    });
   }
 }

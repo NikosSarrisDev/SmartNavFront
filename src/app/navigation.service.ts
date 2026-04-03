@@ -14,7 +14,18 @@ export interface JourneyFilterStation {
   postalCode: string;
 }
 
+export interface HomeDraftState {
+  searchText: string;
+  selectedChip: string;
+  selectedChipPrompt: string;
+}
+
 const createDefaultJourneyFilters = (): JourneyFilterStation[] => [];
+const createDefaultHomeDraft = (): HomeDraftState => ({
+  searchText: '',
+  selectedChip: '',
+  selectedChipPrompt: '',
+});
 
 @Injectable({ providedIn: 'root' })
 export class NavigationService {
@@ -24,11 +35,13 @@ export class NavigationService {
     createDefaultJourneyFilters(),
   );
   private readonly vehicleSizeState = signal<VehicleSize | null>(null);
+  private readonly homeDraftState = signal<HomeDraftState>(createDefaultHomeDraft());
 
   public isLoading$ = new BehaviorSubject<boolean>(false);
   public errorMessage$ = new BehaviorSubject<string | null>(null);
   public readonly journeyFilters = this.journeyFiltersState.asReadonly();
   public readonly vehicleSize = this.vehicleSizeState.asReadonly();
+  public readonly homeDraft = this.homeDraftState.asReadonly();
 
   constructor(
     private http: HttpClient,
@@ -50,6 +63,19 @@ export class NavigationService {
 
   setVehicleSize(size: VehicleSize | null): void {
     this.vehicleSizeState.set(size);
+  }
+
+  setHomeDraft(draft: Partial<HomeDraftState>): void {
+    const current = this.homeDraftState();
+    this.homeDraftState.set({
+      searchText: draft.searchText ?? current.searchText,
+      selectedChip: draft.selectedChip ?? current.selectedChip,
+      selectedChipPrompt: draft.selectedChipPrompt ?? current.selectedChipPrompt,
+    });
+  }
+
+  getHomeDraftSnapshot(): HomeDraftState {
+    return { ...this.homeDraftState() };
   }
 
   getSmartRoute(userNeed: string, currentPos: google.maps.LatLngLiteral): Observable<any> {
@@ -74,7 +100,8 @@ ${filterPrompt}
 Rules:
 1. If not travel/places/navigation, return {"error":"not_navigation"}.
 2. Otherwise, return ONLY:
-{ "dest":"address", "info":"Greek text" }`,
+{ "origin":"address or empty string", "dest":"address", "info":"Greek text" }
+3. If user need does not contain a clear departure point, set "origin" to an empty string.`,
             },
           ],
         },
@@ -95,14 +122,27 @@ Rules:
             throw new Error('This request is not related to navigation.');
           }
 
-          return parsed;
+          const destination = `${parsed.dest ?? ''}`.trim();
+          const origin = `${parsed.origin ?? ''}`.trim();
+          const info = `${parsed.info ?? ''}`.trim();
+
+          if (!destination) {
+            throw new Error('AI could not find a destination.');
+          }
+
+          return {
+            dest: destination,
+            origin,
+            info,
+          };
         } catch {
           throw new Error('Failed to parse AI response.');
         }
       }),
-      switchMap((aiData) => {
+      switchMap((aiData: { dest: string; origin: string; info: string }) => {
+        const routeOrigin = aiData.origin.length > 0 ? aiData.origin : currentPos;
         const request: google.maps.DirectionsRequest = {
-          origin: currentPos,
+          origin: routeOrigin,
           destination: aiData.dest,
           waypoints: formattedStations.map((stop: string) => ({ location: stop, stopover: true })),
           travelMode: google.maps.TravelMode.DRIVING,
