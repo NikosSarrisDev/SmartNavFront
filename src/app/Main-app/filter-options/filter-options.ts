@@ -7,6 +7,7 @@ import { MenuItem } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Menu, MenuModule } from 'primeng/menu';
 import { JourneyFilterStation, NavigationService, VehicleSize } from '../../navigation.service';
+import { DataService } from '../../data.service';
 
 type JourneyStationForm = FormGroup;
 
@@ -19,7 +20,7 @@ type JourneyStationForm = FormGroup;
 export class FilterOptions implements OnInit {
   readonly stationForms: FormGroup;
   languages: MenuItem[] | undefined;
-  readonly vehicleSizeOptions: { value: VehicleSize; labelKey: string }[] = [
+  vehicleSizeOptions: { value: VehicleSize; labelKey: string }[] = [
     { value: 'small', labelKey: 'FILTER_VEHICLE_SIZE_SMALL' },
     { value: 'medium', labelKey: 'FILTER_VEHICLE_SIZE_MEDIUM' },
     { value: 'large', labelKey: 'FILTER_VEHICLE_SIZE_LARGE' },
@@ -31,6 +32,7 @@ export class FilterOptions implements OnInit {
     private router: Router,
     private navigationService: NavigationService,
     private translate: TranslateService,
+    private dataService: DataService,
   ) {
     this.stationForms = this.formBuilder.group({
       stations: this.formBuilder.array([] as JourneyStationForm[]),
@@ -47,6 +49,7 @@ export class FilterOptions implements OnInit {
     const activeLang = this.translate.currentLang || this.translate.getFallbackLang() || 'el';
     this.translate.use(activeLang);
     this.buildLanguageMenu();
+    this.loadVehicleOptions();
   }
 
   get stations(): FormArray<JourneyStationForm> {
@@ -127,5 +130,50 @@ export class FilterOptions implements OnInit {
 
   private isVehicleSize(value: string): value is VehicleSize {
     return value === 'small' || value === 'medium' || value === 'large' || value === 'truck';
+  }
+
+  private loadVehicleOptions(): void {
+    this.dataService.getVehicles({}).subscribe({
+      next: (response: any) => {
+        const backendOptions = (response?.data ?? [])
+          .map((vehicle: any) => {
+            const code = `${vehicle?.code ?? ''}`.trim().toLowerCase();
+            const translationField = `${vehicle?.translationField ?? ''}`.trim();
+
+            if (!this.isVehicleSize(code)) {
+              return null;
+            }
+
+            return {
+              value: code,
+              labelKey: translationField || this.getFallbackTranslationKey(code),
+            };
+          })
+          .filter((value: any) => value != null);
+
+        if (backendOptions.length > 0) {
+          this.vehicleSizeOptions = backendOptions;
+        }
+      },
+      error: () => {
+        // Keep local defaults when lookup is unavailable.
+      },
+    });
+  }
+
+  private getFallbackTranslationKey(code: VehicleSize): string {
+    if (code === 'small') {
+      return 'FILTER_VEHICLE_SIZE_SMALL';
+    }
+
+    if (code === 'medium') {
+      return 'FILTER_VEHICLE_SIZE_MEDIUM';
+    }
+
+    if (code === 'large') {
+      return 'FILTER_VEHICLE_SIZE_LARGE';
+    }
+
+    return 'FILTER_VEHICLE_SIZE_TRUCK';
   }
 }

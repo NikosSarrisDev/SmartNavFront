@@ -305,6 +305,8 @@ export class Home implements OnInit, OnDestroy {
       0,
     );
     const totalDistanceKm = totalDistanceMeters / 1000;
+    const savedStations = this.navService.getJourneyFiltersSnapshot();
+    const selectedVehicleCode = this.navService.getVehicleSizeSnapshot();
 
     const payload = {
       userID: this.currentUserId,
@@ -315,6 +317,14 @@ export class Home implements OnInit, OnDestroy {
       suggestedPreference: this.currentUserPreference,
       chosenPreference: this.selectedChip,
       tripDate: new Date().toISOString(),
+      vehicleCode: selectedVehicleCode ?? undefined,
+      stations: savedStations.map((station, index) => ({
+        street: station.street,
+        number: station.number,
+        cityArea: station.cityArea,
+        postalCode: station.postalCode,
+        position: index + 1,
+      })),
     };
 
     this.dataService.tripCreate(payload).subscribe({
