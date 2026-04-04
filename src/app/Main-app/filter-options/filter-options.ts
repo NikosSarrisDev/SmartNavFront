@@ -78,6 +78,34 @@ export class FilterOptions implements OnInit, OnDestroy {
     }
   }
 
+  confirmRemoveStation(index: number): void {
+    if (index < 0 || index >= this.stations.length) {
+      return;
+    }
+
+    const message = this.translate.instant('FILTER_REMOVE_STATION_CONFIRM', {
+      station: index + 1,
+    });
+
+    if (window.confirm(message)) {
+      this.removeStation(index);
+    }
+  }
+
+  removeAllStations(): void {
+    if (this.stations.length === 0) {
+      return;
+    }
+
+    const message = this.translate.instant('FILTER_REMOVE_ALL_STATIONS_CONFIRM', {
+      count: this.stations.length,
+    });
+
+    if (window.confirm(message)) {
+      this.stations.clear();
+    }
+  }
+
   cancel(): void {
     this.router.navigate(['/home']);
   }
@@ -151,7 +179,13 @@ export class FilterOptions implements OnInit, OnDestroy {
   }
 
   private isVehicleSize(value: string): value is VehicleSize {
-    return value === 'small' || value === 'medium' || value === 'large' || value === 'truck';
+    return (
+      value === 'small' ||
+      value === 'medium' ||
+      value === 'large' ||
+      value === 'truck' ||
+      value === 'motorcycle'
+    );
   }
 
   private loadVehicleOptions(): void {
@@ -175,6 +209,7 @@ export class FilterOptions implements OnInit, OnDestroy {
           .filter((value: any) => value != null && value.translationField.length > 0);
 
         this.vehicleSizeOptions.set(backendOptions);
+        console.log(this.vehicleSizeOptions());
       },
       error: () => {
         this.vehicleSizeOptions.set([]);

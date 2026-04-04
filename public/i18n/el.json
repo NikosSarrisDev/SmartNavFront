@@ -1,4 +1,4 @@
-{
+﻿{
   "ΕΙΣΟΔΟΣ_ΜΕ_EMAIL": "ΕΙΣΟΔΟΣ ΜΕ EMAIL",
   "EMAIL_REQUIRED": "To πεδίο Email είναι υποχρεωτικό",
   "ΚΩΔΙΚΟΣ": "Κωδικός",
@@ -96,6 +96,10 @@
   "FILTER_VEHICLE_SIZE_MEDIUM": "SUV / Βαν",
   "FILTER_VEHICLE_SIZE_LARGE": "Μεγάλο βαν",
   "FILTER_VEHICLE_SIZE_TRUCK": "Φορτηγό",
+  "FILTER_VEHICLE_SIZE_MOTORCYCLE": "Μοτοσυκλέτα",
+  "FILTER_REMOVE_STATION_CONFIRM": "Αφαίρεση σταθμού {{station}};",
+  "FILTER_REMOVE_ALL_STATIONS": "Αφαίρεση όλων των σταθμών",
+  "FILTER_REMOVE_ALL_STATIONS_CONFIRM": "Αφαίρεση όλων των {{count}} σταθμών;",
   "FILTER_CANCEL": "Ακύρωση",
   "FILTER_APPLY": "Εφαρμογή",
   "LANGUAGE_MENU_TITLE": "Γλώσσα",

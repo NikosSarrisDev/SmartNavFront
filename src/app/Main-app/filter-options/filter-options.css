@@ -59,6 +59,14 @@
   color: #6b7280;
 }
 
+.station-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .add-station-button {
   border: none;
   border-radius: 999px;
@@ -79,6 +87,19 @@
   color: #9ca3af;
   background: #d1d5db;
   box-shadow: none;
+}
+
+.remove-all-button {
+  border: 1px solid #fca5a5;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  color: #b91c1c;
+  background: #fff1f2;
 }
 
 .add-station-button span {
@@ -264,6 +285,11 @@
 
   .add-station-button {
     align-self: flex-end;
+  }
+
+  .station-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .footer-actions {

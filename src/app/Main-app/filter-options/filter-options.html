@@ -20,15 +20,22 @@
         <h1>{{ 'FILTER_TITLE' | translate }}</h1>
         <p>{{ 'FILTER_SUBTITLE' | translate }}</p>
       </div>
-      <button
-        type="button"
-        class="add-station-button"
-        (click)="addStation()"
-        [disabled]="!canAddStation"
-      >
-        <span>+</span>
-        {{ 'FILTER_ADD_STATION' | translate }}
-      </button>
+      <div class="station-actions">
+        @if (stations.length > 0) {
+          <button type="button" class="remove-all-button" (click)="removeAllStations()">
+            {{ 'FILTER_REMOVE_ALL_STATIONS' | translate }}
+          </button>
+        }
+        <button
+          type="button"
+          class="add-station-button"
+          (click)="addStation()"
+          [disabled]="!canAddStation"
+        >
+          <span>+</span>
+          {{ 'FILTER_ADD_STATION' | translate }}
+        </button>
+      </div>
     </div>
 
     <form [formGroup]="stationForms" class="filter-form">
@@ -40,7 +47,7 @@
           <section class="station-card" [formGroupName]="$index">
             <div class="station-head">
               <h2>{{ getStationTitle($index) }}</h2>
-              <button type="button" (click)="removeStation($index)" class="trash-button">
+              <button type="button" (click)="confirmRemoveStation($index)" class="trash-button">
                 <i class="pi pi-trash" style="font-size: 2rem; color: red"></i>
               </button>
             </div>
