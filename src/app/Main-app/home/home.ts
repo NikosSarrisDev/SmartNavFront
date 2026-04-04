@@ -123,6 +123,7 @@ export class Home implements OnInit, OnDestroy {
   route?: google.maps.DirectionsResult;
   explanation: string = '';
   chips: any[] = [];
+  private readonly vehicleIdByCode = new Map<string, number>();
 
   constructor(
     public navService: NavigationService,
@@ -152,6 +153,7 @@ export class Home implements OnInit, OnDestroy {
     this.getCurrentUserRoleAndAvatar(this.currentUserId);
     this.getPreferences();
     this.getActivePreference(this.currentUserId);
+    this.loadVehicleLookup();
   }
 
   getCurrentUserRoleAndAvatar(userId: number) {
@@ -307,6 +309,9 @@ export class Home implements OnInit, OnDestroy {
     const totalDistanceKm = totalDistanceMeters / 1000;
     const savedStations = this.navService.getJourneyFiltersSnapshot();
     const selectedVehicleCode = this.navService.getVehicleSizeSnapshot();
+    const selectedVehicleId = selectedVehicleCode
+      ? (this.vehicleIdByCode.get(selectedVehicleCode) ?? null)
+      : null;
 
     const payload = {
       userID: this.currentUserId,
@@ -317,7 +322,8 @@ export class Home implements OnInit, OnDestroy {
       suggestedPreference: this.currentUserPreference,
       chosenPreference: this.selectedChip,
       tripDate: new Date().toISOString(),
-      vehicleCode: selectedVehicleCode ?? undefined,
+      vehicleID: selectedVehicleId,
+      vehicleCode: selectedVehicleCode ?? null,
       stations: savedStations.map((station, index) => ({
         street: station.street,
         number: station.number,
@@ -554,6 +560,28 @@ export class Home implements OnInit, OnDestroy {
       searchText: this.currentSearchText,
       selectedChip: this.selectedChip,
       selectedChipPrompt: this.selectedChipPrompt,
+    });
+  }
+
+  private loadVehicleLookup(): void {
+    this.dataService.getVehicles({}).subscribe({
+      next: (response: any) => {
+        this.vehicleIdByCode.clear();
+
+        const vehicles = response?.data ?? [];
+        vehicles.forEach((vehicle: any) => {
+          const code = `${vehicle?.code ?? vehicle?.Code ?? ''}`.trim().toLowerCase();
+          const idRaw = vehicle?.id ?? vehicle?.Id;
+          const id = Number(idRaw);
+
+          if (code.length > 0 && Number.isInteger(id) && id > 0) {
+            this.vehicleIdByCode.set(code, id);
+          }
+        });
+      },
+      error: () => {
+        this.vehicleIdByCode.clear();
+      },
     });
   }
 }

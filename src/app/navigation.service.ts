@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 
-export type VehicleSize = 'small' | 'medium' | 'large' | 'truck';
+export type VehicleSize = 'small' | 'medium' | 'large' | 'truck' | 'motorcycle';
 
 export interface JourneyFilterStation {
   street: string;

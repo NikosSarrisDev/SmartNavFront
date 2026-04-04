@@ -223,7 +223,6 @@ export class FilterOptions implements OnInit, OnDestroy {
           .filter((value: any) => value != null && value.translationField.length > 0);
 
         this.vehicleSizeOptions.set(backendOptions);
-        console.log(this.vehicleSizeOptions());
       },
       error: () => {
         this.vehicleSizeOptions.set([]);
