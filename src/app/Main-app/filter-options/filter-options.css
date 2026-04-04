@@ -74,6 +74,13 @@
   box-shadow: 0 10px 20px rgba(79, 70, 229, 0.25);
 }
 
+.add-station-button:disabled {
+  cursor: not-allowed;
+  color: #9ca3af;
+  background: #d1d5db;
+  box-shadow: none;
+}
+
 .add-station-button span {
   font-size: 1.4rem;
   line-height: 1;

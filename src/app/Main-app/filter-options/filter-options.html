@@ -20,7 +20,12 @@
         <h1>{{ 'FILTER_TITLE' | translate }}</h1>
         <p>{{ 'FILTER_SUBTITLE' | translate }}</p>
       </div>
-      <button type="button" class="add-station-button" (click)="addStation()">
+      <button
+        type="button"
+        class="add-station-button"
+        (click)="addStation()"
+        [disabled]="!canAddStation"
+      >
         <span>+</span>
         {{ 'FILTER_ADD_STATION' | translate }}
       </button>
@@ -101,10 +106,10 @@
             <span>{{ 'FILTER_VEHICLE_SIZE_NONE' | translate }}</span>
           </label>
 
-          @for (option of vehicleSizeOptions; track option.value) {
+          @for (option of vehicleSizeOptions(); track option.value) {
             <label class="vehicle-size-option">
               <input type="radio" formControlName="vehicleSize" [value]="option.value" />
-              <span>{{ option.labelKey | translate }}</span>
+              <span>{{ option.translationField | translate }}</span>
             </label>
           }
         </div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -17,15 +17,11 @@ type JourneyStationForm = FormGroup;
   templateUrl: './filter-options.html',
   styleUrl: './filter-options.css',
 })
-export class FilterOptions implements OnInit {
+export class FilterOptions implements OnInit, OnDestroy {
+  readonly maxStations = 10;
   readonly stationForms: FormGroup;
   languages: MenuItem[] | undefined;
-  vehicleSizeOptions: { value: VehicleSize; labelKey: string }[] = [
-    { value: 'small', labelKey: 'FILTER_VEHICLE_SIZE_SMALL' },
-    { value: 'medium', labelKey: 'FILTER_VEHICLE_SIZE_MEDIUM' },
-    { value: 'large', labelKey: 'FILTER_VEHICLE_SIZE_LARGE' },
-    { value: 'truck', labelKey: 'FILTER_VEHICLE_SIZE_TRUCK' },
-  ];
+  readonly vehicleSizeOptions = signal<{ value: VehicleSize; translationField: string }[]>([]);
 
   constructor(
     private formBuilder: FormBuilder,
@@ -47,16 +43,32 @@ export class FilterOptions implements OnInit {
 
   ngOnInit(): void {
     const activeLang = this.translate.currentLang || this.translate.getFallbackLang() || 'el';
-    this.translate.use(activeLang);
-    this.buildLanguageMenu();
+    this.translate.use(activeLang).subscribe({
+      next: () => {
+        this.buildLanguageMenu();
+      },
+      error: () => {
+        this.buildLanguageMenu();
+      },
+    });
     this.loadVehicleOptions();
   }
+
+  ngOnDestroy(): void {}
 
   get stations(): FormArray<JourneyStationForm> {
     return this.stationForms.get('stations') as FormArray<JourneyStationForm>;
   }
 
+  get canAddStation(): boolean {
+    return this.stations.length < this.maxStations;
+  }
+
   addStation(): void {
+    if (!this.canAddStation) {
+      return;
+    }
+
     this.stations.push(this.createStationGroup(this.createBlankStation()));
   }
 
@@ -84,30 +96,40 @@ export class FilterOptions implements OnInit {
   }
 
   changeLanguage(lang: string): void {
-    this.translate.use(lang);
-    this.buildLanguageMenu();
+    this.translate.use(lang).subscribe({
+      next: () => {
+        this.buildLanguageMenu();
+      },
+      error: () => {
+        this.buildLanguageMenu();
+      },
+    });
   }
 
   private buildLanguageMenu(): void {
-    this.languages = [
-      {
-        label: this.translate.instant('LANGUAGE_MENU_TITLE'),
-        items: [
+    this.translate
+      .get(['LANGUAGE_MENU_TITLE', 'LANGUAGE_OPTION_EL', 'LANGUAGE_OPTION_EN'])
+      .subscribe((labels) => {
+        this.languages = [
           {
-            label: this.translate.instant('LANGUAGE_OPTION_EL'),
-            command: () => {
-              this.changeLanguage('el');
-            },
+            label: labels['LANGUAGE_MENU_TITLE'],
+            items: [
+              {
+                label: labels['LANGUAGE_OPTION_EL'],
+                command: () => {
+                  this.changeLanguage('el');
+                },
+              },
+              {
+                label: labels['LANGUAGE_OPTION_EN'],
+                command: () => {
+                  this.changeLanguage('en');
+                },
+              },
+            ],
           },
-          {
-            label: this.translate.instant('LANGUAGE_OPTION_EN'),
-            command: () => {
-              this.changeLanguage('en');
-            },
-          },
-        ],
-      },
-    ];
+        ];
+      });
   }
 
   private createStationGroup(filter: JourneyFilterStation): JourneyStationForm {
@@ -137,8 +159,9 @@ export class FilterOptions implements OnInit {
       next: (response: any) => {
         const backendOptions = (response?.data ?? [])
           .map((vehicle: any) => {
-            const code = `${vehicle?.code ?? ''}`.trim().toLowerCase();
-            const translationField = `${vehicle?.translationField ?? ''}`.trim();
+            const code = `${vehicle?.code ?? vehicle?.Code ?? ''}`.trim().toLowerCase();
+            const translationField =
+              `${vehicle?.translationField ?? vehicle?.TranslationField ?? ''}`.trim();
 
             if (!this.isVehicleSize(code)) {
               return null;
@@ -146,34 +169,16 @@ export class FilterOptions implements OnInit {
 
             return {
               value: code,
-              labelKey: translationField || this.getFallbackTranslationKey(code),
+              translationField,
             };
           })
-          .filter((value: any) => value != null);
+          .filter((value: any) => value != null && value.translationField.length > 0);
 
-        if (backendOptions.length > 0) {
-          this.vehicleSizeOptions = backendOptions;
-        }
+        this.vehicleSizeOptions.set(backendOptions);
       },
       error: () => {
-        // Keep local defaults when lookup is unavailable.
+        this.vehicleSizeOptions.set([]);
       },
     });
-  }
-
-  private getFallbackTranslationKey(code: VehicleSize): string {
-    if (code === 'small') {
-      return 'FILTER_VEHICLE_SIZE_SMALL';
-    }
-
-    if (code === 'medium') {
-      return 'FILTER_VEHICLE_SIZE_MEDIUM';
-    }
-
-    if (code === 'large') {
-      return 'FILTER_VEHICLE_SIZE_LARGE';
-    }
-
-    return 'FILTER_VEHICLE_SIZE_TRUCK';
   }
 }
