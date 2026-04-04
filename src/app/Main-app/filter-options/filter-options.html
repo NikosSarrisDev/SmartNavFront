@@ -1,19 +1,22 @@
-<div class="filter-page">
+<div class="filter-page" [class.modal-embedded]="inModal">
   <section class="filter-card">
-    <div class="filter-topbar">
-      <div class="topbar-spacer"></div>
-      <div class="topbar-actions">
-        <div class="app-globe">
-          <p-button
-            icon="pi pi-globe"
-            (click)="menu.toggle($event)"
-            [rounded]="true"
-            severity="secondary"
-          >
-          </p-button>
+    @if (!inModal) {
+      <div class="filter-topbar">
+        <div class="topbar-spacer"></div>
+        <div class="topbar-actions">
+          <div class="app-globe">
+            <p-button
+              icon="pi pi-globe"
+              (click)="menu.toggle($event)"
+              [rounded]="true"
+              severity="secondary"
+            >
+            </p-button>
+          </div>
         </div>
       </div>
-    </div>
+      <p-menu #menu [model]="languages" [popup]="true"></p-menu>
+    }
 
     <div class="filter-header">
       <div>
@@ -133,5 +136,4 @@
     </div>
   </section>
 
-  <p-menu #menu [model]="languages" [popup]="true"></p-menu>
 </div>

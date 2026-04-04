@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -18,6 +18,9 @@ type JourneyStationForm = FormGroup;
   styleUrl: './filter-options.css',
 })
 export class FilterOptions implements OnInit, OnDestroy {
+  @Input() inModal = false;
+  @Output() closed = new EventEmitter<void>();
+
   readonly maxStations = 10;
   readonly stationForms: FormGroup;
   languages: MenuItem[] | undefined;
@@ -107,6 +110,11 @@ export class FilterOptions implements OnInit, OnDestroy {
   }
 
   cancel(): void {
+    if (this.inModal) {
+      this.closed.emit();
+      return;
+    }
+
     this.router.navigate(['/home']);
   }
 
@@ -116,6 +124,12 @@ export class FilterOptions implements OnInit, OnDestroy {
     const vehicleSize = this.isVehicleSize(vehicleSizeRaw) ? vehicleSizeRaw : null;
     this.navigationService.setJourneyFilters(filters);
     this.navigationService.setVehicleSize(vehicleSize);
+
+    if (this.inModal) {
+      this.closed.emit();
+      return;
+    }
+
     this.router.navigate(['/home']);
   }
 

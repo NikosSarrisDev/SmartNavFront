@@ -13,7 +13,7 @@
       <div class="app-globe" *ngIf="!homeCmp.navigationStarted">
         <p-button
           icon="pi pi-filter"
-          (click)="navigateToFilters()"
+          (click)="openFiltersModal()"
           [rounded]="true"
           severity="secondary"
         >
@@ -32,3 +32,18 @@
   </ng-container>
   <p-menu menu #menu [model]="languages" [popup]="true"></p-menu>
 </app-home>
+
+<p-dialog
+  [(visible)]="filtersModalVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="false"
+  [showHeader]="false"
+  [closeOnEscape]="true"
+  [style]="{ width: '96vw', height: '94vh' }"
+  [contentStyle]="{ padding: '0', height: '100%', overflow: 'auto' }"
+  styleClass="filters-dialog"
+>
+  <app-filter-options [inModal]="true" (closed)="closeFiltersModal()"></app-filter-options>
+</p-dialog>

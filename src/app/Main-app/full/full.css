@@ -14,3 +14,7 @@
 .app-globe:hover {
   transform: scale(1.3);
 }
+
+:host ::ng-deep .filters-dialog .p-dialog-content {
+  border-radius: 18px;
+}

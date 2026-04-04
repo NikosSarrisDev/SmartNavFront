@@ -10,6 +10,13 @@
   justify-content: center;
 }
 
+.filter-page.modal-embedded {
+  min-height: 100%;
+  padding: 1.25rem;
+  background: transparent;
+  align-items: stretch;
+}
+
 .filter-card {
   width: min(720px, 100%);
   background: #ffffff;
@@ -17,6 +24,11 @@
   padding: 2rem;
   box-shadow: 0 18px 50px rgba(55, 65, 81, 0.15);
   border: 1px solid rgba(99, 102, 241, 0.12);
+}
+
+.filter-page.modal-embedded .filter-card {
+  width: 100%;
+  max-width: none;
 }
 
 .filter-topbar {
@@ -263,6 +275,10 @@
 @media (max-width: 720px) {
   .filter-page {
     padding: 1rem;
+  }
+
+  .filter-page.modal-embedded {
+    padding: 0.75rem;
   }
 
   .filter-card {

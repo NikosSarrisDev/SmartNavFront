@@ -3,25 +3,26 @@ import { Home } from '../home/home';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { Button } from 'primeng/button';
 import { Menu, MenuModule } from 'primeng/menu';
+import { Dialog } from 'primeng/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MenuItem } from 'primeng/api';
 import { IsLoaderFullCompEnabled } from '../../is-loader-full-comp-enabled';
 import { NgIf } from '@angular/common';
-import { Router } from '@angular/router';
+import { FilterOptions } from '../filter-options/filter-options';
 
 @Component({
   selector: 'app-full',
-  imports: [Home, ProgressSpinner, Button, Menu, MenuModule, NgIf],
+  imports: [Home, ProgressSpinner, Button, Menu, MenuModule, Dialog, FilterOptions, NgIf],
   templateUrl: './full.html',
   styleUrl: './full.css',
 })
 export class Full implements OnInit {
   languages: MenuItem[] | undefined;
+  filtersModalVisible = false;
 
   constructor(
     private translate: TranslateService,
     private isLoaderFullCompEnabled: IsLoaderFullCompEnabled,
-    private router: Router,
   ) {}
 
   ngOnInit() {
@@ -56,7 +57,11 @@ export class Full implements OnInit {
     this.translate.use(lang);
   }
 
-  navigateToFilters() {
-    this.router.navigate(['/filters']);
+  openFiltersModal(): void {
+    this.filtersModalVisible = true;
+  }
+
+  closeFiltersModal(): void {
+    this.filtersModalVisible = false;
   }
 }
