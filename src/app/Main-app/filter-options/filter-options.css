@@ -124,6 +124,12 @@
   gap: 1rem;
 }
 
+.validation-error {
+  margin: 0.75rem 0 0;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
 .empty-stations {
   margin: 0;
   padding: 0.9rem 1rem;
@@ -270,6 +276,13 @@
   color: #ffffff;
   background: linear-gradient(135deg, #6200ee 0%, #4338ca 100%);
   box-shadow: 0 10px 24px rgba(98, 0, 238, 0.24);
+}
+
+.apply-button:disabled {
+  cursor: not-allowed;
+  color: #9ca3af;
+  background: #d1d5db;
+  box-shadow: none;
 }
 
 @media (max-width: 720px) {

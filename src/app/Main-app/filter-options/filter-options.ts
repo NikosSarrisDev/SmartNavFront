@@ -1,6 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, signal } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MenuItem } from 'primeng/api';
@@ -34,7 +42,9 @@ export class FilterOptions implements OnInit, OnDestroy {
     private dataService: DataService,
   ) {
     this.stationForms = this.formBuilder.group({
-      stations: this.formBuilder.array([] as JourneyStationForm[]),
+      stations: this.formBuilder.array([] as JourneyStationForm[], {
+        validators: [this.duplicateStationsValidator()],
+      }),
       vehicleSize: [''],
     });
 
@@ -119,6 +129,11 @@ export class FilterOptions implements OnInit, OnDestroy {
   }
 
   apply(): void {
+    if (this.stationForms.invalid) {
+      this.stationForms.markAllAsTouched();
+      return;
+    }
+
     const filters = this.stations.getRawValue() as JourneyFilterStation[];
     const vehicleSizeRaw = `${this.stationForms.get('vehicleSize')?.value ?? ''}`.trim();
     const vehicleSize = this.isVehicleSize(vehicleSizeRaw) ? vehicleSizeRaw : null;
@@ -146,6 +161,15 @@ export class FilterOptions implements OnInit, OnDestroy {
         this.buildLanguageMenu();
       },
     });
+  }
+
+  hasDuplicateStationsError(): boolean {
+    const hasDuplicateAddress = this.stations.hasError('duplicateStationAddress');
+    if (!hasDuplicateAddress) {
+      return false;
+    }
+
+    return this.stations.touched || this.stationForms.touched || this.stations.dirty;
   }
 
   private buildLanguageMenu(): void {
@@ -190,6 +214,43 @@ export class FilterOptions implements OnInit, OnDestroy {
       cityArea: '',
       postalCode: '',
     };
+  }
+
+  private duplicateStationsValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!(control instanceof FormArray)) {
+        return null;
+      }
+
+      const seenStations = new Set<string>();
+
+      for (const stationControl of control.controls) {
+        const street = this.normalizeAddressField(stationControl.get('street')?.value);
+        const number = this.normalizeAddressField(stationControl.get('number')?.value);
+        const cityArea = this.normalizeAddressField(stationControl.get('cityArea')?.value);
+        const postalCode = this.normalizeAddressField(stationControl.get('postalCode')?.value);
+
+        if (!street || !number || !cityArea || !postalCode) {
+          continue;
+        }
+
+        const stationKey = `${street}|${number}|${cityArea}|${postalCode}`;
+        if (seenStations.has(stationKey)) {
+          return { duplicateStationAddress: true };
+        }
+
+        seenStations.add(stationKey);
+      }
+
+      return null;
+    };
+  }
+
+  private normalizeAddressField(value: unknown): string {
+    return `${value ?? ''}`
+      .trim()
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
   }
 
   private isVehicleSize(value: string): value is VehicleSize {

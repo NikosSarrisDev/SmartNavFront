@@ -105,6 +105,9 @@
           </section>
         }
       </div>
+      @if (hasDuplicateStationsError()) {
+        <p class="validation-error">{{ 'FILTER_DUPLICATE_STATION_ERROR' | translate }}</p>
+      }
 
       <section class="vehicle-size-card">
         <h2>{{ 'FILTER_VEHICLE_SIZE_TITLE' | translate }}</h2>
@@ -130,7 +133,7 @@
       <button type="button" class="cancel-button" (click)="cancel()">
         {{ 'FILTER_CANCEL' | translate }}
       </button>
-      <button type="button" class="apply-button" (click)="apply()">
+      <button type="button" class="apply-button" (click)="apply()" [disabled]="stationForms.invalid">
         {{ 'FILTER_APPLY' | translate }}
       </button>
     </div>

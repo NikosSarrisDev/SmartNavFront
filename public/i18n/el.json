@@ -100,6 +100,7 @@
   "FILTER_REMOVE_STATION_CONFIRM": "Αφαίρεση σταθμού {{station}};",
   "FILTER_REMOVE_ALL_STATIONS": "Αφαίρεση όλων των σταθμών",
   "FILTER_REMOVE_ALL_STATIONS_CONFIRM": "Αφαίρεση όλων των {{count}} σταθμών;",
+  "FILTER_DUPLICATE_STATION_ERROR": "Ο ίδιος σταθμός δεν μπορεί να προστεθεί δύο φορές. Χρησιμοποιήστε διαφορετική οδό, αριθμό, πόλη/περιοχή ή Τ.Κ.",
   "FILTER_CANCEL": "Ακύρωση",
   "FILTER_APPLY": "Εφαρμογή",
   "LANGUAGE_MENU_TITLE": "Γλώσσα",
