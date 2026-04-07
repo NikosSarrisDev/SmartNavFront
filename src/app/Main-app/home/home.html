@@ -53,8 +53,8 @@
 
       <div class="active-filter-chips" *ngIf="hasActiveFilterChips()">
         <p-chip
-          *ngFor="let stationNumber of activeStationNumbers()"
-          [label]="('FILTER_STATION' | translate) + ' ' + stationNumber"
+          *ngIf="activeStationCount() > 0"
+          [label]="getActiveStationChipLabel()"
           styleClass="active-filter-chip station-chip"
         />
         <p-chip

@@ -127,9 +127,7 @@ export class Home implements OnInit, OnDestroy {
   chips: any[] = [];
   private readonly vehicleIdByCode = new Map<string, number>();
   private readonly vehicleNameByCode = signal<Record<string, string>>({});
-  readonly activeStationNumbers = computed(() =>
-    this.navService.journeyFilters().map((_, index) => index + 1),
-  );
+  readonly activeStationCount = computed(() => this.navService.journeyFilters().length);
   readonly activeVehicleName = computed(() => {
     const selectedVehicleCode = this.navService.vehicleSize();
     if (!selectedVehicleCode) {
@@ -140,7 +138,7 @@ export class Home implements OnInit, OnDestroy {
     return namesByCode[selectedVehicleCode] ?? selectedVehicleCode;
   });
   readonly hasActiveFilterChips = computed(
-    () => this.activeStationNumbers().length > 0 || !!this.activeVehicleName(),
+    () => this.activeStationCount() > 0 || !!this.activeVehicleName(),
   );
 
   constructor(
@@ -403,6 +401,17 @@ export class Home implements OnInit, OnDestroy {
 
   canStartNavigation(): boolean {
     return !!this.latestDirections?.routes?.length;
+  }
+
+  getActiveStationChipLabel(): string {
+    const stationCount = this.activeStationCount();
+    if (stationCount <= 0) {
+      return '';
+    }
+
+    const translationKey =
+      stationCount === 1 ? 'HOME_ACTIVE_STATIONS_SINGLE' : 'HOME_ACTIVE_STATIONS_MULTI';
+    return this.translate.instant(translationKey, { count: stationCount });
   }
 
   ngOnDestroy(): void {

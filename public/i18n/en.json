@@ -72,6 +72,8 @@
   "NAV_PANEL_DISTANCE": "Distance",
   "NAV_PANEL_ETA": "ETA",
   "NAV_PANEL_PROGRESS": "Trip Progress",
+  "HOME_ACTIVE_STATIONS_SINGLE": "{{count}} station",
+  "HOME_ACTIVE_STATIONS_MULTI": "{{count}} stations",
   "EXISTING_NAVIGATION_IN_PROGRESS": "Navigation already in progress. Please cancel it to start a new one.",
   "FILTER_TITLE": "Journey filters",
   "FILTER_SUBTITLE": "Add only intermediate stations. If you add none, routing stays start to finish.",

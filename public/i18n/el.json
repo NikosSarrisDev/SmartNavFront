@@ -73,6 +73,8 @@
   "NAV_PANEL_DISTANCE": "Απόσταση",
   "NAV_PANEL_ETA": "Εκτιμώμενη Άφιξη",
   "NAV_PANEL_PROGRESS": "Πρόοδος Διαδρομής",
+  "HOME_ACTIVE_STATIONS_SINGLE": "{{count}} στάση",
+  "HOME_ACTIVE_STATIONS_MULTI": "{{count}} στάσεις",
   "FILTER_TITLE": "Φίλτρα Διαδρομής",
   "FILTER_SUBTITLE": "Προσθέστε μόνο ενδιάμεσες στάσεις. Αν δεν βάλετε καμία, η διαδρομή μένει από αφετηρία σε προορισμό.",
   "FILTER_ADD_STATION": "Προσθήκη στάσης",
