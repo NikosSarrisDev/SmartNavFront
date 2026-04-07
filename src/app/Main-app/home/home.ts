@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, computed, signal } from '@angular/core';
 import { NavigationService } from '../../navigation.service';
 import { AsyncPipe, DatePipe, DecimalPipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMap, GoogleMapsModule } from '@angular/google-maps';
@@ -13,6 +13,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MenuItem, MessageService } from 'primeng/api';
 import { Toast } from 'primeng/toast';
 import { FormsModule } from '@angular/forms';
+import { Chip } from 'primeng/chip';
 
 @Component({
   selector: 'app-home',
@@ -28,6 +29,7 @@ import { FormsModule } from '@angular/forms';
     FormsModule,
     ProgressSpinnerModule,
     Toast,
+    Chip,
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
@@ -124,6 +126,22 @@ export class Home implements OnInit, OnDestroy {
   explanation: string = '';
   chips: any[] = [];
   private readonly vehicleIdByCode = new Map<string, number>();
+  private readonly vehicleNameByCode = signal<Record<string, string>>({});
+  readonly activeStationNumbers = computed(() =>
+    this.navService.journeyFilters().map((_, index) => index + 1),
+  );
+  readonly activeVehicleName = computed(() => {
+    const selectedVehicleCode = this.navService.vehicleSize();
+    if (!selectedVehicleCode) {
+      return null;
+    }
+
+    const namesByCode = this.vehicleNameByCode();
+    return namesByCode[selectedVehicleCode] ?? selectedVehicleCode;
+  });
+  readonly hasActiveFilterChips = computed(
+    () => this.activeStationNumbers().length > 0 || !!this.activeVehicleName(),
+  );
 
   constructor(
     public navService: NavigationService,
@@ -567,20 +585,32 @@ export class Home implements OnInit, OnDestroy {
     this.dataService.getVehicles({}).subscribe({
       next: (response: any) => {
         this.vehicleIdByCode.clear();
+        const nextVehicleNameByCode: Record<string, string> = {};
 
         const vehicles = response?.data ?? [];
         vehicles.forEach((vehicle: any) => {
           const code = `${vehicle?.code ?? vehicle?.Code ?? ''}`.trim().toLowerCase();
           const idRaw = vehicle?.id ?? vehicle?.Id;
           const id = Number(idRaw);
+          const translationField =
+            `${vehicle?.translationField ?? vehicle?.TranslationField ?? ''}`.trim();
+          const displayName = `${vehicle?.name ?? vehicle?.Name ?? ''}`.trim();
+          const vehicleLabel = translationField || displayName || code;
 
           if (code.length > 0 && Number.isInteger(id) && id > 0) {
             this.vehicleIdByCode.set(code, id);
           }
+
+          if (code.length > 0 && vehicleLabel.length > 0) {
+            nextVehicleNameByCode[code] = vehicleLabel;
+          }
         });
+
+        this.vehicleNameByCode.set(nextVehicleNameByCode);
       },
       error: () => {
         this.vehicleIdByCode.clear();
+        this.vehicleNameByCode.set({});
       },
     });
   }

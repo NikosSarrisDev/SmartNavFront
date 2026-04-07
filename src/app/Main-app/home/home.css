@@ -47,6 +47,31 @@
   outline: none;
 }
 
+.active-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+:host ::ng-deep .active-filter-chip {
+  border-radius: 999px;
+  border: 1px solid #dbeafe;
+  background: #f8fafc;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+:host ::ng-deep .station-chip {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+:host ::ng-deep .vehicle-chip {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
 /* CHIPS */
 .chips-grid {
   display: grid;
