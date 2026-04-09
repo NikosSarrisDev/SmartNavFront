@@ -58,12 +58,31 @@
             <label [for]="'station-street-' + $index">{{
               'FILTER_STREET_LABEL' | translate
             }}</label>
-            <input
-              [id]="'station-street-' + $index"
-              type="text"
-              formControlName="street"
-              [placeholder]="'FILTER_STREET_PLACEHOLDER' | translate"
-            />
+            <div class="street-input-wrapper">
+              <input
+                [id]="'station-street-' + $index"
+                type="text"
+                formControlName="street"
+                [placeholder]="'FILTER_STREET_PLACEHOLDER' | translate"
+                autocomplete="off"
+                (input)="onStationStreetInput($index)"
+                (focus)="onStationStreetFocus($index)"
+                (blur)="onStationStreetBlur($index)"
+              />
+              @if (isStationSuggestionListVisible($index)) {
+                <div class="station-address-suggestions">
+                  @for (suggestion of getStationSuggestions($index); track suggestion.placeId) {
+                    <button
+                      type="button"
+                      class="station-address-suggestion"
+                      (mousedown)="selectStationSuggestion($index, suggestion, $event)"
+                    >
+                      {{ suggestion.description }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
 
             <div class="field-grid">
               <div>
@@ -133,10 +152,14 @@
       <button type="button" class="cancel-button" (click)="cancel()">
         {{ 'FILTER_CANCEL' | translate }}
       </button>
-      <button type="button" class="apply-button" (click)="apply()" [disabled]="stationForms.invalid">
+      <button
+        type="button"
+        class="apply-button"
+        (click)="apply()"
+        [disabled]="stationForms.invalid"
+      >
         {{ 'FILTER_APPLY' | translate }}
       </button>
     </div>
   </section>
-
 </div>

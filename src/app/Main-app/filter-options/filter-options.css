@@ -182,6 +182,44 @@
   font-weight: 600;
 }
 
+.street-input-wrapper {
+  position: relative;
+}
+
+.station-address-suggestions {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.15);
+  overflow: hidden;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.station-address-suggestion {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #111827;
+  text-align: left;
+  font-size: 0.9rem;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+}
+
+.station-address-suggestion + .station-address-suggestion {
+  border-top: 1px solid #f3f4f6;
+}
+
+.station-address-suggestion:hover {
+  background: #eef2ff;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

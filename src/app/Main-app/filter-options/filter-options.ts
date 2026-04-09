@@ -18,6 +18,10 @@ import { JourneyFilterStation, NavigationService, VehicleSize } from '../../navi
 import { DataService } from '../../data.service';
 
 type JourneyStationForm = FormGroup;
+type StationAddressSuggestion = {
+  placeId: string;
+  description: string;
+};
 
 @Component({
   selector: 'app-filter-options',
@@ -33,6 +37,13 @@ export class FilterOptions implements OnInit, OnDestroy {
   readonly stationForms: FormGroup;
   languages: MenuItem[] | undefined;
   readonly vehicleSizeOptions = signal<{ value: VehicleSize; translationField: string }[]>([]);
+  private autocompleteService: google.maps.places.AutocompleteService | null = null;
+  private placeDetailsService: google.maps.places.PlacesService | null = null;
+  private autocompleteSessionToken: google.maps.places.AutocompleteSessionToken | null = null;
+  private hideSuggestionsTimeout: number | null = null;
+  private readonly pendingAutocompleteRequests = new Map<number, number>();
+  private readonly stationSuggestions = signal<Record<number, StationAddressSuggestion[]>>({});
+  activeSuggestionIndex: number | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -65,9 +76,12 @@ export class FilterOptions implements OnInit, OnDestroy {
       },
     });
     this.loadVehicleOptions();
+    this.initializeAutocompleteServices();
   }
 
-  ngOnDestroy(): void {}
+  ngOnDestroy(): void {
+    this.clearHideSuggestionsTimeout();
+  }
 
   get stations(): FormArray<JourneyStationForm> {
     return this.stationForms.get('stations') as FormArray<JourneyStationForm>;
@@ -88,6 +102,7 @@ export class FilterOptions implements OnInit, OnDestroy {
   removeStation(index: number): void {
     if (index >= 0 && index < this.stations.length) {
       this.stations.removeAt(index);
+      this.clearAllStationSuggestions();
     }
   }
 
@@ -116,6 +131,7 @@ export class FilterOptions implements OnInit, OnDestroy {
 
     if (window.confirm(message)) {
       this.stations.clear();
+      this.clearAllStationSuggestions();
     }
   }
 
@@ -172,6 +188,127 @@ export class FilterOptions implements OnInit, OnDestroy {
     return this.stations.touched || this.stationForms.touched || this.stations.dirty;
   }
 
+  onStationStreetInput(index: number): void {
+    this.clearHideSuggestionsTimeout();
+
+    const stationGroup = this.getStationGroup(index);
+    if (!stationGroup || !this.autocompleteService) {
+      this.setStationSuggestions(index, []);
+      return;
+    }
+
+    const streetValue = `${stationGroup.get('street')?.value ?? ''}`.trim();
+    if (!streetValue) {
+      this.setStationSuggestions(index, []);
+      return;
+    }
+
+    const requestVersion = (this.pendingAutocompleteRequests.get(index) ?? 0) + 1;
+    this.pendingAutocompleteRequests.set(index, requestVersion);
+    const request: google.maps.places.AutocompletionRequest = {
+      input: this.buildAutocompleteQuery(stationGroup),
+      sessionToken: this.getAutocompleteSessionToken(),
+      types: ['address'],
+    };
+
+    this.autocompleteService.getPlacePredictions(request, (predictions, status) => {
+      if ((this.pendingAutocompleteRequests.get(index) ?? 0) !== requestVersion) {
+        return;
+      }
+
+      if (
+        status !== google.maps.places.PlacesServiceStatus.OK ||
+        !predictions ||
+        predictions.length === 0
+      ) {
+        this.setStationSuggestions(index, []);
+        return;
+      }
+
+      const nextSuggestions = predictions
+        .filter(
+          (prediction) =>
+            !!prediction.place_id &&
+            prediction.place_id.length > 0 &&
+            !!prediction.description &&
+            prediction.description.length > 0,
+        )
+        .slice(0, 6)
+        .map((prediction) => ({
+          placeId: prediction.place_id,
+          description: prediction.description,
+        }));
+
+      this.setStationSuggestions(index, nextSuggestions);
+    });
+  }
+
+  onStationStreetFocus(index: number): void {
+    this.clearHideSuggestionsTimeout();
+    if (this.getStationSuggestions(index).length > 0) {
+      this.activeSuggestionIndex = index;
+    }
+  }
+
+  onStationStreetBlur(index: number): void {
+    this.clearHideSuggestionsTimeout();
+    this.hideSuggestionsTimeout = window.setTimeout(() => {
+      if (this.activeSuggestionIndex === index) {
+        this.activeSuggestionIndex = null;
+      }
+    }, 120);
+  }
+
+  getStationSuggestions(index: number): StationAddressSuggestion[] {
+    return this.stationSuggestions()[index] ?? [];
+  }
+
+  isStationSuggestionListVisible(index: number): boolean {
+    return this.activeSuggestionIndex === index && this.getStationSuggestions(index).length > 0;
+  }
+
+  selectStationSuggestion(
+    index: number,
+    suggestion: StationAddressSuggestion,
+    event: MouseEvent,
+  ): void {
+    event.preventDefault();
+    this.clearHideSuggestionsTimeout();
+
+    const stationGroup = this.getStationGroup(index);
+    if (!stationGroup || !this.placeDetailsService) {
+      this.setStationSuggestions(index, []);
+      return;
+    }
+
+    const request: google.maps.places.PlaceDetailsRequest = {
+      placeId: suggestion.placeId,
+      fields: ['address_components', 'formatted_address', 'name'],
+      sessionToken: this.autocompleteSessionToken ?? undefined,
+    };
+
+    this.placeDetailsService.getDetails(request, (place, status) => {
+      if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+        return;
+      }
+
+      const currentAddress = stationGroup.getRawValue() as JourneyFilterStation;
+      const parsedAddress = this.parseAddressFromPlace(place);
+
+      stationGroup.patchValue({
+        street: parsedAddress.street || currentAddress.street,
+        number: parsedAddress.number || currentAddress.number,
+        cityArea: parsedAddress.cityArea || currentAddress.cityArea,
+        postalCode: parsedAddress.postalCode || currentAddress.postalCode,
+      });
+      stationGroup.markAsDirty();
+      stationGroup.markAllAsTouched();
+
+      this.autocompleteSessionToken = null;
+      this.setStationSuggestions(index, []);
+    });
+  }
+
   private buildLanguageMenu(): void {
     this.translate
       .get(['LANGUAGE_MENU_TITLE', 'LANGUAGE_OPTION_EL', 'LANGUAGE_OPTION_EN'])
@@ -198,6 +335,19 @@ export class FilterOptions implements OnInit, OnDestroy {
       });
   }
 
+  private initializeAutocompleteServices(): void {
+    if (
+      typeof google === 'undefined' ||
+      !google.maps?.places?.AutocompleteService ||
+      !google.maps?.places?.PlacesService
+    ) {
+      return;
+    }
+
+    this.autocompleteService = new google.maps.places.AutocompleteService();
+    this.placeDetailsService = new google.maps.places.PlacesService(document.createElement('div'));
+  }
+
   private createStationGroup(filter: JourneyFilterStation): JourneyStationForm {
     return this.formBuilder.group({
       street: [filter.street],
@@ -214,6 +364,103 @@ export class FilterOptions implements OnInit, OnDestroy {
       cityArea: '',
       postalCode: '',
     };
+  }
+
+  private getAutocompleteSessionToken(): google.maps.places.AutocompleteSessionToken | undefined {
+    if (
+      !this.autocompleteSessionToken &&
+      typeof google !== 'undefined' &&
+      !!google.maps?.places?.AutocompleteSessionToken
+    ) {
+      this.autocompleteSessionToken = new google.maps.places.AutocompleteSessionToken();
+    }
+
+    return this.autocompleteSessionToken ?? undefined;
+  }
+
+  private getStationGroup(index: number): JourneyStationForm | null {
+    if (index < 0 || index >= this.stations.length) {
+      return null;
+    }
+
+    return this.stations.at(index) as JourneyStationForm;
+  }
+
+  private buildAutocompleteQuery(stationGroup: JourneyStationForm): string {
+    const street = `${stationGroup.get('street')?.value ?? ''}`.trim();
+    const number = `${stationGroup.get('number')?.value ?? ''}`.trim();
+    const cityArea = `${stationGroup.get('cityArea')?.value ?? ''}`.trim();
+    const postalCode = `${stationGroup.get('postalCode')?.value ?? ''}`.trim();
+
+    return [street, number, cityArea, postalCode].filter((value) => value.length > 0).join(' ');
+  }
+
+  private parseAddressFromPlace(place: google.maps.places.PlaceResult): JourneyFilterStation {
+    const components = place.address_components ?? [];
+    const street =
+      this.getAddressComponent(components, 'route') ||
+      this.getFirstAddressSegment(place.formatted_address) ||
+      `${place.name ?? ''}`.trim();
+
+    return {
+      street,
+      number: this.getAddressComponent(components, 'street_number'),
+      cityArea:
+        this.getAddressComponent(components, 'locality') ||
+        this.getAddressComponent(components, 'postal_town') ||
+        this.getAddressComponent(components, 'administrative_area_level_3') ||
+        this.getAddressComponent(components, 'sublocality') ||
+        this.getAddressComponent(components, 'administrative_area_level_2'),
+      postalCode: this.getAddressComponent(components, 'postal_code'),
+    };
+  }
+
+  private getAddressComponent(
+    components: google.maps.GeocoderAddressComponent[],
+    componentType: string,
+  ): string {
+    const component = components.find((item) => item.types.includes(componentType));
+    return `${component?.long_name ?? ''}`.trim();
+  }
+
+  private getFirstAddressSegment(formattedAddress?: string | null): string {
+    if (!formattedAddress) {
+      return '';
+    }
+
+    return formattedAddress.split(',')[0]?.trim() ?? '';
+  }
+
+  private setStationSuggestions(index: number, suggestions: StationAddressSuggestion[]): void {
+    const currentSuggestions = this.stationSuggestions();
+
+    if (suggestions.length === 0) {
+      const { [index]: _removed, ...rest } = currentSuggestions;
+      this.stationSuggestions.set(rest);
+      if (this.activeSuggestionIndex === index) {
+        this.activeSuggestionIndex = null;
+      }
+      return;
+    }
+
+    this.stationSuggestions.set({
+      ...currentSuggestions,
+      [index]: suggestions,
+    });
+    this.activeSuggestionIndex = index;
+  }
+
+  private clearAllStationSuggestions(): void {
+    this.stationSuggestions.set({});
+    this.pendingAutocompleteRequests.clear();
+    this.activeSuggestionIndex = null;
+  }
+
+  private clearHideSuggestionsTimeout(): void {
+    if (this.hideSuggestionsTimeout != null) {
+      window.clearTimeout(this.hideSuggestionsTimeout);
+      this.hideSuggestionsTimeout = null;
+    }
   }
 
   private duplicateStationsValidator(): ValidatorFn {
@@ -247,10 +494,7 @@ export class FilterOptions implements OnInit, OnDestroy {
   }
 
   private normalizeAddressField(value: unknown): string {
-    return `${value ?? ''}`
-      .trim()
-      .replace(/\s+/g, ' ')
-      .toLowerCase();
+    return `${value ?? ''}`.trim().replace(/\s+/g, ' ').toLowerCase();
   }
 
   private isVehicleSize(value: string): value is VehicleSize {
