@@ -20,7 +20,8 @@ export interface JourneyRouteFilters {
   avoidHighways: boolean;
   avoidFerries: boolean;
   trafficTimeMode: TrafficTimeMode;
-  trafficDateTime: string | null;
+  trafficStartDateTime: string | null;
+  trafficEndDateTime: string | null;
   includeEvChargingStations: boolean;
 }
 
@@ -36,7 +37,8 @@ const createDefaultJourneyRouteFilters = (): JourneyRouteFilters => ({
   avoidHighways: false,
   avoidFerries: false,
   trafficTimeMode: 'none',
-  trafficDateTime: null,
+  trafficStartDateTime: null,
+  trafficEndDateTime: null,
   includeEvChargingStations: false,
 });
 const createDefaultHomeDraft = (): HomeDraftState => ({
@@ -91,14 +93,22 @@ export class NavigationService {
     const normalizedMode = this.isTrafficTimeMode(filters.trafficTimeMode)
       ? filters.trafficTimeMode
       : 'none';
-    const normalizedTime = this.normalizeTrafficDateTime(normalizedMode, filters.trafficDateTime);
+    const normalizedStartTime = this.normalizeTrafficDateTime(
+      normalizedMode,
+      filters.trafficStartDateTime,
+    );
+    const normalizedEndTime = this.normalizeTrafficDateTime(
+      normalizedMode,
+      filters.trafficEndDateTime,
+    );
 
     this.journeyRouteFiltersState.set({
       avoidTolls: !!filters.avoidTolls,
       avoidHighways: !!filters.avoidHighways,
       avoidFerries: !!filters.avoidFerries,
       trafficTimeMode: normalizedMode,
-      trafficDateTime: normalizedTime,
+      trafficStartDateTime: normalizedStartTime,
+      trafficEndDateTime: normalizedEndTime,
       includeEvChargingStations: !!filters.includeEvChargingStations,
     });
   }
@@ -299,20 +309,21 @@ Rules:
     }
 
     if (routeFilters.trafficTimeMode !== 'none') {
-      const trafficDateTime = this.formatTrafficDateTimeForPrompt(routeFilters.trafficDateTime);
+      const trafficStart = this.formatTrafficDateTimeForPrompt(routeFilters.trafficStartDateTime);
+      const trafficEnd = this.formatTrafficDateTimeForPrompt(routeFilters.trafficEndDateTime);
+      const modeText =
+        routeFilters.trafficTimeMode === 'departure' ? 'departure time' : 'arrival time';
 
-      if (trafficDateTime) {
-        if (routeFilters.trafficTimeMode === 'departure') {
-          details.push(
-            `Traffic: preferred departure time "${trafficDateTime}". Consider real-time and historical traffic.`,
-          );
-        } else {
-          details.push(
-            `Traffic: preferred arrival time "${trafficDateTime}". Consider real-time and historical traffic.`,
-          );
-        }
-      } else {
-        details.push('Traffic: consider real-time and historical traffic patterns.');
+      details.push(
+        `Traffic mode: "${modeText}". Consider both real-time and historical traffic conditions.`,
+      );
+
+      if (trafficStart) {
+        details.push(`Traffic window start: "${trafficStart}".`);
+      }
+
+      if (trafficEnd) {
+        details.push(`Traffic window end: "${trafficEnd}".`);
       }
     }
 
@@ -352,11 +363,16 @@ Rules:
   }
 
   private getDrivingDepartureTime(routeFilters: JourneyRouteFilters): Date | null {
-    if (routeFilters.trafficTimeMode !== 'departure' || !routeFilters.trafficDateTime) {
+    if (routeFilters.trafficTimeMode === 'none') {
       return null;
     }
 
-    const departureTime = new Date(routeFilters.trafficDateTime);
+    const candidateTime = routeFilters.trafficStartDateTime ?? routeFilters.trafficEndDateTime;
+    if (!candidateTime) {
+      return null;
+    }
+
+    const departureTime = new Date(candidateTime);
     if (Number.isNaN(departureTime.getTime())) {
       return null;
     }

@@ -29,6 +29,9 @@
             {{ 'FILTER_REMOVE_ALL_STATIONS' | translate }}
           </button>
         }
+        <button type="button" class="reset-filters-button" (click)="resetNonStationFilters()">
+          {{ 'FILTER_RESET_NON_STATION_FILTERS' | translate }}
+        </button>
         <button
           type="button"
           class="add-station-button"
@@ -186,14 +189,30 @@
         </div>
 
         @if (shouldShowTrafficDateTime()) {
-          <div class="traffic-datetime-wrapper">
-            <label for="traffic-date-time">{{ 'FILTER_TRAFFIC_TIME_DATE_LABEL' | translate }}</label>
-            <input
-              id="traffic-date-time"
-              type="datetime-local"
-              formControlName="trafficDateTime"
-              [placeholder]="'FILTER_TRAFFIC_TIME_DATE_PLACEHOLDER' | translate"
-            />
+          <div class="traffic-datetime-grid">
+            <div class="traffic-datetime-wrapper">
+              <label for="traffic-start-date-time">{{
+                'FILTER_TRAFFIC_TIME_START_LABEL' | translate
+              }}</label>
+              <input
+                id="traffic-start-date-time"
+                type="datetime-local"
+                formControlName="trafficStartDateTime"
+                [placeholder]="'FILTER_TRAFFIC_TIME_START_PLACEHOLDER' | translate"
+              />
+            </div>
+
+            <div class="traffic-datetime-wrapper">
+              <label for="traffic-end-date-time">{{
+                'FILTER_TRAFFIC_TIME_END_LABEL' | translate
+              }}</label>
+              <input
+                id="traffic-end-date-time"
+                type="datetime-local"
+                formControlName="trafficEndDateTime"
+                [placeholder]="'FILTER_TRAFFIC_TIME_END_PLACEHOLDER' | translate"
+              />
+            </div>
           </div>
         }
       </section>

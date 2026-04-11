@@ -45,6 +45,7 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   outline: none;
+  cursor: pointer;
 }
 
 .active-filter-chips {
@@ -70,6 +71,21 @@
 :host ::ng-deep .vehicle-chip {
   border-color: #fed7aa;
   background: #fff7ed;
+}
+
+:host ::ng-deep .avoid-chip {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+:host ::ng-deep .traffic-chip {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+:host ::ng-deep .ev-chip {
+  border-color: #99f6e4;
+  background: #f0fdfa;
 }
 
 /* CHIPS */
@@ -164,6 +180,7 @@
   border: none;
   padding: 0 15px;
   border-radius: 8px;
+  cursor: not-allowed;
 }
 
 .goal-button-enable {
@@ -186,6 +203,10 @@
   border-radius: 50%;
   border: 4px solid #6750a4;
   margin-bottom: 15px;
+}
+
+.avatar-wrapper {
+  cursor: pointer;
 }
 
 .nav-started-box {

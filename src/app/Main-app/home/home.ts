@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild, computed, signal } from '@angular/core';
-import { NavigationService } from '../../navigation.service';
+import { JourneyRouteFilters, NavigationService } from '../../navigation.service';
 import { AsyncPipe, DatePipe, DecimalPipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMap, GoogleMapsModule } from '@angular/google-maps';
 import { Observable, tap } from 'rxjs';
@@ -128,6 +128,7 @@ export class Home implements OnInit, OnDestroy {
   private readonly vehicleIdByCode = new Map<string, number>();
   private readonly vehicleNameByCode = signal<Record<string, string>>({});
   readonly activeStationCount = computed(() => this.navService.journeyFilters().length);
+  readonly activeRouteFilters = computed(() => this.navService.journeyRouteFilters());
   readonly activeVehicleName = computed(() => {
     const selectedVehicleCode = this.navService.vehicleSize();
     if (!selectedVehicleCode) {
@@ -137,9 +138,21 @@ export class Home implements OnInit, OnDestroy {
     const namesByCode = this.vehicleNameByCode();
     return namesByCode[selectedVehicleCode] ?? selectedVehicleCode;
   });
-  readonly hasActiveFilterChips = computed(
-    () => this.activeStationCount() > 0 || !!this.activeVehicleName(),
-  );
+  readonly hasActiveFilterChips = computed(() => {
+    const routeFilters = this.activeRouteFilters();
+
+    return (
+      this.activeStationCount() > 0 ||
+      !!this.activeVehicleName() ||
+      routeFilters.avoidTolls ||
+      routeFilters.avoidHighways ||
+      routeFilters.avoidFerries ||
+      routeFilters.trafficTimeMode !== 'none' ||
+      !!routeFilters.trafficStartDateTime ||
+      !!routeFilters.trafficEndDateTime ||
+      routeFilters.includeEvChargingStations
+    );
+  });
 
   constructor(
     public navService: NavigationService,
@@ -414,6 +427,26 @@ export class Home implements OnInit, OnDestroy {
     return this.translate.instant(translationKey, { count: stationCount });
   }
 
+  getTrafficStartChipLabel(routeFilters: JourneyRouteFilters): string {
+    if (!routeFilters.trafficStartDateTime) {
+      return '';
+    }
+
+    return this.translate.instant('HOME_FILTER_TRAFFIC_START_AT', {
+      date: this.formatFilterDateTime(routeFilters.trafficStartDateTime),
+    });
+  }
+
+  getTrafficEndChipLabel(routeFilters: JourneyRouteFilters): string {
+    if (!routeFilters.trafficEndDateTime) {
+      return '';
+    }
+
+    return this.translate.instant('HOME_FILTER_TRAFFIC_END_AT', {
+      date: this.formatFilterDateTime(routeFilters.trafficEndDateTime),
+    });
+  }
+
   ngOnDestroy(): void {
     this.persistHomeDraft();
     this.stopCameraAnimation();
@@ -580,6 +613,19 @@ export class Home implements OnInit, OnDestroy {
         },
       ],
     };
+  }
+
+  private formatFilterDateTime(value: string): string {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+
+    const locale = this.translate.currentLang === 'el' ? 'el-GR' : 'en-US';
+    return parsed.toLocaleString(locale, {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
   }
 
   private persistHomeDraft(): void {
