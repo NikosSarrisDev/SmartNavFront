@@ -146,6 +146,67 @@
           }
         </div>
       </section>
+
+      <section class="avoidances-card">
+        <h2>{{ 'FILTER_AVOIDANCES_TITLE' | translate }}</h2>
+        <p>{{ 'FILTER_AVOIDANCES_SUBTITLE' | translate }}</p>
+
+        <div class="toggle-grid">
+          <label class="toggle-option">
+            <input type="checkbox" formControlName="avoidTolls" />
+            <span>{{ 'FILTER_AVOID_TOLLS' | translate }}</span>
+          </label>
+          <label class="toggle-option">
+            <input type="checkbox" formControlName="avoidHighways" />
+            <span>{{ 'FILTER_AVOID_HIGHWAYS' | translate }}</span>
+          </label>
+          <label class="toggle-option">
+            <input type="checkbox" formControlName="avoidFerries" />
+            <span>{{ 'FILTER_AVOID_FERRIES' | translate }}</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="traffic-time-card">
+        <h2>{{ 'FILTER_TRAFFIC_TIME_TITLE' | translate }}</h2>
+        <p>{{ 'FILTER_TRAFFIC_TIME_SUBTITLE' | translate }}</p>
+
+        <div class="traffic-mode-grid">
+          @for (option of trafficTimeModeOptions; track option.value) {
+            <label class="traffic-mode-option">
+              <input
+                type="radio"
+                formControlName="trafficTimeMode"
+                [value]="option.value"
+                (change)="onTrafficTimeModeChange()"
+              />
+              <span>{{ option.translationField | translate }}</span>
+            </label>
+          }
+        </div>
+
+        @if (shouldShowTrafficDateTime()) {
+          <div class="traffic-datetime-wrapper">
+            <label for="traffic-date-time">{{ 'FILTER_TRAFFIC_TIME_DATE_LABEL' | translate }}</label>
+            <input
+              id="traffic-date-time"
+              type="datetime-local"
+              formControlName="trafficDateTime"
+              [placeholder]="'FILTER_TRAFFIC_TIME_DATE_PLACEHOLDER' | translate"
+            />
+          </div>
+        }
+      </section>
+
+      <section class="ev-card">
+        <h2>{{ 'FILTER_EV_TITLE' | translate }}</h2>
+        <p>{{ 'FILTER_EV_SUBTITLE' | translate }}</p>
+
+        <label class="toggle-option ev-toggle">
+          <input type="checkbox" formControlName="includeEvChargingStations" />
+          <span>{{ 'FILTER_EV_INCLUDE_CHARGERS' | translate }}</span>
+        </label>
+      </section>
     </form>
 
     <div class="footer-actions">

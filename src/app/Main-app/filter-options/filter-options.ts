@@ -14,7 +14,13 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MenuItem } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Menu, MenuModule } from 'primeng/menu';
-import { JourneyFilterStation, NavigationService, VehicleSize } from '../../navigation.service';
+import {
+  JourneyFilterStation,
+  JourneyRouteFilters,
+  NavigationService,
+  TrafficTimeMode,
+  VehicleSize,
+} from '../../navigation.service';
 import { DataService } from '../../data.service';
 
 type JourneyStationForm = FormGroup;
@@ -37,6 +43,11 @@ export class FilterOptions implements OnInit, OnDestroy {
   readonly stationForms: FormGroup;
   languages: MenuItem[] | undefined;
   readonly vehicleSizeOptions = signal<{ value: VehicleSize; translationField: string }[]>([]);
+  readonly trafficTimeModeOptions: { value: TrafficTimeMode; translationField: string }[] = [
+    { value: 'none', translationField: 'FILTER_TRAFFIC_TIME_MODE_NONE' },
+    { value: 'departure', translationField: 'FILTER_TRAFFIC_TIME_MODE_DEPARTURE' },
+    { value: 'arrival', translationField: 'FILTER_TRAFFIC_TIME_MODE_ARRIVAL' },
+  ];
   private autocompleteService: google.maps.places.AutocompleteService | null = null;
   private placeDetailsService: google.maps.places.PlacesService | null = null;
   private autocompleteSessionToken: google.maps.places.AutocompleteSessionToken | null = null;
@@ -57,11 +68,26 @@ export class FilterOptions implements OnInit, OnDestroy {
         validators: [this.duplicateStationsValidator()],
       }),
       vehicleSize: [''],
+      avoidTolls: [false],
+      avoidHighways: [false],
+      avoidFerries: [false],
+      trafficTimeMode: ['none'],
+      trafficDateTime: [''],
+      includeEvChargingStations: [false],
     });
 
     const existingStations = this.navigationService.getJourneyFiltersSnapshot();
     const existingVehicleSize = this.navigationService.getVehicleSizeSnapshot();
-    this.stationForms.patchValue({ vehicleSize: existingVehicleSize ?? '' });
+    const existingRouteFilters = this.navigationService.getJourneyRouteFiltersSnapshot();
+    this.stationForms.patchValue({
+      vehicleSize: existingVehicleSize ?? '',
+      avoidTolls: existingRouteFilters.avoidTolls,
+      avoidHighways: existingRouteFilters.avoidHighways,
+      avoidFerries: existingRouteFilters.avoidFerries,
+      trafficTimeMode: existingRouteFilters.trafficTimeMode,
+      trafficDateTime: existingRouteFilters.trafficDateTime ?? '',
+      includeEvChargingStations: existingRouteFilters.includeEvChargingStations,
+    });
     existingStations.forEach((filter) => this.stations.push(this.createStationGroup(filter)));
   }
 
@@ -153,8 +179,21 @@ export class FilterOptions implements OnInit, OnDestroy {
     const filters = this.stations.getRawValue() as JourneyFilterStation[];
     const vehicleSizeRaw = `${this.stationForms.get('vehicleSize')?.value ?? ''}`.trim();
     const vehicleSize = this.isVehicleSize(vehicleSizeRaw) ? vehicleSizeRaw : null;
+    const trafficTimeModeRaw = `${this.stationForms.get('trafficTimeMode')?.value ?? ''}`.trim();
+    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw) ? trafficTimeModeRaw : 'none';
+    const trafficDateTimeRaw = `${this.stationForms.get('trafficDateTime')?.value ?? ''}`.trim();
+    const routeFilters: JourneyRouteFilters = {
+      avoidTolls: !!this.stationForms.get('avoidTolls')?.value,
+      avoidHighways: !!this.stationForms.get('avoidHighways')?.value,
+      avoidFerries: !!this.stationForms.get('avoidFerries')?.value,
+      trafficTimeMode,
+      trafficDateTime: this.normalizeTrafficDateTime(trafficTimeMode, trafficDateTimeRaw),
+      includeEvChargingStations: !!this.stationForms.get('includeEvChargingStations')?.value,
+    };
+
     this.navigationService.setJourneyFilters(filters);
     this.navigationService.setVehicleSize(vehicleSize);
+    this.navigationService.setJourneyRouteFilters(routeFilters);
 
     if (this.inModal) {
       this.closed.emit();
@@ -186,6 +225,21 @@ export class FilterOptions implements OnInit, OnDestroy {
     }
 
     return this.stations.touched || this.stationForms.touched || this.stations.dirty;
+  }
+
+  onTrafficTimeModeChange(): void {
+    const trafficTimeModeRaw = `${this.stationForms.get('trafficTimeMode')?.value ?? ''}`.trim();
+    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw) ? trafficTimeModeRaw : 'none';
+
+    if (trafficTimeMode === 'none') {
+      this.stationForms.patchValue({ trafficDateTime: '' });
+    }
+  }
+
+  shouldShowTrafficDateTime(): boolean {
+    const trafficTimeModeRaw = `${this.stationForms.get('trafficTimeMode')?.value ?? ''}`.trim();
+    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw) ? trafficTimeModeRaw : 'none';
+    return trafficTimeMode !== 'none';
   }
 
   onStationStreetInput(index: number): void {
@@ -505,6 +559,23 @@ export class FilterOptions implements OnInit, OnDestroy {
       value === 'truck' ||
       value === 'motorcycle'
     );
+  }
+
+  private isTrafficTimeMode(value: string): value is TrafficTimeMode {
+    return value === 'none' || value === 'departure' || value === 'arrival';
+  }
+
+  private normalizeTrafficDateTime(mode: TrafficTimeMode, value: string): string | null {
+    if (mode === 'none' || value.length === 0) {
+      return null;
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    return value;
   }
 
   private loadVehicleOptions(): void {

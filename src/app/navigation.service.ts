@@ -6,12 +6,22 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 
 export type VehicleSize = 'small' | 'medium' | 'large' | 'truck' | 'motorcycle';
+export type TrafficTimeMode = 'none' | 'departure' | 'arrival';
 
 export interface JourneyFilterStation {
   street: string;
   number: string;
   cityArea: string;
   postalCode: string;
+}
+
+export interface JourneyRouteFilters {
+  avoidTolls: boolean;
+  avoidHighways: boolean;
+  avoidFerries: boolean;
+  trafficTimeMode: TrafficTimeMode;
+  trafficDateTime: string | null;
+  includeEvChargingStations: boolean;
 }
 
 export interface HomeDraftState {
@@ -21,6 +31,14 @@ export interface HomeDraftState {
 }
 
 const createDefaultJourneyFilters = (): JourneyFilterStation[] => [];
+const createDefaultJourneyRouteFilters = (): JourneyRouteFilters => ({
+  avoidTolls: false,
+  avoidHighways: false,
+  avoidFerries: false,
+  trafficTimeMode: 'none',
+  trafficDateTime: null,
+  includeEvChargingStations: false,
+});
 const createDefaultHomeDraft = (): HomeDraftState => ({
   searchText: '',
   selectedChip: '',
@@ -35,12 +53,16 @@ export class NavigationService {
     createDefaultJourneyFilters(),
   );
   private readonly vehicleSizeState = signal<VehicleSize | null>(null);
+  private readonly journeyRouteFiltersState = signal<JourneyRouteFilters>(
+    createDefaultJourneyRouteFilters(),
+  );
   private readonly homeDraftState = signal<HomeDraftState>(createDefaultHomeDraft());
 
   public isLoading$ = new BehaviorSubject<boolean>(false);
   public errorMessage$ = new BehaviorSubject<string | null>(null);
   public readonly journeyFilters = this.journeyFiltersState.asReadonly();
   public readonly vehicleSize = this.vehicleSizeState.asReadonly();
+  public readonly journeyRouteFilters = this.journeyRouteFiltersState.asReadonly();
   public readonly homeDraft = this.homeDraftState.asReadonly();
 
   constructor(
@@ -65,6 +87,22 @@ export class NavigationService {
     this.vehicleSizeState.set(size);
   }
 
+  setJourneyRouteFilters(filters: JourneyRouteFilters): void {
+    const normalizedMode = this.isTrafficTimeMode(filters.trafficTimeMode)
+      ? filters.trafficTimeMode
+      : 'none';
+    const normalizedTime = this.normalizeTrafficDateTime(normalizedMode, filters.trafficDateTime);
+
+    this.journeyRouteFiltersState.set({
+      avoidTolls: !!filters.avoidTolls,
+      avoidHighways: !!filters.avoidHighways,
+      avoidFerries: !!filters.avoidFerries,
+      trafficTimeMode: normalizedMode,
+      trafficDateTime: normalizedTime,
+      includeEvChargingStations: !!filters.includeEvChargingStations,
+    });
+  }
+
   setHomeDraft(draft: Partial<HomeDraftState>): void {
     const current = this.homeDraftState();
     this.homeDraftState.set({
@@ -84,10 +122,11 @@ export class NavigationService {
 
     const savedStations = this.journeyFiltersState();
     const savedVehicleSize = this.vehicleSizeState();
+    const savedRouteFilters = this.journeyRouteFiltersState();
     const formattedStations = savedStations
       .map((station) => this.formatStation(station))
       .filter((station) => station.length > 0);
-    const filterPrompt = this.buildFilterPrompt(savedStations, savedVehicleSize);
+    const filterPrompt = this.buildFilterPrompt(savedStations, savedVehicleSize, savedRouteFilters);
 
     const prompt = {
       contents: [
@@ -147,7 +186,18 @@ Rules:
           waypoints: formattedStations.map((stop: string) => ({ location: stop, stopover: true })),
           travelMode: google.maps.TravelMode.DRIVING,
           optimizeWaypoints: true,
+          avoidTolls: savedRouteFilters.avoidTolls,
+          avoidHighways: savedRouteFilters.avoidHighways,
+          avoidFerries: savedRouteFilters.avoidFerries,
         };
+        const departureTime = this.getDrivingDepartureTime(savedRouteFilters);
+
+        if (departureTime) {
+          request.drivingOptions = {
+            departureTime,
+            trafficModel: google.maps.TrafficModel.BEST_GUESS,
+          };
+        }
 
         return this.directionsService.route(request).pipe(
           map((res) => {
@@ -193,6 +243,10 @@ Rules:
     return this.vehicleSizeState();
   }
 
+  getJourneyRouteFiltersSnapshot(): JourneyRouteFilters {
+    return { ...this.journeyRouteFiltersState() };
+  }
+
   getCurrentLocation(): Promise<google.maps.LatLngLiteral> {
     return new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
@@ -211,6 +265,7 @@ Rules:
   private buildFilterPrompt(
     filters: JourneyFilterStation[],
     vehicleSize: VehicleSize | null,
+    routeFilters: JourneyRouteFilters,
   ): string {
     const stationDetails = filters
       .map((filter, index) => ({
@@ -229,11 +284,101 @@ Rules:
       details.push(`Vehicle: "${vehicleSize}". Avoid roads that do not fit.`);
     }
 
+    const avoidances: string[] = [];
+    if (routeFilters.avoidTolls) {
+      avoidances.push('tolls');
+    }
+    if (routeFilters.avoidHighways) {
+      avoidances.push('highways');
+    }
+    if (routeFilters.avoidFerries) {
+      avoidances.push('ferries');
+    }
+    if (avoidances.length > 0) {
+      details.push(`Avoidances: ${avoidances.join(', ')}.`);
+    }
+
+    if (routeFilters.trafficTimeMode !== 'none') {
+      const trafficDateTime = this.formatTrafficDateTimeForPrompt(routeFilters.trafficDateTime);
+
+      if (trafficDateTime) {
+        if (routeFilters.trafficTimeMode === 'departure') {
+          details.push(
+            `Traffic: preferred departure time "${trafficDateTime}". Consider real-time and historical traffic.`,
+          );
+        } else {
+          details.push(
+            `Traffic: preferred arrival time "${trafficDateTime}". Consider real-time and historical traffic.`,
+          );
+        }
+      } else {
+        details.push('Traffic: consider real-time and historical traffic patterns.');
+      }
+    }
+
+    if (routeFilters.includeEvChargingStations) {
+      details.push(
+        'EV: prioritize routes with charging station availability and include suitable charging stops.',
+      );
+    }
+
     if (!details.length) {
       return 'Filters: none.';
     }
 
     return `Filters: ${details.join(' ')}`;
+  }
+
+  private isTrafficTimeMode(value: string): value is TrafficTimeMode {
+    return value === 'none' || value === 'departure' || value === 'arrival';
+  }
+
+  private normalizeTrafficDateTime(mode: TrafficTimeMode, value: string | null): string | null {
+    if (mode === 'none') {
+      return null;
+    }
+
+    const trimmed = `${value ?? ''}`.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    return trimmed;
+  }
+
+  private getDrivingDepartureTime(routeFilters: JourneyRouteFilters): Date | null {
+    if (routeFilters.trafficTimeMode !== 'departure' || !routeFilters.trafficDateTime) {
+      return null;
+    }
+
+    const departureTime = new Date(routeFilters.trafficDateTime);
+    if (Number.isNaN(departureTime.getTime())) {
+      return null;
+    }
+
+    if (departureTime.getTime() < Date.now()) {
+      return new Date();
+    }
+
+    return departureTime;
+  }
+
+  private formatTrafficDateTimeForPrompt(value: string | null): string | null {
+    if (!value) {
+      return null;
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    return parsed.toISOString();
   }
 
   private formatStation(station: JourneyFilterStation): string {
