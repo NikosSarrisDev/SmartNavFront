@@ -110,6 +110,7 @@
   "FILTER_AVOIDANCES_TITLE": "Avoidances",
   "FILTER_AVOIDANCES_SUBTITLE": "Choose what the route should avoid.",
   "FILTER_RESET_NON_STATION_FILTERS": "Reset non-station filters",
+  "FILTER_RESET_NON_STATION_FILTERS_CONFIRM": "Reset all non-station filters to default values?",
   "FILTER_AVOID_TOLLS": "Avoid toll roads",
   "FILTER_AVOID_HIGHWAYS": "Avoid highways",
   "FILTER_AVOID_FERRIES": "Avoid ferries / ships",

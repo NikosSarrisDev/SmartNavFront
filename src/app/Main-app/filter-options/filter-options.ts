@@ -250,6 +250,12 @@ export class FilterOptions implements OnInit, OnDestroy {
   }
 
   resetNonStationFilters(): void {
+    const message = this.translate.instant('FILTER_RESET_NON_STATION_FILTERS_CONFIRM');
+
+    if (!window.confirm(message)) {
+      return;
+    }
+
     this.stationForms.patchValue({
       vehicleSize: '',
       avoidTolls: false,

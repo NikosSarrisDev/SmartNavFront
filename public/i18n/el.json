@@ -110,6 +110,7 @@
   "FILTER_AVOIDANCES_TITLE": "Αποφυγές",
   "FILTER_AVOIDANCES_SUBTITLE": "Επιλέξτε τι πρέπει να αποφεύγει η διαδρομή.",
   "FILTER_RESET_NON_STATION_FILTERS": "Επαναφορά υπόλοιπων φίλτρων",
+  "FILTER_RESET_NON_STATION_FILTERS_CONFIRM": "Επαναφορά όλων των υπόλοιπων φίλτρων στις προεπιλεγμένες τιμές;",
   "FILTER_AVOID_TOLLS": "Αποφυγή διοδίων",
   "FILTER_AVOID_HIGHWAYS": "Αποφυγή αυτοκινητοδρόμων",
   "FILTER_AVOID_FERRIES": "Αποφυγή πορθμείων / πλοίων",
