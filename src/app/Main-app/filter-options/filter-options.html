@@ -29,9 +29,11 @@
             {{ 'FILTER_REMOVE_ALL_STATIONS' | translate }}
           </button>
         }
-        <button type="button" class="reset-filters-button" (click)="resetNonStationFilters()">
-          {{ 'FILTER_RESET_NON_STATION_FILTERS' | translate }}
-        </button>
+        @if (hasNonDefaultNonStationFilters()) {
+          <button type="button" class="reset-filters-button" (click)="resetNonStationFilters()">
+            {{ 'FILTER_RESET_NON_STATION_FILTERS' | translate }}
+          </button>
+        }
         <button
           type="button"
           class="add-station-button"

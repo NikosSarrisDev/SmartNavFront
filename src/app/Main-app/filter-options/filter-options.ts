@@ -249,6 +249,29 @@ export class FilterOptions implements OnInit, OnDestroy {
     return trafficTimeMode !== 'none';
   }
 
+  hasNonDefaultNonStationFilters(): boolean {
+    const vehicleSizeRaw = `${this.stationForms.get('vehicleSize')?.value ?? ''}`.trim();
+    const avoidTolls = !!this.stationForms.get('avoidTolls')?.value;
+    const avoidHighways = !!this.stationForms.get('avoidHighways')?.value;
+    const avoidFerries = !!this.stationForms.get('avoidFerries')?.value;
+    const includeEvChargingStations = !!this.stationForms.get('includeEvChargingStations')?.value;
+    const trafficTimeModeRaw = `${this.stationForms.get('trafficTimeMode')?.value ?? ''}`.trim();
+    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw) ? trafficTimeModeRaw : 'none';
+    const trafficStartDateTime = `${this.stationForms.get('trafficStartDateTime')?.value ?? ''}`.trim();
+    const trafficEndDateTime = `${this.stationForms.get('trafficEndDateTime')?.value ?? ''}`.trim();
+
+    return (
+      vehicleSizeRaw.length > 0 ||
+      avoidTolls ||
+      avoidHighways ||
+      avoidFerries ||
+      includeEvChargingStations ||
+      trafficTimeMode !== 'none' ||
+      trafficStartDateTime.length > 0 ||
+      trafficEndDateTime.length > 0
+    );
+  }
+
   resetNonStationFilters(): void {
     const message = this.translate.instant('FILTER_RESET_NON_STATION_FILTERS_CONFIRM');
 
