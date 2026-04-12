@@ -15,6 +15,14 @@ import { Toast } from 'primeng/toast';
 import { FormsModule } from '@angular/forms';
 import { Chip } from 'primeng/chip';
 
+type RouteFeatureMarkerType = 'toll' | 'highway' | 'ferry' | 'ev';
+type RouteFeatureMarker = {
+  id: string;
+  position: google.maps.LatLngLiteral;
+  title: string;
+  options: google.maps.MarkerOptions;
+};
+
 @Component({
   selector: 'app-home',
   imports: [
@@ -125,8 +133,16 @@ export class Home implements OnInit, OnDestroy {
   route?: google.maps.DirectionsResult;
   explanation: string = '';
   chips: any[] = [];
+  readonly routeFeatureMarkers = signal<RouteFeatureMarker[]>([]);
   private readonly vehicleIdByCode = new Map<string, number>();
   private readonly vehicleNameByCode = signal<Record<string, string>>({});
+  private routeFeatureRequestToken = 0;
+  private readonly routeFeatureIconByType: Record<RouteFeatureMarkerType, string> = {
+    toll: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+    highway: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
+    ferry: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png',
+    ev: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+  };
   readonly activeStationCount = computed(() => this.navService.journeyFilters().length);
   readonly activeRouteFilters = computed(() => this.navService.journeyRouteFilters());
   readonly activeVehicleName = computed(() => {
@@ -285,6 +301,8 @@ export class Home implements OnInit, OnDestroy {
     this.destinationMarker = undefined;
     this.userStartMarker = undefined;
     this.activeRoutePath = [];
+    this.routeFeatureRequestToken++;
+    this.routeFeatureMarkers.set([]);
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
 
@@ -307,6 +325,9 @@ export class Home implements OnInit, OnDestroy {
           this.duration = Math.round(totalDuration / 60) + ' min';
 
           this.explanation = data.explanation;
+          const routeFilters = this.navService.getJourneyRouteFiltersSnapshot();
+          const currentToken = this.routeFeatureRequestToken;
+          void this.loadRouteFeatureMarkers(route, routeFilters, currentToken);
         }
       }),
       finalize(() => this.isLoaderFullCompEnabled.setLoadingToFalse()),
@@ -445,6 +466,10 @@ export class Home implements OnInit, OnDestroy {
     return this.translate.instant('HOME_FILTER_TRAFFIC_END_AT', {
       date: this.formatFilterDateTime(routeFilters.trafficEndDateTime),
     });
+  }
+
+  trackRouteFeatureMarker(_index: number, marker: RouteFeatureMarker): string {
+    return marker.id;
   }
 
   ngOnDestroy(): void {
@@ -613,6 +638,274 @@ export class Home implements OnInit, OnDestroy {
         },
       ],
     };
+  }
+
+  private async loadRouteFeatureMarkers(
+    route: google.maps.DirectionsRoute,
+    routeFilters: JourneyRouteFilters,
+    requestToken: number,
+  ): Promise<void> {
+    const roadFeatureMarkers = this.buildRoadFeatureMarkers(route, routeFilters);
+    if (requestToken !== this.routeFeatureRequestToken) {
+      return;
+    }
+
+    this.routeFeatureMarkers.set(roadFeatureMarkers);
+
+    if (!routeFilters.includeEvChargingStations) {
+      return;
+    }
+
+    const evMarkers = await this.findEvChargingMarkers(route, requestToken);
+    if (requestToken !== this.routeFeatureRequestToken) {
+      return;
+    }
+
+    this.routeFeatureMarkers.set([...roadFeatureMarkers, ...evMarkers]);
+  }
+
+  private buildRoadFeatureMarkers(
+    route: google.maps.DirectionsRoute,
+    routeFilters: JourneyRouteFilters,
+  ): RouteFeatureMarker[] {
+    const markers: RouteFeatureMarker[] = [];
+
+    const tollPosition = this.findRouteFeaturePosition(route, 'toll');
+    if (tollPosition) {
+      markers.push(this.createRouteFeatureMarker('toll', tollPosition));
+    }
+
+    if (routeFilters.avoidHighways) {
+      const highwayPosition = this.findRouteFeaturePosition(route, 'highway');
+      if (highwayPosition) {
+        markers.push(this.createRouteFeatureMarker('highway', highwayPosition));
+      }
+    }
+
+    if (routeFilters.avoidFerries) {
+      const ferryPosition = this.findRouteFeaturePosition(route, 'ferry');
+      if (ferryPosition) {
+        markers.push(this.createRouteFeatureMarker('ferry', ferryPosition));
+      }
+    }
+
+    return markers;
+  }
+
+  private createRouteFeatureMarker(
+    type: RouteFeatureMarkerType,
+    position: google.maps.LatLngLiteral,
+    customId?: string,
+    customTitle?: string,
+  ): RouteFeatureMarker {
+    const title =
+      customTitle ??
+      this.translate.instant(
+        type === 'toll'
+          ? 'HOME_MAP_MARKER_TOLL'
+          : type === 'highway'
+            ? 'HOME_MAP_MARKER_HIGHWAY'
+            : type === 'ferry'
+              ? 'HOME_MAP_MARKER_FERRY'
+              : 'HOME_MAP_MARKER_EV',
+      );
+
+    return {
+      id: customId ?? `${type}-${position.lat.toFixed(5)}-${position.lng.toFixed(5)}`,
+      position,
+      title,
+      options: {
+        icon: this.routeFeatureIconByType[type],
+        zIndex: 985,
+      },
+    };
+  }
+
+  private findRouteFeaturePosition(
+    route: google.maps.DirectionsRoute,
+    featureType: Exclude<RouteFeatureMarkerType, 'ev'>,
+  ): google.maps.LatLngLiteral | null {
+    const keywords = this.getRouteFeatureKeywords(featureType);
+    const legs = route.legs ?? [];
+
+    for (const leg of legs) {
+      for (const step of leg.steps ?? []) {
+        const normalizedInstruction = this.normalizeSearchText(step.instructions ?? '');
+        if (!this.containsAnyKeyword(normalizedInstruction, keywords)) {
+          continue;
+        }
+
+        return this.toLatLngLiteral(step.start_location ?? leg.start_location);
+      }
+    }
+
+    const warningsText = this.normalizeSearchText((route.warnings ?? []).join(' '));
+    if (this.containsAnyKeyword(warningsText, keywords) && legs.length > 0) {
+      return this.toLatLngLiteral(legs[0].start_location);
+    }
+
+    return null;
+  }
+
+  private getRouteFeatureKeywords(featureType: Exclude<RouteFeatureMarkerType, 'ev'>): string[] {
+    if (featureType === 'toll') {
+      return ['toll', 'tolls', 'διοδι', 'διoδι'];
+    }
+
+    if (featureType === 'highway') {
+      return ['highway', 'motorway', 'expressway', 'autobahn', 'freeway', 'αυτοκινητοδρομ'];
+    }
+
+    return ['ferry', 'boat', 'ship', 'πορθμ', 'πλοι'];
+  }
+
+  private normalizeSearchText(text: string): string {
+    return `${text}`
+      .replace(/<[^>]*>/g, ' ')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  private containsAnyKeyword(text: string, keywords: string[]): boolean {
+    return keywords.some((keyword) => text.includes(keyword));
+  }
+
+  private toLatLngLiteral(value?: google.maps.LatLng | null): google.maps.LatLngLiteral {
+    if (!value) {
+      return this.center;
+    }
+
+    return {
+      lat: value.lat(),
+      lng: value.lng(),
+    };
+  }
+
+  private async findEvChargingMarkers(
+    route: google.maps.DirectionsRoute,
+    requestToken: number,
+  ): Promise<RouteFeatureMarker[]> {
+    if (
+      typeof google === 'undefined' ||
+      !google.maps?.places?.PlacesService ||
+      !google.maps?.places?.PlacesServiceStatus
+    ) {
+      return [];
+    }
+
+    const sampledPoints = this.sampleRoutePoints(route.overview_path ?? [], 6);
+    if (sampledPoints.length === 0) {
+      return [];
+    }
+
+    const placesService = new google.maps.places.PlacesService(
+      this.mapRef?.googleMap ?? document.createElement('div'),
+    );
+    const searchResults = await Promise.all(
+      sampledPoints.map((point) => this.searchNearbyEvStations(placesService, point)),
+    );
+    if (requestToken !== this.routeFeatureRequestToken) {
+      return [];
+    }
+
+    const uniquePlaces = new Map<string, google.maps.places.PlaceResult>();
+    searchResults.flat().forEach((place, index) => {
+      const placeId = `${place.place_id ?? ''}`.trim();
+      const geometryLocation = place.geometry?.location;
+      const fallbackId = geometryLocation
+        ? `${geometryLocation.lat().toFixed(5)}|${geometryLocation.lng().toFixed(5)}`
+        : `ev-${index}`;
+      const key = placeId || fallbackId;
+
+      if (!uniquePlaces.has(key)) {
+        uniquePlaces.set(key, place);
+      }
+    });
+
+    const evTitle = this.translate.instant('HOME_MAP_MARKER_EV');
+    const markers: RouteFeatureMarker[] = [];
+    Array.from(uniquePlaces.entries())
+      .slice(0, 8)
+      .forEach(([key, place], index) => {
+        const location = place.geometry?.location;
+        if (!location) {
+          return;
+        }
+
+        const placeName = `${place.name ?? ''}`.trim();
+        const markerTitle = placeName.length > 0 ? `${evTitle}: ${placeName}` : evTitle;
+        markers.push(
+          this.createRouteFeatureMarker(
+            'ev',
+            { lat: location.lat(), lng: location.lng() },
+            `ev-${key}-${index}`,
+            markerTitle,
+          ),
+        );
+      });
+
+    return markers;
+  }
+
+  private searchNearbyEvStations(
+    placesService: google.maps.places.PlacesService,
+    point: google.maps.LatLngLiteral,
+  ): Promise<google.maps.places.PlaceResult[]> {
+    const request: google.maps.places.PlaceSearchRequest = {
+      location: point,
+      radius: 2400,
+      keyword: 'EV charging station',
+      type: 'electric_vehicle_charging_station',
+    };
+
+    return new Promise((resolve) => {
+      placesService.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          resolve(results ?? []);
+          return;
+        }
+
+        resolve([]);
+      });
+    });
+  }
+
+  private sampleRoutePoints(
+    path: google.maps.LatLng[],
+    maxSamples: number,
+  ): google.maps.LatLngLiteral[] {
+    if (!path || path.length === 0 || maxSamples <= 0) {
+      return [];
+    }
+
+    if (path.length <= maxSamples) {
+      return path.map((point) => ({ lat: point.lat(), lng: point.lng() }));
+    }
+
+    const step = (path.length - 1) / (maxSamples - 1);
+    const sampled: google.maps.LatLngLiteral[] = [];
+    const seen = new Set<string>();
+
+    for (let i = 0; i < maxSamples; i++) {
+      const index = Math.round(i * step);
+      const point = path[index];
+      if (!point) {
+        continue;
+      }
+
+      const lat = point.lat();
+      const lng = point.lng();
+      const key = `${lat.toFixed(5)}|${lng.toFixed(5)}`;
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      sampled.push({ lat, lng });
+    }
+
+    return sampled;
   }
 
   private formatFilterDateTime(value: string): string {

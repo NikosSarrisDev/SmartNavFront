@@ -209,6 +209,12 @@
           [position]="navigationArrow"
           [options]="navigationArrowOptions"
         ></map-marker>
+        <map-marker
+          *ngFor="let featureMarker of routeFeatureMarkers(); trackBy: trackRouteFeatureMarker"
+          [position]="featureMarker.position"
+          [options]="featureMarker.options"
+          [title]="featureMarker.title"
+        ></map-marker>
       </google-map>
       <div class="map-navigation-state" *ngIf="navigationStarted">
         {{ 'NAVIGATION_IN_PROGRESS' | translate }}
