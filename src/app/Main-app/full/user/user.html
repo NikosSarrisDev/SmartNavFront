@@ -74,22 +74,6 @@
 
     <main class="main-content">
       <section class="section">
-        <h3>{{ 'AI_PREFERENCES_TITLE' | translate }}</h3>
-        <div class="chips-container">
-          @for (pref of preferences(); track pref.id) {
-            <button
-              style="margin: 0.5rem"
-              [class.active]="pref.active"
-              (click)="togglePreference(pref.id)"
-              class="chip"
-            >
-              {{ pref.icon }} {{ pref.translationField | translate }}
-            </button>
-          }
-        </div>
-      </section>
-
-      <section class="section">
         <h3>{{ 'TRIP_HISTORY_TITLE' | translate }}</h3>
         <div class="table-wrapper">
           <table>

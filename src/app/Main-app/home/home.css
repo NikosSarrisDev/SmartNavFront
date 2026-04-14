@@ -49,72 +49,8 @@
   cursor: pointer;
 }
 
-.active-filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-:host ::ng-deep .active-filter-chip {
-  border-radius: 999px;
-  border: 1px solid #dbeafe;
-  background: #f8fafc;
-  color: #1f2937;
-  font-weight: 600;
-}
-
-:host ::ng-deep .station-chip {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-}
-
-:host ::ng-deep .vehicle-chip {
-  border-color: #fed7aa;
-  background: #fff7ed;
-}
-
-:host ::ng-deep .avoid-chip {
-  border-color: #fecaca;
-  background: #fef2f2;
-}
-
-:host ::ng-deep .traffic-chip {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-}
-
-:host ::ng-deep .ev-chip {
-  border-color: #99f6e4;
-  background: #f0fdfa;
-}
-
-/* CHIPS */
-.chips-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.filters-entry-slot {
   margin-bottom: 20px;
-}
-
-.chip {
-  padding: 10px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  background: #f8f9fa;
-  cursor: pointer;
-  transition: 0.2s;
-  color: #000000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.chip.active {
-  background: #e8f0fe;
-  border-color: #1a73e8;
-  color: #1a73e8;
 }
 
 .ai-reasoning-results {

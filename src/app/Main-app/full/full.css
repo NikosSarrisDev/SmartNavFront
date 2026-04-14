@@ -18,3 +18,31 @@
 :host ::ng-deep .filters-dialog .p-dialog-content {
   border-radius: 18px;
 }
+
+.filters-entry-action {
+  width: 100%;
+}
+
+.open-filters-button {
+  width: 100%;
+  border: 1px solid #c4b5fd;
+  background: #f5f3ff;
+  color: #4c1d95;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.open-filters-button:hover {
+  transform: translateY(-1px);
+}
+
+.open-filters-button:disabled {
+  cursor: not-allowed;
+  background: #e5e7eb;
+  color: #6b7280;
+  border-color: #d1d5db;
+  transform: none;
+}

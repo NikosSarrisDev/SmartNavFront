@@ -133,6 +133,37 @@
         <p class="validation-error">{{ 'FILTER_DUPLICATE_STATION_ERROR' | translate }}</p>
       }
 
+      <section class="preference-card">
+        <h2>{{ 'FILTER_ROUTE_PREFERENCE_TITLE' | translate }}</h2>
+        <p>{{ 'FILTER_ROUTE_PREFERENCE_SUBTITLE' | translate }}</p>
+
+        <div class="preference-chip-grid">
+          @if (preferenceOptions().length === 0) {
+            <button
+              type="button"
+              class="preference-chip"
+              [class.active]="isPreferenceSelected('fastest')"
+              (click)="selectPreference('fastest')"
+            >
+              <span class="preference-icon">⚡</span>
+              <span>{{ 'NAV_CHIP_FASTEST' | translate }}</span>
+            </button>
+          } @else {
+            @for (option of preferenceOptions(); track option.id) {
+              <button
+                type="button"
+                class="preference-chip"
+                [class.active]="isPreferenceSelected(option.code)"
+                (click)="selectPreference(option.code)"
+              >
+                <span class="preference-icon">{{ option.icon }}</span>
+                <span>{{ option.translationField | translate }}</span>
+              </button>
+            }
+          }
+        </div>
+      </section>
+
       <section class="vehicle-size-card">
         <h2>{{ 'FILTER_VEHICLE_SIZE_TITLE' | translate }}</h2>
         <p>{{ 'FILTER_VEHICLE_SIZE_SUBTITLE' | translate }}</p>

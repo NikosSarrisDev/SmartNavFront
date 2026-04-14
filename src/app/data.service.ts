@@ -229,6 +229,71 @@ export class DataService {
 
   }
 
+  filteredPreferenceCreate(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Create', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  filteredPreferenceListAll(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/ListAll', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  filteredPreferenceGetByUser(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/GetByUser', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  filteredPreferenceUpdate(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Update', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  filteredPreferenceDelete(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Delete', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
   private handleError(error:any) {
     var status = error.error.status;
     if (status == undefined) {

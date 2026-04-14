@@ -51,71 +51,8 @@
         </div>
       </div>
 
-      <div class="active-filter-chips" *ngIf="hasActiveFilterChips()">
-        <p-chip
-          *ngIf="activeStationCount() > 0"
-          [label]="getActiveStationChipLabel()"
-          styleClass="active-filter-chip station-chip"
-        />
-        <p-chip
-          *ngIf="activeVehicleName() as vehicleName"
-          [label]="vehicleName | translate"
-          styleClass="active-filter-chip vehicle-chip"
-        />
-        <ng-container *ngIf="activeRouteFilters() as routeFilters">
-          <p-chip
-            *ngIf="routeFilters.avoidTolls"
-            [label]="'HOME_FILTER_AVOID_TOLLS' | translate"
-            styleClass="active-filter-chip avoid-chip"
-          />
-          <p-chip
-            *ngIf="routeFilters.avoidHighways"
-            [label]="'HOME_FILTER_AVOID_HIGHWAYS' | translate"
-            styleClass="active-filter-chip avoid-chip"
-          />
-          <p-chip
-            *ngIf="routeFilters.avoidFerries"
-            [label]="'HOME_FILTER_AVOID_FERRIES' | translate"
-            styleClass="active-filter-chip avoid-chip"
-          />
-          <p-chip
-            *ngIf="routeFilters.trafficTimeMode === 'departure'"
-            [label]="'HOME_FILTER_TRAFFIC_MODE_DEPARTURE' | translate"
-            styleClass="active-filter-chip traffic-chip"
-          />
-          <p-chip
-            *ngIf="routeFilters.trafficTimeMode === 'arrival'"
-            [label]="'HOME_FILTER_TRAFFIC_MODE_ARRIVAL' | translate"
-            styleClass="active-filter-chip traffic-chip"
-          />
-          <p-chip
-            *ngIf="routeFilters.trafficStartDateTime"
-            [label]="getTrafficStartChipLabel(routeFilters)"
-            styleClass="active-filter-chip traffic-chip"
-          />
-          <p-chip
-            *ngIf="routeFilters.trafficEndDateTime"
-            [label]="getTrafficEndChipLabel(routeFilters)"
-            styleClass="active-filter-chip traffic-chip"
-          />
-          <p-chip
-            *ngIf="routeFilters.includeEvChargingStations"
-            [label]="'HOME_FILTER_EV_CHARGERS' | translate"
-            styleClass="active-filter-chip ev-chip"
-          />
-        </ng-container>
-      </div>
-
-      <div class="chips-grid">
-        <button
-          *ngFor="let chip of chips"
-          class="chip"
-          [class.active]="selectedChip === chip.code"
-          [disabled]="(navService.isLoading$ | async) || navigationStarted"
-          (click)="selectChip(chip)"
-        >
-          {{ chip.icon }} {{ chip.translationField | translate }}
-        </button>
+      <div class="filters-entry-slot">
+        <ng-content select="[filters-entry]"></ng-content>
       </div>
 
       <hr />

@@ -268,6 +268,57 @@ button:disabled {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
+.preference-card {
+  margin-top: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 1rem;
+  background: #ffffff;
+}
+
+.preference-card h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #111827;
+}
+
+.preference-card p {
+  margin: 0.35rem 0 0.9rem;
+  color: #6b7280;
+}
+
+.preference-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.preference-chip {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  background: #fafafa;
+  color: #1f2937;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.preference-chip.active {
+  border-color: #4f46e5;
+  color: #312e81;
+  background: #eef2ff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
+}
+
+.preference-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
 .vehicle-size-card {
   margin-top: 1rem;
   border: 1px solid #e5e7eb;
@@ -472,6 +523,10 @@ button:disabled {
   }
 
   .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .preference-chip-grid {
     grid-template-columns: 1fr;
   }
 

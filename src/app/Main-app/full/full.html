@@ -10,15 +10,6 @@
   </div>
   <ng-container globe>
     <div class="header-actions">
-      <div class="app-globe" *ngIf="!homeCmp.navigationStarted">
-        <p-button
-          icon="pi pi-filter"
-          (click)="openFiltersModal()"
-          [rounded]="true"
-          severity="secondary"
-        >
-        </p-button>
-      </div>
       <div class="app-globe">
         <p-button
           icon="pi pi-globe"
@@ -31,6 +22,16 @@
     </div>
   </ng-container>
   <p-menu menu #menu [model]="languages" [popup]="true"></p-menu>
+  <div filters-entry class="filters-entry-action">
+    <button
+      type="button"
+      class="open-filters-button"
+      (click)="openFiltersModal()"
+      [disabled]="homeCmp.navigationStarted"
+    >
+      {{ 'HOME_FILTERS_ACTION_LABEL' | translate }}
+    </button>
+  </div>
 </app-home>
 
 <p-dialog

@@ -22,11 +22,19 @@ import {
   VehicleSize,
 } from '../../navigation.service';
 import { DataService } from '../../data.service';
+import { AuthenticationService } from '../../auth.service';
 
 type JourneyStationForm = FormGroup;
 type StationAddressSuggestion = {
   placeId: string;
   description: string;
+};
+type RoutePreferenceOption = {
+  id: number;
+  code: string;
+  icon: string;
+  translationField: string;
+  prompt: string;
 };
 
 @Component({
@@ -42,6 +50,7 @@ export class FilterOptions implements OnInit, OnDestroy {
   readonly maxStations = 10;
   readonly stationForms: FormGroup;
   languages: MenuItem[] | undefined;
+  readonly preferenceOptions = signal<RoutePreferenceOption[]>([]);
   readonly vehicleSizeOptions = signal<{ value: VehicleSize; translationField: string }[]>([]);
   readonly trafficTimeModeOptions: { value: TrafficTimeMode; translationField: string }[] = [
     { value: 'none', translationField: 'FILTER_TRAFFIC_TIME_MODE_NONE' },
@@ -62,11 +71,13 @@ export class FilterOptions implements OnInit, OnDestroy {
     private navigationService: NavigationService,
     private translate: TranslateService,
     private dataService: DataService,
+    private auth: AuthenticationService,
   ) {
     this.stationForms = this.formBuilder.group({
       stations: this.formBuilder.array([] as JourneyStationForm[], {
         validators: [this.duplicateStationsValidator()],
       }),
+      preferenceCode: ['fastest'],
       vehicleSize: [''],
       avoidTolls: [false],
       avoidHighways: [false],
@@ -80,7 +91,9 @@ export class FilterOptions implements OnInit, OnDestroy {
     const existingStations = this.navigationService.getJourneyFiltersSnapshot();
     const existingVehicleSize = this.navigationService.getVehicleSizeSnapshot();
     const existingRouteFilters = this.navigationService.getJourneyRouteFiltersSnapshot();
+    const existingHomeDraft = this.navigationService.getHomeDraftSnapshot();
     this.stationForms.patchValue({
+      preferenceCode: `${existingHomeDraft.selectedChip ?? 'fastest'}`.trim().toLowerCase(),
       vehicleSize: existingVehicleSize ?? '',
       avoidTolls: existingRouteFilters.avoidTolls,
       avoidHighways: existingRouteFilters.avoidHighways,
@@ -103,6 +116,7 @@ export class FilterOptions implements OnInit, OnDestroy {
         this.buildLanguageMenu();
       },
     });
+    this.loadPreferenceOptions();
     this.loadVehicleOptions();
     this.initializeAutocompleteServices();
   }
@@ -194,10 +208,31 @@ export class FilterOptions implements OnInit, OnDestroy {
       trafficEndDateTime: this.normalizeTrafficDateTime(trafficTimeMode, trafficEndDateTimeRaw),
       includeEvChargingStations: !!this.stationForms.get('includeEvChargingStations')?.value,
     };
+    const preferenceCodeRaw = `${this.stationForms.get('preferenceCode')?.value ?? ''}`
+      .trim()
+      .toLowerCase();
+    const selectedPreferenceCode = preferenceCodeRaw.length > 0 ? preferenceCodeRaw : 'fastest';
+    const selectedPreferenceOption = this.preferenceOptions().find(
+      (option) => option.code === selectedPreferenceCode,
+    );
+    const selectedPreferencePrompt = (
+      selectedPreferenceOption?.prompt || 'Find the fastest possible driving route.'
+    ).trim();
 
     this.navigationService.setJourneyFilters(filters);
     this.navigationService.setVehicleSize(vehicleSize);
     this.navigationService.setJourneyRouteFilters(routeFilters);
+    this.navigationService.setHomeDraft({
+      selectedChip: selectedPreferenceCode,
+      selectedChipPrompt: selectedPreferencePrompt,
+    });
+    this.persistFilteredPreference(
+      filters,
+      routeFilters,
+      vehicleSize,
+      selectedPreferenceCode,
+      selectedPreferencePrompt,
+    );
 
     if (this.inModal) {
       this.closed.emit();
@@ -250,6 +285,9 @@ export class FilterOptions implements OnInit, OnDestroy {
   }
 
   hasNonDefaultNonStationFilters(): boolean {
+    const preferenceCode = `${this.stationForms.get('preferenceCode')?.value ?? ''}`
+      .trim()
+      .toLowerCase();
     const vehicleSizeRaw = `${this.stationForms.get('vehicleSize')?.value ?? ''}`.trim();
     const avoidTolls = !!this.stationForms.get('avoidTolls')?.value;
     const avoidHighways = !!this.stationForms.get('avoidHighways')?.value;
@@ -261,6 +299,7 @@ export class FilterOptions implements OnInit, OnDestroy {
     const trafficEndDateTime = `${this.stationForms.get('trafficEndDateTime')?.value ?? ''}`.trim();
 
     return (
+      (preferenceCode.length > 0 && preferenceCode !== 'fastest') ||
       vehicleSizeRaw.length > 0 ||
       avoidTolls ||
       avoidHighways ||
@@ -280,6 +319,7 @@ export class FilterOptions implements OnInit, OnDestroy {
     }
 
     this.stationForms.patchValue({
+      preferenceCode: 'fastest',
       vehicleSize: '',
       avoidTolls: false,
       avoidHighways: false,
@@ -290,6 +330,18 @@ export class FilterOptions implements OnInit, OnDestroy {
       includeEvChargingStations: false,
     });
     this.stationForms.markAsDirty();
+  }
+
+  selectPreference(code: string): void {
+    this.stationForms.patchValue({ preferenceCode: code });
+    this.stationForms.markAsDirty();
+  }
+
+  isPreferenceSelected(code: string): boolean {
+    const selectedCode = `${this.stationForms.get('preferenceCode')?.value ?? ''}`
+      .trim()
+      .toLowerCase();
+    return selectedCode === code;
   }
 
   onStationStreetInput(index: number): void {
@@ -626,6 +678,102 @@ export class FilterOptions implements OnInit, OnDestroy {
     }
 
     return value;
+  }
+
+  private loadPreferenceOptions(): void {
+    this.dataService.getPreferences({}).subscribe({
+      next: (response: any) => {
+        const mappedPreferences: RoutePreferenceOption[] = (response?.data ?? [])
+          .map((item: any) => {
+            const id = Number(item?.id ?? item?.Id);
+            const code = `${item?.code ?? item?.Code ?? ''}`.trim().toLowerCase();
+            const prompt = `${item?.prompt ?? item?.Prompt ?? ''}`.trim();
+            const icon = `${item?.icon ?? item?.Icon ?? ''}`.trim();
+            const translationField =
+              `${item?.translationField ?? item?.TranslationField ?? ''}`.trim();
+
+            if (!Number.isInteger(id) || id <= 0 || code.length === 0) {
+              return null;
+            }
+
+            return {
+              id,
+              code,
+              icon,
+              translationField,
+              prompt,
+            };
+          })
+          .filter(
+            (value: RoutePreferenceOption | null): value is RoutePreferenceOption => value != null,
+          );
+
+        this.preferenceOptions.set(mappedPreferences);
+
+        const currentCode = `${this.stationForms.get('preferenceCode')?.value ?? ''}`
+          .trim()
+          .toLowerCase();
+        const currentExists = mappedPreferences.some(
+          (option: RoutePreferenceOption) => option.code === currentCode,
+        );
+
+        if (!currentExists) {
+          const fallback =
+            mappedPreferences.find((option: RoutePreferenceOption) => option.code === 'fastest') ??
+            mappedPreferences[0];
+          this.stationForms.patchValue({ preferenceCode: fallback?.code ?? 'fastest' });
+        }
+      },
+      error: () => {
+        this.preferenceOptions.set([]);
+
+        const currentCode = `${this.stationForms.get('preferenceCode')?.value ?? ''}`
+          .trim()
+          .toLowerCase();
+        if (currentCode.length === 0) {
+          this.stationForms.patchValue({ preferenceCode: 'fastest' });
+        }
+      },
+    });
+  }
+
+  private persistFilteredPreference(
+    filters: JourneyFilterStation[],
+    routeFilters: JourneyRouteFilters,
+    vehicleSize: VehicleSize | null,
+    selectedPreferenceCode: string,
+    selectedPreferencePrompt: string,
+  ): void {
+    const userId = Number(this.auth.currentUser()?.data?.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return;
+    }
+
+    const payload = {
+      userID: userId,
+      selectedPreferenceCode,
+      selectedPreferencePrompt,
+      vehicleSize: vehicleSize ?? null,
+      avoidTolls: routeFilters.avoidTolls,
+      avoidHighways: routeFilters.avoidHighways,
+      avoidFerries: routeFilters.avoidFerries,
+      trafficTimeMode: routeFilters.trafficTimeMode,
+      trafficStartDateTime: routeFilters.trafficStartDateTime,
+      trafficEndDateTime: routeFilters.trafficEndDateTime,
+      includeEvChargingStations: routeFilters.includeEvChargingStations,
+      stations: filters.map((station) => ({
+        street: station.street,
+        number: station.number,
+        cityArea: station.cityArea,
+        postalCode: station.postalCode,
+      })),
+    };
+
+    this.dataService.filteredPreferenceCreate(payload).subscribe({
+      error: () => {
+        // Keep UX non-blocking when audit row persistence fails.
+      },
+    });
   }
 
   private loadVehicleOptions(): void {

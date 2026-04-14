@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
 import { JourneyRouteFilters, NavigationService } from '../../navigation.service';
 import { AsyncPipe, DatePipe, DecimalPipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMap, GoogleMapsModule } from '@angular/google-maps';
@@ -10,10 +10,9 @@ import { DataService } from '../../data.service';
 import { finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { MenuItem, MessageService } from 'primeng/api';
 import { Toast } from 'primeng/toast';
 import { FormsModule } from '@angular/forms';
-import { Chip } from 'primeng/chip';
+import { MessageService } from 'primeng/api';
 
 type RouteFeatureMarkerType = 'toll' | 'highway' | 'ferry' | 'ev';
 type RouteFeatureMarker = {
@@ -37,7 +36,6 @@ type RouteFeatureMarker = {
     FormsModule,
     ProgressSpinnerModule,
     Toast,
-    Chip,
   ],
   templateUrl: './home.html',
   styleUrl: './home.css',
@@ -132,10 +130,8 @@ export class Home implements OnInit, OnDestroy {
   };
   route?: google.maps.DirectionsResult;
   explanation: string = '';
-  chips: any[] = [];
   readonly routeFeatureMarkers = signal<RouteFeatureMarker[]>([]);
   private readonly vehicleIdByCode = new Map<string, number>();
-  private readonly vehicleNameByCode = signal<Record<string, string>>({});
   private routeFeatureRequestToken = 0;
   private readonly routeFeatureIconByType: Record<RouteFeatureMarkerType, string> = {
     toll: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
@@ -143,32 +139,6 @@ export class Home implements OnInit, OnDestroy {
     ferry: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png',
     ev: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
   };
-  readonly activeStationCount = computed(() => this.navService.journeyFilters().length);
-  readonly activeRouteFilters = computed(() => this.navService.journeyRouteFilters());
-  readonly activeVehicleName = computed(() => {
-    const selectedVehicleCode = this.navService.vehicleSize();
-    if (!selectedVehicleCode) {
-      return null;
-    }
-
-    const namesByCode = this.vehicleNameByCode();
-    return namesByCode[selectedVehicleCode] ?? selectedVehicleCode;
-  });
-  readonly hasActiveFilterChips = computed(() => {
-    const routeFilters = this.activeRouteFilters();
-
-    return (
-      this.activeStationCount() > 0 ||
-      !!this.activeVehicleName() ||
-      routeFilters.avoidTolls ||
-      routeFilters.avoidHighways ||
-      routeFilters.avoidFerries ||
-      routeFilters.trafficTimeMode !== 'none' ||
-      !!routeFilters.trafficStartDateTime ||
-      !!routeFilters.trafficEndDateTime ||
-      routeFilters.includeEvChargingStations
-    );
-  });
 
   constructor(
     public navService: NavigationService,
@@ -176,7 +146,6 @@ export class Home implements OnInit, OnDestroy {
     private auth: AuthenticationService,
     private dataService: DataService,
     private router: Router,
-    private messageService: MessageService,
     private translate: TranslateService,
   ) {}
 
@@ -187,8 +156,9 @@ export class Home implements OnInit, OnDestroy {
     this.currentUserName = currentUser?.data?.userName;
     const homeDraft = this.navService.getHomeDraftSnapshot();
     this.currentSearchText = homeDraft.searchText;
-    this.selectedChip = homeDraft.selectedChip;
-    this.selectedChipPrompt = homeDraft.selectedChipPrompt;
+    this.selectedChip = homeDraft.selectedChip || 'fastest';
+    this.selectedChipPrompt =
+      homeDraft.selectedChipPrompt || 'Find the fastest possible driving route.';
 
     try {
       this.center = await this.navService.getCurrentLocation();
@@ -196,7 +166,6 @@ export class Home implements OnInit, OnDestroy {
       // Keep the current center fallback and rely on errorMessage$ for UI feedback.
     }
     this.getCurrentUserRoleAndAvatar(this.currentUserId);
-    this.getPreferences();
     this.getActivePreference(this.currentUserId);
     this.loadVehicleLookup();
   }
@@ -218,24 +187,9 @@ export class Home implements OnInit, OnDestroy {
     this.router.navigate(['/user']);
   }
 
-  selectChip(chip: { code: string; prompt: string }) {
-    this.selectedChip = chip.code;
-    this.selectedChipPrompt = chip.prompt;
-    this.navigationStarted = false;
-    this.navigationStartAt = null;
-    this.navService.errorMessage$.next(null);
-    this.persistHomeDraft();
-  }
-
   onSearchTextChange(value: string): void {
     this.currentSearchText = value;
     this.persistHomeDraft();
-  }
-
-  getPreferences() {
-    this.dataService.getPreferences({}).subscribe((res: any) => {
-      this.chips = res.data;
-    });
   }
 
   getActivePreference(userId: number) {
@@ -263,6 +217,13 @@ export class Home implements OnInit, OnDestroy {
   }
 
   async findPath() {
+    const latestDraft = this.navService.getHomeDraftSnapshot();
+    this.selectedChip = latestDraft.selectedChip || this.selectedChip || 'fastest';
+    this.selectedChipPrompt =
+      latestDraft.selectedChipPrompt ||
+      this.selectedChipPrompt ||
+      'Find the fastest possible driving route.';
+
     const trimmedQuery = (this.currentSearchText || '').trim();
     if (!trimmedQuery) {
       this.navService.errorMessage$.next('Please fill in the destination details first.');
@@ -435,37 +396,6 @@ export class Home implements OnInit, OnDestroy {
 
   canStartNavigation(): boolean {
     return !!this.latestDirections?.routes?.length;
-  }
-
-  getActiveStationChipLabel(): string {
-    const stationCount = this.activeStationCount();
-    if (stationCount <= 0) {
-      return '';
-    }
-
-    const translationKey =
-      stationCount === 1 ? 'HOME_ACTIVE_STATIONS_SINGLE' : 'HOME_ACTIVE_STATIONS_MULTI';
-    return this.translate.instant(translationKey, { count: stationCount });
-  }
-
-  getTrafficStartChipLabel(routeFilters: JourneyRouteFilters): string {
-    if (!routeFilters.trafficStartDateTime) {
-      return '';
-    }
-
-    return this.translate.instant('HOME_FILTER_TRAFFIC_START_AT', {
-      date: this.formatFilterDateTime(routeFilters.trafficStartDateTime),
-    });
-  }
-
-  getTrafficEndChipLabel(routeFilters: JourneyRouteFilters): string {
-    if (!routeFilters.trafficEndDateTime) {
-      return '';
-    }
-
-    return this.translate.instant('HOME_FILTER_TRAFFIC_END_AT', {
-      date: this.formatFilterDateTime(routeFilters.trafficEndDateTime),
-    });
   }
 
   trackRouteFeatureMarker(_index: number, marker: RouteFeatureMarker): string {
@@ -908,19 +838,6 @@ export class Home implements OnInit, OnDestroy {
     return sampled;
   }
 
-  private formatFilterDateTime(value: string): string {
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-      return value;
-    }
-
-    const locale = this.translate.currentLang === 'el' ? 'el-GR' : 'en-US';
-    return parsed.toLocaleString(locale, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    });
-  }
-
   private persistHomeDraft(): void {
     this.navService.setHomeDraft({
       searchText: this.currentSearchText,
@@ -933,32 +850,20 @@ export class Home implements OnInit, OnDestroy {
     this.dataService.getVehicles({}).subscribe({
       next: (response: any) => {
         this.vehicleIdByCode.clear();
-        const nextVehicleNameByCode: Record<string, string> = {};
 
         const vehicles = response?.data ?? [];
         vehicles.forEach((vehicle: any) => {
           const code = `${vehicle?.code ?? vehicle?.Code ?? ''}`.trim().toLowerCase();
           const idRaw = vehicle?.id ?? vehicle?.Id;
           const id = Number(idRaw);
-          const translationField =
-            `${vehicle?.translationField ?? vehicle?.TranslationField ?? ''}`.trim();
-          const displayName = `${vehicle?.name ?? vehicle?.Name ?? ''}`.trim();
-          const vehicleLabel = translationField || displayName || code;
 
           if (code.length > 0 && Number.isInteger(id) && id > 0) {
             this.vehicleIdByCode.set(code, id);
           }
-
-          if (code.length > 0 && vehicleLabel.length > 0) {
-            nextVehicleNameByCode[code] = vehicleLabel;
-          }
         });
-
-        this.vehicleNameByCode.set(nextVehicleNameByCode);
       },
       error: () => {
         this.vehicleIdByCode.clear();
-        this.vehicleNameByCode.set({});
       },
     });
   }

@@ -43,8 +43,8 @@ const createDefaultJourneyRouteFilters = (): JourneyRouteFilters => ({
 });
 const createDefaultHomeDraft = (): HomeDraftState => ({
   searchText: '',
-  selectedChip: '',
-  selectedChipPrompt: '',
+  selectedChip: 'fastest',
+  selectedChipPrompt: 'Find the fastest possible driving route.',
 });
 
 @Injectable({ providedIn: 'root' })
