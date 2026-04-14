@@ -786,8 +786,11 @@ export class FilterOptions implements OnInit, OnDestroy {
     };
 
     this.dataService.filteredPreferenceCreate(payload).subscribe({
-      error: () => {
-        // Keep UX non-blocking when audit row persistence fails.
+      next: (response) => {
+        console.log('Successfully created preference:', response);
+      },
+      error: (error) => {
+        console.error('Failed to create preference:', error);
       },
     });
   }
