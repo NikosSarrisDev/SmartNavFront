@@ -23,6 +23,7 @@ import {
 } from '../../navigation.service';
 import { DataService } from '../../data.service';
 import { AuthenticationService } from '../../auth.service';
+import { stationsFormCrossValidator } from './stationsFormCrossValidator';
 
 type JourneyStationForm = FormGroup;
 type StationAddressSuggestion = {
@@ -54,8 +55,7 @@ export class FilterOptions implements OnInit, OnDestroy {
   readonly vehicleSizeOptions = signal<{ value: VehicleSize; translationField: string }[]>([]);
   readonly trafficTimeModeOptions: { value: TrafficTimeMode; translationField: string }[] = [
     { value: 'none', translationField: 'FILTER_TRAFFIC_TIME_MODE_NONE' },
-    { value: 'departure', translationField: 'FILTER_TRAFFIC_TIME_MODE_DEPARTURE' },
-    { value: 'arrival', translationField: 'FILTER_TRAFFIC_TIME_MODE_ARRIVAL' },
+    { value: 'mode', translationField: 'FILTER_TRAFFIC_TIME_MODE' },
   ];
   private autocompleteService: google.maps.places.AutocompleteService | null = null;
   private placeDetailsService: google.maps.places.PlacesService | null = null;
@@ -73,27 +73,32 @@ export class FilterOptions implements OnInit, OnDestroy {
     private dataService: DataService,
     private auth: AuthenticationService,
   ) {
-    this.stationForms = this.formBuilder.group({
-      stations: this.formBuilder.array([] as JourneyStationForm[], {
-        validators: [this.duplicateStationsValidator()],
-      }),
-      preferenceCode: ['fastest'],
-      vehicleSize: [''],
-      avoidTolls: [false],
-      avoidHighways: [false],
-      avoidFerries: [false],
-      trafficTimeMode: ['none'],
-      trafficStartDateTime: [''],
-      trafficEndDateTime: [''],
-      includeEvChargingStations: [false],
-    });
+    this.stationForms = this.formBuilder.group(
+      {
+        stations: this.formBuilder.array([] as JourneyStationForm[], {
+          validators: [this.duplicateStationsValidator()],
+        }),
+        preferenceCode: ['fast'],
+        vehicleSize: [''],
+        avoidTolls: [false],
+        avoidHighways: [false],
+        avoidFerries: [false],
+        trafficTimeMode: ['none'],
+        trafficStartDateTime: [''],
+        trafficEndDateTime: [''],
+        includeEvChargingStations: [false],
+      },
+      {
+        validators: stationsFormCrossValidator('trafficStartDateTime', 'trafficEndDateTime'),
+      },
+    );
 
     const existingStations = this.navigationService.getJourneyFiltersSnapshot();
     const existingVehicleSize = this.navigationService.getVehicleSizeSnapshot();
     const existingRouteFilters = this.navigationService.getJourneyRouteFiltersSnapshot();
     const existingHomeDraft = this.navigationService.getHomeDraftSnapshot();
     this.stationForms.patchValue({
-      preferenceCode: `${existingHomeDraft.selectedChip ?? 'fastest'}`.trim().toLowerCase(),
+      preferenceCode: `${existingHomeDraft.selectedChip ?? 'fast'}`.trim().toLowerCase(),
       vehicleSize: existingVehicleSize ?? '',
       avoidTolls: existingRouteFilters.avoidTolls,
       avoidHighways: existingRouteFilters.avoidHighways,
@@ -196,9 +201,13 @@ export class FilterOptions implements OnInit, OnDestroy {
     const vehicleSizeRaw = `${this.stationForms.get('vehicleSize')?.value ?? ''}`.trim();
     const vehicleSize = this.isVehicleSize(vehicleSizeRaw) ? vehicleSizeRaw : null;
     const trafficTimeModeRaw = `${this.stationForms.get('trafficTimeMode')?.value ?? ''}`.trim();
-    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw) ? trafficTimeModeRaw : 'none';
-    const trafficStartDateTimeRaw = `${this.stationForms.get('trafficStartDateTime')?.value ?? ''}`.trim();
-    const trafficEndDateTimeRaw = `${this.stationForms.get('trafficEndDateTime')?.value ?? ''}`.trim();
+    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw)
+      ? trafficTimeModeRaw
+      : 'none';
+    const trafficStartDateTimeRaw =
+      `${this.stationForms.get('trafficStartDateTime')?.value ?? ''}`.trim();
+    const trafficEndDateTimeRaw =
+      `${this.stationForms.get('trafficEndDateTime')?.value ?? ''}`.trim();
     const routeFilters: JourneyRouteFilters = {
       avoidTolls: !!this.stationForms.get('avoidTolls')?.value,
       avoidHighways: !!this.stationForms.get('avoidHighways')?.value,
@@ -211,7 +220,7 @@ export class FilterOptions implements OnInit, OnDestroy {
     const preferenceCodeRaw = `${this.stationForms.get('preferenceCode')?.value ?? ''}`
       .trim()
       .toLowerCase();
-    const selectedPreferenceCode = preferenceCodeRaw.length > 0 ? preferenceCodeRaw : 'fastest';
+    const selectedPreferenceCode = preferenceCodeRaw.length > 0 ? preferenceCodeRaw : 'fast';
     const selectedPreferenceOption = this.preferenceOptions().find(
       (option) => option.code === selectedPreferenceCode,
     );
@@ -268,7 +277,9 @@ export class FilterOptions implements OnInit, OnDestroy {
 
   onTrafficTimeModeChange(): void {
     const trafficTimeModeRaw = `${this.stationForms.get('trafficTimeMode')?.value ?? ''}`.trim();
-    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw) ? trafficTimeModeRaw : 'none';
+    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw)
+      ? trafficTimeModeRaw
+      : 'none';
 
     if (trafficTimeMode === 'none') {
       this.stationForms.patchValue({
@@ -280,7 +291,9 @@ export class FilterOptions implements OnInit, OnDestroy {
 
   shouldShowTrafficDateTime(): boolean {
     const trafficTimeModeRaw = `${this.stationForms.get('trafficTimeMode')?.value ?? ''}`.trim();
-    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw) ? trafficTimeModeRaw : 'none';
+    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw)
+      ? trafficTimeModeRaw
+      : 'none';
     return trafficTimeMode !== 'none';
   }
 
@@ -294,12 +307,15 @@ export class FilterOptions implements OnInit, OnDestroy {
     const avoidFerries = !!this.stationForms.get('avoidFerries')?.value;
     const includeEvChargingStations = !!this.stationForms.get('includeEvChargingStations')?.value;
     const trafficTimeModeRaw = `${this.stationForms.get('trafficTimeMode')?.value ?? ''}`.trim();
-    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw) ? trafficTimeModeRaw : 'none';
-    const trafficStartDateTime = `${this.stationForms.get('trafficStartDateTime')?.value ?? ''}`.trim();
+    const trafficTimeMode = this.isTrafficTimeMode(trafficTimeModeRaw)
+      ? trafficTimeModeRaw
+      : 'none';
+    const trafficStartDateTime =
+      `${this.stationForms.get('trafficStartDateTime')?.value ?? ''}`.trim();
     const trafficEndDateTime = `${this.stationForms.get('trafficEndDateTime')?.value ?? ''}`.trim();
 
     return (
-      (preferenceCode.length > 0 && preferenceCode !== 'fastest') ||
+      (preferenceCode.length > 0 && preferenceCode !== 'fast') ||
       vehicleSizeRaw.length > 0 ||
       avoidTolls ||
       avoidHighways ||
@@ -319,7 +335,7 @@ export class FilterOptions implements OnInit, OnDestroy {
     }
 
     this.stationForms.patchValue({
-      preferenceCode: 'fastest',
+      preferenceCode: 'fast',
       vehicleSize: '',
       avoidTolls: false,
       avoidHighways: false,
@@ -664,7 +680,7 @@ export class FilterOptions implements OnInit, OnDestroy {
   }
 
   private isTrafficTimeMode(value: string): value is TrafficTimeMode {
-    return value === 'none' || value === 'departure' || value === 'arrival';
+    return value === 'none' || value === 'mode';
   }
 
   private normalizeTrafficDateTime(mode: TrafficTimeMode, value: string): string | null {
@@ -719,9 +735,9 @@ export class FilterOptions implements OnInit, OnDestroy {
 
         if (!currentExists) {
           const fallback =
-            mappedPreferences.find((option: RoutePreferenceOption) => option.code === 'fastest') ??
+            mappedPreferences.find((option: RoutePreferenceOption) => option.code === 'fast') ??
             mappedPreferences[0];
-          this.stationForms.patchValue({ preferenceCode: fallback?.code ?? 'fastest' });
+          this.stationForms.patchValue({ preferenceCode: fallback?.code ?? 'fast' });
         }
       },
       error: () => {
@@ -731,7 +747,7 @@ export class FilterOptions implements OnInit, OnDestroy {
           .trim()
           .toLowerCase();
         if (currentCode.length === 0) {
-          this.stationForms.patchValue({ preferenceCode: 'fastest' });
+          this.stationForms.patchValue({ preferenceCode: 'fast' });
         }
       },
     });

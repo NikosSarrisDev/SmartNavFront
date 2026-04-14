@@ -6,7 +6,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 
 export type VehicleSize = 'small' | 'medium' | 'large' | 'truck' | 'motorcycle';
-export type TrafficTimeMode = 'none' | 'departure' | 'arrival';
+export type TrafficTimeMode = 'none' | 'departure' | 'arrival' | 'mode';
 
 export interface JourneyFilterStation {
   street: string;

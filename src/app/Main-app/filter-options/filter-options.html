@@ -248,6 +248,11 @@
             </div>
           </div>
         }
+        @if (stationForms.hasError('dateRangeInvalid')) {
+          <div class="error-message" style="color: red; font-size: 0.9em; margin-top: 8px">
+            {{ 'FILTER_TRAFFIC_TIME_INVALID' | translate }}
+          </div>
+        }
       </section>
 
       <section class="ev-card">
