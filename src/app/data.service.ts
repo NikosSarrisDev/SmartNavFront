@@ -188,19 +188,6 @@ export class DataService {
 
   }
 
-  getAiSuggestions(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/GetAISuggestions', data, httpOptions).pipe(
-      map(
-        (response: any) => {
-          return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
-  }
-
   tripUpdate(data:any) {
     return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/Update', data, httpOptions).pipe(
       map(
@@ -257,6 +244,19 @@ export class DataService {
 
   filteredPreferenceGetByUser(data:any) {
     return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/GetByUser', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  filteredPreferenceGetLatestByUser(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/GetLatestByUser', data, httpOptions).pipe(
       map(
         (response: any) => {
           return response;

@@ -46,5 +46,9 @@
   [contentStyle]="{ padding: '0', height: '100%', overflow: 'auto' }"
   styleClass="filters-dialog"
 >
-  <app-filter-options [inModal]="true" (closed)="closeFiltersModal()"></app-filter-options>
+  <app-filter-options
+    *ngIf="filtersModalVisible"
+    [inModal]="true"
+    (closed)="closeFiltersModal()"
+  ></app-filter-options>
 </p-dialog>

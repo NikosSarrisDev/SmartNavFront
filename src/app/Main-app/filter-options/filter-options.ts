@@ -37,6 +37,25 @@ type RoutePreferenceOption = {
   translationField: string;
   prompt: string;
 };
+type StoredFilteredPreferenceResponse = {
+  selectedPreferenceCode?: string | null;
+  vehicleSize?: string | null;
+  avoidTolls?: boolean;
+  avoidHighways?: boolean;
+  avoidFerries?: boolean;
+  trafficTimeMode?: string | null;
+  trafficStartDateTime?: string | null;
+  trafficEndDateTime?: string | null;
+  includeEvChargingStations?: boolean;
+  stations?: Array<{
+    street?: string | null;
+    number?: string | null;
+    cityArea?: string | null;
+    postalCode?: string | null;
+  }>;
+  hasStoredNonStationFilters?: boolean;
+  hasStoredStations?: boolean;
+};
 
 @Component({
   selector: 'app-filter-options',
@@ -92,23 +111,6 @@ export class FilterOptions implements OnInit, OnDestroy {
         validators: stationsFormCrossValidator('trafficStartDateTime', 'trafficEndDateTime'),
       },
     );
-
-    const existingStations = this.navigationService.getJourneyFiltersSnapshot();
-    const existingVehicleSize = this.navigationService.getVehicleSizeSnapshot();
-    const existingRouteFilters = this.navigationService.getJourneyRouteFiltersSnapshot();
-    const existingHomeDraft = this.navigationService.getHomeDraftSnapshot();
-    this.stationForms.patchValue({
-      preferenceCode: `${existingHomeDraft.selectedChip ?? 'fast'}`.trim().toLowerCase(),
-      vehicleSize: existingVehicleSize ?? '',
-      avoidTolls: existingRouteFilters.avoidTolls,
-      avoidHighways: existingRouteFilters.avoidHighways,
-      avoidFerries: existingRouteFilters.avoidFerries,
-      trafficTimeMode: existingRouteFilters.trafficTimeMode,
-      trafficStartDateTime: existingRouteFilters.trafficStartDateTime ?? '',
-      trafficEndDateTime: existingRouteFilters.trafficEndDateTime ?? '',
-      includeEvChargingStations: existingRouteFilters.includeEvChargingStations,
-    });
-    existingStations.forEach((filter) => this.stations.push(this.createStationGroup(filter)));
   }
 
   ngOnInit(): void {
@@ -124,6 +126,8 @@ export class FilterOptions implements OnInit, OnDestroy {
     this.loadPreferenceOptions();
     this.loadVehicleOptions();
     this.initializeAutocompleteServices();
+    this.resetFormToDefaults();
+    this.loadStoredFilteredPreferencesForCurrentUser();
   }
 
   ngOnDestroy(): void {
@@ -821,5 +825,129 @@ export class FilterOptions implements OnInit, OnDestroy {
         this.vehicleSizeOptions.set([]);
       },
     });
+  }
+
+  private loadStoredFilteredPreferencesForCurrentUser(): void {
+    const userId = Number(this.auth.currentUser()?.data?.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return;
+    }
+
+    this.dataService.filteredPreferenceGetLatestByUser({ userId }).subscribe({
+      next: (response: any) => {
+        const stored = (response?.data ?? null) as StoredFilteredPreferenceResponse | null;
+        if (!stored) {
+          return;
+        }
+
+        if (stored.hasStoredNonStationFilters) {
+          const applyStoredFilters = window.confirm(
+            this.translate.instant('FILTER_STORED_FILTERS_CONFIRM'),
+          );
+          if (applyStoredFilters) {
+            this.applyStoredNonStationFilters(stored);
+          }
+        }
+
+        const stations = this.normalizeStoredStations(stored.stations);
+        if (!stations.length) {
+          return;
+        }
+
+        const applyStoredStations = window.confirm(
+          this.translate.instant('FILTER_STORED_STATIONS_CONFIRM'),
+        );
+        if (applyStoredStations) {
+          this.applyStoredStations(stations);
+        }
+      },
+      error: () => {
+        // Keep defaults if no stored preferences are available.
+      },
+    });
+  }
+
+  private applyStoredNonStationFilters(stored: StoredFilteredPreferenceResponse): void {
+    const selectedPreferenceCode = `${stored.selectedPreferenceCode ?? ''}`.trim().toLowerCase();
+    const normalizedTrafficMode = `${stored.trafficTimeMode ?? ''}`.trim().toLowerCase();
+    const trafficTimeMode = this.isTrafficTimeMode(normalizedTrafficMode) ? normalizedTrafficMode : 'none';
+
+    this.stationForms.patchValue({
+      preferenceCode: selectedPreferenceCode.length > 0 ? selectedPreferenceCode : 'fast',
+      vehicleSize: this.isVehicleSize(`${stored.vehicleSize ?? ''}`.trim()) ? `${stored.vehicleSize}`.trim() : '',
+      avoidTolls: !!stored.avoidTolls,
+      avoidHighways: !!stored.avoidHighways,
+      avoidFerries: !!stored.avoidFerries,
+      trafficTimeMode,
+      trafficStartDateTime: this.toDateTimeLocalValue(stored.trafficStartDateTime),
+      trafficEndDateTime: this.toDateTimeLocalValue(stored.trafficEndDateTime),
+      includeEvChargingStations: !!stored.includeEvChargingStations,
+    });
+  }
+
+  private applyStoredStations(stations: JourneyFilterStation[]): void {
+    this.stations.clear();
+    stations.forEach((station) => this.stations.push(this.createStationGroup(station)));
+    this.clearAllStationSuggestions();
+  }
+
+  private normalizeStoredStations(
+    stations: StoredFilteredPreferenceResponse['stations'],
+  ): JourneyFilterStation[] {
+    return (stations ?? [])
+      .map((station) => ({
+        street: `${station?.street ?? ''}`.trim(),
+        number: `${station?.number ?? ''}`.trim(),
+        cityArea: `${station?.cityArea ?? ''}`.trim(),
+        postalCode: `${station?.postalCode ?? ''}`.trim(),
+      }))
+      .filter((station) => this.hasAnyAddressField(station));
+  }
+
+  private resetFormToDefaults(): void {
+    this.stations.clear();
+    this.clearAllStationSuggestions();
+    this.stationForms.patchValue({
+      preferenceCode: 'fast',
+      vehicleSize: '',
+      avoidTolls: false,
+      avoidHighways: false,
+      avoidFerries: false,
+      trafficTimeMode: 'none',
+      trafficStartDateTime: '',
+      trafficEndDateTime: '',
+      includeEvChargingStations: false,
+    });
+    this.stationForms.markAsPristine();
+    this.stationForms.markAsUntouched();
+  }
+
+  private toDateTimeLocalValue(value: unknown): string {
+    const raw = `${value ?? ''}`.trim();
+    if (!raw) {
+      return '';
+    }
+
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) {
+      return '';
+    }
+
+    const year = parsed.getFullYear();
+    const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
+    const day = `${parsed.getDate()}`.padStart(2, '0');
+    const hours = `${parsed.getHours()}`.padStart(2, '0');
+    const minutes = `${parsed.getMinutes()}`.padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  private hasAnyAddressField(station: JourneyFilterStation): boolean {
+    return (
+      station.street.length > 0 ||
+      station.number.length > 0 ||
+      station.cityArea.length > 0 ||
+      station.postalCode.length > 0
+    );
   }
 }

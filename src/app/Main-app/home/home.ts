@@ -195,20 +195,7 @@ export class Home implements OnInit, OnDestroy {
   getActivePreference(userId: number) {
     this.dataService.getCurrentUserActivePreference({ userId }).subscribe(
       (response) => {
-        const fallbackPreference = response?.data?.[0]?.code;
-        this.currentUserPreference = fallbackPreference;
-
-        this.dataService.getAiSuggestions({ userId }).subscribe({
-          next: (aiResponse: any) => {
-            const aiSuggested = aiResponse?.data?.suggestedPreference;
-            if (aiSuggested) {
-              this.currentUserPreference = aiSuggested;
-            }
-          },
-          error: () => {
-            this.currentUserPreference = fallbackPreference;
-          },
-        });
+        this.currentUserPreference = response?.data?.[0]?.code ?? null;
       },
       () => {
         this.currentUserPreference = null;
@@ -330,8 +317,6 @@ export class Home implements OnInit, OnDestroy {
       departure: firstLeg.start_address,
       distanceKM: Number(totalDistanceKm.toFixed(2)),
       score: 0,
-      suggestedPreference: this.currentUserPreference,
-      chosenPreference: this.selectedChip,
       tripDate: new Date().toISOString(),
       vehicleID: selectedVehicleId,
       vehicleCode: selectedVehicleCode ?? null,

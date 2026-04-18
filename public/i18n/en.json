@@ -138,6 +138,8 @@
   "FILTER_REMOVE_STATION_CONFIRM": "Remove station {{station}}?",
   "FILTER_REMOVE_ALL_STATIONS": "Remove all stations",
   "FILTER_REMOVE_ALL_STATIONS_CONFIRM": "Remove all {{count}} stations?",
+  "FILTER_STORED_FILTERS_CONFIRM": "Filters found. Do you wish to apply them?",
+  "FILTER_STORED_STATIONS_CONFIRM": "Stations are found. Do you wish to apply them?",
   "FILTER_DUPLICATE_STATION_ERROR": "The same station cannot be added twice. Use a different street, number, city/area, or postal code.",
   "FILTER_CANCEL": "Cancel",
   "FILTER_APPLY": "Apply",
