@@ -56,6 +56,9 @@ type StoredFilteredPreferenceResponse = {
   hasStoredNonStationFilters?: boolean;
   hasStoredStations?: boolean;
 };
+type ManualStoredPreferenceResponse = {
+  data?: StoredFilteredPreferenceResponse | null;
+};
 
 @Component({
   selector: 'app-filter-options',
@@ -83,6 +86,10 @@ export class FilterOptions implements OnInit, OnDestroy {
   private readonly pendingAutocompleteRequests = new Map<number, number>();
   private readonly stationSuggestions = signal<Record<number, StationAddressSuggestion[]>>({});
   activeSuggestionIndex: number | null = null;
+  confirmPopupVisible = false;
+  confirmPopupMessage = '';
+  private confirmPopupResolver: ((value: boolean) => void) | null = null;
+  private latestStoredPreference: StoredFilteredPreferenceResponse | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -126,12 +133,29 @@ export class FilterOptions implements OnInit, OnDestroy {
     this.loadPreferenceOptions();
     this.loadVehicleOptions();
     this.initializeAutocompleteServices();
-    this.resetFormToDefaults();
-    this.loadStoredFilteredPreferencesForCurrentUser();
+    this.initializeFormFromNavigationState();
+
+    if (!this.navigationService.hasShownStoredPreferencePrompt()) {
+      this.navigationService.markStoredPreferencePromptAsShown();
+      this.loadStoredFilteredPreferencesForCurrentUser();
+      return;
+    }
+
+    this.preloadLatestStoredPreference();
+  }
+
+  reopenStoredPreferencePrompts(): void {
+    if (this.latestStoredPreference) {
+      void this.presentStoredPreferencePrompts(this.latestStoredPreference, true);
+      return;
+    }
+
+    this.loadStoredFilteredPreferencesForCurrentUser(true);
   }
 
   ngOnDestroy(): void {
     this.clearHideSuggestionsTimeout();
+    this.resolveConfirmation(false);
   }
 
   get stations(): FormArray<JourneyStationForm> {
@@ -157,7 +181,7 @@ export class FilterOptions implements OnInit, OnDestroy {
     }
   }
 
-  confirmRemoveStation(index: number): void {
+  async confirmRemoveStation(index: number): Promise<void> {
     if (index < 0 || index >= this.stations.length) {
       return;
     }
@@ -166,12 +190,12 @@ export class FilterOptions implements OnInit, OnDestroy {
       station: index + 1,
     });
 
-    if (window.confirm(message)) {
+    if (await this.requestConfirmation(message)) {
       this.removeStation(index);
     }
   }
 
-  removeAllStations(): void {
+  async removeAllStations(): Promise<void> {
     if (this.stations.length === 0) {
       return;
     }
@@ -180,7 +204,7 @@ export class FilterOptions implements OnInit, OnDestroy {
       count: this.stations.length,
     });
 
-    if (window.confirm(message)) {
+    if (await this.requestConfirmation(message)) {
       this.stations.clear();
       this.clearAllStationSuggestions();
     }
@@ -331,10 +355,10 @@ export class FilterOptions implements OnInit, OnDestroy {
     );
   }
 
-  resetNonStationFilters(): void {
+  async resetNonStationFilters(): Promise<void> {
     const message = this.translate.instant('FILTER_RESET_NON_STATION_FILTERS_CONFIRM');
 
-    if (!window.confirm(message)) {
+    if (!(await this.requestConfirmation(message))) {
       return;
     }
 
@@ -350,6 +374,10 @@ export class FilterOptions implements OnInit, OnDestroy {
       includeEvChargingStations: false,
     });
     this.stationForms.markAsDirty();
+  }
+
+  onConfirmPopupAnswer(answer: boolean): void {
+    this.resolveConfirmation(answer);
   }
 
   selectPreference(code: string): void {
@@ -827,54 +855,86 @@ export class FilterOptions implements OnInit, OnDestroy {
     });
   }
 
-  private loadStoredFilteredPreferencesForCurrentUser(): void {
+  private loadStoredFilteredPreferencesForCurrentUser(forceFiltersPrompt = false): void {
     const userId = Number(this.auth.currentUser()?.data?.id);
     if (!Number.isInteger(userId) || userId <= 0) {
       return;
     }
 
     this.dataService.filteredPreferenceGetLatestByUser({ userId }).subscribe({
-      next: (response: any) => {
+      next: async (response: any) => {
         const stored = (response?.data ?? null) as StoredFilteredPreferenceResponse | null;
         if (!stored) {
+          this.latestStoredPreference = null;
           return;
         }
 
-        if (stored.hasStoredNonStationFilters) {
-          const applyStoredFilters = window.confirm(
-            this.translate.instant('FILTER_STORED_FILTERS_CONFIRM'),
-          );
-          if (applyStoredFilters) {
-            this.applyStoredNonStationFilters(stored);
-          }
-        }
-
-        const stations = this.normalizeStoredStations(stored.stations);
-        if (!stations.length) {
-          return;
-        }
-
-        const applyStoredStations = window.confirm(
-          this.translate.instant('FILTER_STORED_STATIONS_CONFIRM'),
-        );
-        if (applyStoredStations) {
-          this.applyStoredStations(stations);
-        }
+        this.latestStoredPreference = stored;
+        await this.presentStoredPreferencePrompts(stored, forceFiltersPrompt);
       },
       error: () => {
-        // Keep defaults if no stored preferences are available.
+        // Keep current filter state if loading saved preferences fails.
       },
     });
+  }
+
+  private preloadLatestStoredPreference(): void {
+    const userId = Number(this.auth.currentUser()?.data?.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      this.latestStoredPreference = null;
+      return;
+    }
+
+    this.dataService.filteredPreferenceGetLatestByUser({ userId }).subscribe({
+      next: (response: ManualStoredPreferenceResponse) => {
+        const stored = (response?.data ?? null) as StoredFilteredPreferenceResponse | null;
+        this.latestStoredPreference = stored;
+      },
+      error: () => {
+        this.latestStoredPreference = null;
+      },
+    });
+  }
+
+  private async presentStoredPreferencePrompts(
+    stored: StoredFilteredPreferenceResponse,
+    forceFiltersPrompt: boolean,
+  ): Promise<void> {
+    const shouldAskForFilters = forceFiltersPrompt || !!stored.hasStoredNonStationFilters;
+    if (shouldAskForFilters) {
+      const applyStoredFilters = await this.requestConfirmation(
+        this.translate.instant('FILTER_STORED_FILTERS_CONFIRM'),
+      );
+      if (applyStoredFilters) {
+        this.applyStoredNonStationFilters(stored);
+      }
+    }
+
+    const stations = this.normalizeStoredStations(stored.stations);
+    if (!stations.length) {
+      return;
+    }
+
+    const applyStoredStations = await this.requestConfirmation(
+      this.translate.instant('FILTER_STORED_STATIONS_CONFIRM'),
+    );
+    if (applyStoredStations) {
+      this.applyStoredStations(stations);
+    }
   }
 
   private applyStoredNonStationFilters(stored: StoredFilteredPreferenceResponse): void {
     const selectedPreferenceCode = `${stored.selectedPreferenceCode ?? ''}`.trim().toLowerCase();
     const normalizedTrafficMode = `${stored.trafficTimeMode ?? ''}`.trim().toLowerCase();
-    const trafficTimeMode = this.isTrafficTimeMode(normalizedTrafficMode) ? normalizedTrafficMode : 'none';
+    const trafficTimeMode = this.isTrafficTimeMode(normalizedTrafficMode)
+      ? normalizedTrafficMode
+      : 'none';
 
     this.stationForms.patchValue({
       preferenceCode: selectedPreferenceCode.length > 0 ? selectedPreferenceCode : 'fast',
-      vehicleSize: this.isVehicleSize(`${stored.vehicleSize ?? ''}`.trim()) ? `${stored.vehicleSize}`.trim() : '',
+      vehicleSize: this.isVehicleSize(`${stored.vehicleSize ?? ''}`.trim())
+        ? `${stored.vehicleSize}`.trim()
+        : '',
       avoidTolls: !!stored.avoidTolls,
       avoidHighways: !!stored.avoidHighways,
       avoidFerries: !!stored.avoidFerries,
@@ -904,20 +964,27 @@ export class FilterOptions implements OnInit, OnDestroy {
       .filter((station) => this.hasAnyAddressField(station));
   }
 
-  private resetFormToDefaults(): void {
+  private initializeFormFromNavigationState(): void {
+    const existingStations = this.navigationService.getJourneyFiltersSnapshot();
+    const existingVehicleSize = this.navigationService.getVehicleSizeSnapshot();
+    const existingRouteFilters = this.navigationService.getJourneyRouteFiltersSnapshot();
+    const existingHomeDraft = this.navigationService.getHomeDraftSnapshot();
+    const trafficTimeMode = existingRouteFilters.trafficTimeMode === 'none' ? 'none' : 'mode';
+
     this.stations.clear();
     this.clearAllStationSuggestions();
     this.stationForms.patchValue({
-      preferenceCode: 'fast',
-      vehicleSize: '',
-      avoidTolls: false,
-      avoidHighways: false,
-      avoidFerries: false,
-      trafficTimeMode: 'none',
-      trafficStartDateTime: '',
-      trafficEndDateTime: '',
-      includeEvChargingStations: false,
+      preferenceCode: `${existingHomeDraft.selectedChip ?? 'fast'}`.trim().toLowerCase(),
+      vehicleSize: existingVehicleSize ?? '',
+      avoidTolls: existingRouteFilters.avoidTolls,
+      avoidHighways: existingRouteFilters.avoidHighways,
+      avoidFerries: existingRouteFilters.avoidFerries,
+      trafficTimeMode,
+      trafficStartDateTime: this.toDateTimeLocalValue(existingRouteFilters.trafficStartDateTime),
+      trafficEndDateTime: this.toDateTimeLocalValue(existingRouteFilters.trafficEndDateTime),
+      includeEvChargingStations: existingRouteFilters.includeEvChargingStations,
     });
+    existingStations.forEach((filter) => this.stations.push(this.createStationGroup(filter)));
     this.stationForms.markAsPristine();
     this.stationForms.markAsUntouched();
   }
@@ -949,5 +1016,29 @@ export class FilterOptions implements OnInit, OnDestroy {
       station.cityArea.length > 0 ||
       station.postalCode.length > 0
     );
+  }
+
+  private requestConfirmation(message: string): Promise<boolean> {
+    this.resolveConfirmation(false);
+    this.confirmPopupMessage = message;
+    this.confirmPopupVisible = true;
+
+    return new Promise<boolean>((resolve) => {
+      this.confirmPopupResolver = resolve;
+    });
+  }
+
+  private resolveConfirmation(answer: boolean): void {
+    if (!this.confirmPopupResolver) {
+      this.confirmPopupVisible = false;
+      this.confirmPopupMessage = '';
+      return;
+    }
+
+    const resolver = this.confirmPopupResolver;
+    this.confirmPopupResolver = null;
+    this.confirmPopupVisible = false;
+    this.confirmPopupMessage = '';
+    resolver(answer);
   }
 }

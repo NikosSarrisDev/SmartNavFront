@@ -127,6 +127,41 @@ button:disabled {
   background: #fff1f2;
 }
 
+.apply-saved-button {
+  border: 1px solid #7dd3fc;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  padding: 0.8rem 1rem;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  color: #075985;
+  background: #e0f2fe;
+}
+
+.apply-saved-button > * {
+  pointer-events: none;
+}
+
+.ai-stars-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  color: #0369a1;
+  background: #bae6fd;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
 .reset-filters-button {
   border: 1px solid #c4b5fd;
   border-radius: 999px;
@@ -503,6 +538,81 @@ button:disabled {
   box-shadow: none;
 }
 
+.filter-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(3px);
+}
+
+.filter-confirm-card {
+  width: min(440px, 100%);
+  border-radius: 20px;
+  padding: 1.25rem 1.25rem 1.1rem;
+  background: #ffffff;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  box-shadow: 0 28px 56px rgba(2, 6, 23, 0.28);
+}
+
+.filter-confirm-card h3 {
+  margin: 0 0 0.45rem;
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.filter-confirm-card p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.filter-confirm-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.filter-confirm-button {
+  min-width: 96px;
+  border-radius: 999px;
+  border: none;
+  padding: 0.62rem 0.95rem;
+  font-weight: 600;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.filter-confirm-button:hover {
+  transform: translateY(-1px);
+}
+
+.filter-confirm-yes {
+  color: #0c4a6e;
+  background: #bae6fd;
+  box-shadow: 0 8px 18px rgba(56, 189, 248, 0.32);
+}
+
+.filter-confirm-yes:hover {
+  background: #a5ddfa;
+}
+
+.filter-confirm-no {
+  color: #334155;
+  background: #e2e8f0;
+}
+
+.filter-confirm-no:hover {
+  background: #cbd5e1;
+}
+
 @media (max-width: 720px) {
   .filter-page {
     padding: 1rem;
@@ -555,6 +665,14 @@ button:disabled {
 
   .cancel-button,
   .apply-button {
+    width: 100%;
+  }
+
+  .filter-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .filter-confirm-button {
     width: 100%;
   }
 }

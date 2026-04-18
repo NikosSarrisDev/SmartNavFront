@@ -59,6 +59,7 @@ export class NavigationService {
     createDefaultJourneyRouteFilters(),
   );
   private readonly homeDraftState = signal<HomeDraftState>(createDefaultHomeDraft());
+  private storedPreferencePromptShown = false;
 
   public isLoading$ = new BehaviorSubject<boolean>(false);
   public errorMessage$ = new BehaviorSubject<string | null>(null);
@@ -124,6 +125,14 @@ export class NavigationService {
 
   getHomeDraftSnapshot(): HomeDraftState {
     return { ...this.homeDraftState() };
+  }
+
+  hasShownStoredPreferencePrompt(): boolean {
+    return this.storedPreferencePromptShown;
+  }
+
+  markStoredPreferencePromptAsShown(): void {
+    this.storedPreferencePromptShown = true;
   }
 
   getSmartRoute(userNeed: string, currentPos: google.maps.LatLngLiteral): Observable<any> {

@@ -24,6 +24,10 @@
         <p>{{ 'FILTER_SUBTITLE' | translate }}</p>
       </div>
       <div class="station-actions">
+        <button type="button" class="apply-saved-button" (click)="reopenStoredPreferencePrompts()">
+          <span class="ai-stars-icon" aria-hidden="true">✦</span>
+          <span>{{ 'FILTER_APPLY_SAVED_PREFERENCES' | translate }}</span>
+        </button>
         @if (stations.length > 0) {
           <button type="button" class="remove-all-button" (click)="removeAllStations()">
             {{ 'FILTER_REMOVE_ALL_STATIONS' | translate }}
@@ -280,4 +284,29 @@
       </button>
     </div>
   </section>
+
+  @if (confirmPopupVisible) {
+    <div class="filter-confirm-overlay" role="dialog" aria-modal="true">
+      <section class="filter-confirm-card">
+        <h3>{{ 'FILTER_CONFIRM_TITLE' | translate }}</h3>
+        <p>{{ confirmPopupMessage }}</p>
+        <div class="filter-confirm-actions">
+          <button
+            type="button"
+            class="filter-confirm-button filter-confirm-yes"
+            (click)="onConfirmPopupAnswer(true)"
+          >
+            {{ 'FILTER_CONFIRM_YES' | translate }}
+          </button>
+          <button
+            type="button"
+            class="filter-confirm-button filter-confirm-no"
+            (click)="onConfirmPopupAnswer(false)"
+          >
+            {{ 'FILTER_CONFIRM_NO' | translate }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
 </div>
