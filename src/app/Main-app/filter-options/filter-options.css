@@ -81,6 +81,7 @@
 
 label,
 input,
+select,
 button,
 .vehicle-size-option,
 .toggle-option,
@@ -242,6 +243,17 @@ button:disabled {
   font-weight: 600;
 }
 
+.station-preset-wrapper {
+  margin-bottom: 0.75rem;
+}
+
+.station-preset-wrapper small {
+  display: block;
+  margin-top: 0.35rem;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
 .street-input-wrapper {
   position: relative;
 }
@@ -287,7 +299,8 @@ button:disabled {
   margin-top: 0.85rem;
 }
 
-.station-card input {
+.station-card input,
+.station-card select {
   width: 100%;
   padding: 0.9rem 1rem;
   border-radius: 12px;
@@ -298,7 +311,8 @@ button:disabled {
     box-shadow 0.2s ease;
 }
 
-.station-card input:focus {
+.station-card input:focus,
+.station-card select:focus {
   border-color: #6366f1;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }

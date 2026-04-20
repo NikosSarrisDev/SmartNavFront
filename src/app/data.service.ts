@@ -132,6 +132,48 @@ export class DataService {
 
   }
 
+  getPresetIcons(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Preset/Icons', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+
+  }
+
+  presetCreate(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Preset/Create', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+
+  }
+
+  getPresetsByUser(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Preset/GetByUser', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+
+  }
+
   getCurrentUserActivePreference(data:any) {
     return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/CurrentUserActivePreference', data, httpOptions).pipe(
       map(

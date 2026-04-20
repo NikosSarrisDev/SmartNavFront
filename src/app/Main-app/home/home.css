@@ -111,6 +111,326 @@
   position: relative;
 }
 
+.fast-presets-button {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 7;
+  border: 1px solid #7dd3fc;
+  background: #e0f2fe;
+  color: #075985;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.28);
+}
+
+.fast-presets-button:hover {
+  transform: translateY(-1px);
+}
+
+.fast-presets-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(3px);
+}
+
+.fast-presets-card {
+  position: relative;
+  width: min(560px, 96vw);
+  border-radius: 22px;
+  padding: 1.2rem 1.2rem 1.1rem;
+  background: #ffffff;
+  border: 1px solid rgba(14, 165, 233, 0.26);
+  box-shadow: 0 28px 56px rgba(2, 6, 23, 0.28);
+}
+
+.fast-presets-card h3 {
+  margin: 0 0 0.35rem;
+  color: #0f172a;
+}
+
+.fast-presets-card p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.fast-presets-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.fast-preset-street-wrapper {
+  position: relative;
+}
+
+.fast-presets-grid label,
+.fast-presets-icon-row label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.fast-presets-grid input,
+.fast-presets-icon-row select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  outline: none;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.fast-presets-grid input:focus,
+.fast-presets-icon-row select:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+}
+
+.fast-preset-icon-picker {
+  position: relative;
+}
+
+.fast-preset-icon-trigger {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  background: #ffffff;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.fast-preset-icon-trigger:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
+}
+
+.fast-preset-icon-trigger-label {
+  flex: 1;
+  text-align: left;
+  font-weight: 600;
+}
+
+.fast-preset-icon-preview {
+  width: 1.2rem;
+  height: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #0369a1;
+}
+
+.fast-preset-icon-preview:empty {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.fast-preset-icon-preview :is(svg) {
+  width: 1.1rem;
+  height: 1.1rem;
+  display: block;
+}
+
+.fast-preset-icon-options {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 25;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.15);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.fast-preset-icon-option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #111827;
+  text-align: left;
+  font-size: 0.92rem;
+  padding: 0.68rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.fast-preset-icon-option + .fast-preset-icon-option {
+  border-top: 1px solid #f3f4f6;
+}
+
+.fast-preset-icon-option:hover {
+  background: #eef2ff;
+}
+
+.fast-preset-icon-option.active {
+  background: #e0f2fe;
+  color: #0c4a6e;
+}
+
+.fast-preset-address-suggestions {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 15;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.15);
+  overflow: hidden;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.fast-preset-address-suggestion {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #111827;
+  text-align: left;
+  font-size: 0.9rem;
+  padding: 0.7rem 0.85rem;
+}
+
+.fast-preset-address-suggestion + .fast-preset-address-suggestion {
+  border-top: 1px solid #f3f4f6;
+}
+
+.fast-preset-address-suggestion:hover {
+  background: #eef2ff;
+}
+
+.fast-presets-icon-row {
+  margin-top: 0.9rem;
+}
+
+.fast-preset-selected-icon {
+  margin-top: 0.55rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 0.5rem 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0f172a;
+}
+
+.fast-presets-actions {
+  margin-top: 1.15rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.fast-presets-cancel,
+.fast-presets-save {
+  min-width: 120px;
+  border-radius: 999px;
+  border: none;
+  padding: 0.72rem 1.05rem;
+  font-weight: 700;
+}
+
+.fast-presets-cancel {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+}
+
+.fast-presets-save {
+  color: #0c4a6e;
+  background: #bae6fd;
+  box-shadow: 0 9px 20px rgba(56, 189, 248, 0.32);
+}
+
+.fast-presets-save:disabled {
+  cursor: not-allowed;
+  color: #94a3b8;
+  background: #e2e8f0;
+  box-shadow: none;
+}
+
+.fast-presets-confirm-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.fast-presets-confirm-card {
+  width: min(360px, 100%);
+  border-radius: 18px;
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid rgba(14, 165, 233, 0.26);
+}
+
+.fast-presets-confirm-card h4 {
+  margin: 0 0 0.35rem;
+  color: #0f172a;
+}
+
+.fast-presets-confirm-card p {
+  margin: 0;
+  color: #334155;
+}
+
+.fast-presets-confirm-actions {
+  margin-top: 0.95rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+.fast-presets-confirm-yes,
+.fast-presets-confirm-no {
+  min-width: 96px;
+  border: none;
+  border-radius: 999px;
+  padding: 0.62rem 0.95rem;
+  font-weight: 700;
+}
+
+.fast-presets-confirm-yes {
+  color: #0c4a6e;
+  background: #bae6fd;
+  box-shadow: 0 8px 18px rgba(56, 189, 248, 0.32);
+}
+
+.fast-presets-confirm-no {
+  color: #334155;
+  background: #e2e8f0;
+}
+
 .goal-button-disable {
   background-color: #8f8e8e;
   color: white;
@@ -285,5 +605,27 @@
     right: 12px;
     bottom: 12px;
     width: auto;
+  }
+
+  .fast-presets-button {
+    top: 12px;
+    right: 12px;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .fast-presets-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fast-presets-actions,
+  .fast-presets-confirm-actions {
+    flex-direction: column-reverse;
+  }
+
+  .fast-presets-cancel,
+  .fast-presets-save,
+  .fast-presets-confirm-yes,
+  .fast-presets-confirm-no {
+    width: 100%;
   }
 }

@@ -37,6 +37,15 @@ type RoutePreferenceOption = {
   translationField: string;
   prompt: string;
 };
+type UserPresetOption = {
+  id: number;
+  street: string;
+  number: string;
+  cityArea: string;
+  postalCode: string;
+  iconData: string;
+  translationField: string;
+};
 type StoredFilteredPreferenceResponse = {
   selectedPreferenceCode?: string | null;
   vehicleSize?: string | null;
@@ -75,6 +84,7 @@ export class FilterOptions implements OnInit, OnDestroy {
   languages: MenuItem[] | undefined;
   readonly preferenceOptions = signal<RoutePreferenceOption[]>([]);
   readonly vehicleSizeOptions = signal<{ value: VehicleSize; translationField: string }[]>([]);
+  readonly userPresets = signal<UserPresetOption[]>([]);
   readonly trafficTimeModeOptions: { value: TrafficTimeMode; translationField: string }[] = [
     { value: 'none', translationField: 'FILTER_TRAFFIC_TIME_MODE_NONE' },
     { value: 'mode', translationField: 'FILTER_TRAFFIC_TIME_MODE' },
@@ -132,6 +142,7 @@ export class FilterOptions implements OnInit, OnDestroy {
     });
     this.loadPreferenceOptions();
     this.loadVehicleOptions();
+    this.loadUserPresets();
     this.initializeAutocompleteServices();
     this.initializeFormFromNavigationState();
 
@@ -225,7 +236,15 @@ export class FilterOptions implements OnInit, OnDestroy {
       return;
     }
 
-    const filters = this.stations.getRawValue() as JourneyFilterStation[];
+    const filters = this.stations.controls.map((stationControl) => {
+      const raw = stationControl.getRawValue();
+      return {
+        street: `${raw?.street ?? ''}`.trim(),
+        number: `${raw?.number ?? ''}`.trim(),
+        cityArea: `${raw?.cityArea ?? ''}`.trim(),
+        postalCode: `${raw?.postalCode ?? ''}`.trim(),
+      } as JourneyFilterStation;
+    });
     const vehicleSizeRaw = `${this.stationForms.get('vehicleSize')?.value ?? ''}`.trim();
     const vehicleSize = this.isVehicleSize(vehicleSizeRaw) ? vehicleSizeRaw : null;
     const trafficTimeModeRaw = `${this.stationForms.get('trafficTimeMode')?.value ?? ''}`.trim();
@@ -392,6 +411,54 @@ export class FilterOptions implements OnInit, OnDestroy {
     return selectedCode === code;
   }
 
+  onStationPresetChange(index: number): void {
+    const stationGroup = this.getStationGroup(index);
+    if (!stationGroup) {
+      return;
+    }
+
+    const selectedPresetId = this.toPositiveInt(stationGroup.get('presetId')?.value);
+    if (!selectedPresetId) {
+      return;
+    }
+
+    const selectedPreset = this.userPresets().find((preset) => preset.id === selectedPresetId);
+    if (!selectedPreset) {
+      return;
+    }
+
+    stationGroup.patchValue({
+      street: selectedPreset.street,
+      number: selectedPreset.number,
+      cityArea: selectedPreset.cityArea,
+      postalCode: selectedPreset.postalCode,
+    });
+    stationGroup.markAsDirty();
+    stationGroup.markAllAsTouched();
+
+    this.setStationSuggestions(index, []);
+  }
+
+  getUserPresetOptionLabel(preset: UserPresetOption): string {
+    const translationField = `${preset.translationField ?? ''}`.trim();
+    const translated = translationField ? this.translate.instant(translationField) : '';
+    const translatedLabel = translated && translated !== translationField ? translated : translationField;
+    const address = [preset.street, preset.number, preset.cityArea, preset.postalCode]
+      .filter((value) => value.length > 0)
+      .join(', ');
+
+    const left = translatedLabel;
+    if (!left) {
+      return address;
+    }
+
+    if (!address) {
+      return left;
+    }
+
+    return `${left} - ${address}`;
+  }
+
   onStationStreetInput(index: number): void {
     this.clearHideSuggestionsTimeout();
 
@@ -554,6 +621,7 @@ export class FilterOptions implements OnInit, OnDestroy {
 
   private createStationGroup(filter: JourneyFilterStation): JourneyStationForm {
     return this.formBuilder.group({
+      presetId: [null],
       street: [filter.street],
       number: [filter.number],
       cityArea: [filter.cityArea],
@@ -699,6 +767,15 @@ export class FilterOptions implements OnInit, OnDestroy {
 
   private normalizeAddressField(value: unknown): string {
     return `${value ?? ''}`.trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  private toPositiveInt(value: unknown): number | null {
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      return null;
+    }
+
+    return parsed;
   }
 
   private isVehicleSize(value: string): value is VehicleSize {
@@ -851,6 +928,48 @@ export class FilterOptions implements OnInit, OnDestroy {
       },
       error: () => {
         this.vehicleSizeOptions.set([]);
+      },
+    });
+  }
+
+  private loadUserPresets(): void {
+    const userId = Number(this.auth.currentUser()?.data?.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      this.userPresets.set([]);
+      return;
+    }
+
+    this.dataService.getPresetsByUser({ userId }).subscribe({
+      next: (response: any) => {
+        const presets = (response?.data ?? [])
+          .map((item: any) => {
+            const id = Number(item?.id ?? item?.Id);
+            if (!Number.isInteger(id) || id <= 0) {
+              return null;
+            }
+
+            const mappedPreset: UserPresetOption = {
+              id,
+              street: `${item?.street ?? item?.Street ?? ''}`.trim(),
+              number: `${item?.number ?? item?.Number ?? ''}`.trim(),
+              cityArea: `${item?.cityArea ?? item?.CityArea ?? ''}`.trim(),
+              postalCode: `${item?.postalCode ?? item?.PostalCode ?? ''}`.trim(),
+              iconData: `${item?.iconData ?? item?.IconData ?? ''}`.trim(),
+              translationField: `${item?.translationField ?? item?.TranslationField ?? ''}`.trim(),
+            };
+
+            if (!this.hasAnyAddressField(mappedPreset)) {
+              return null;
+            }
+
+            return mappedPreset;
+          })
+          .filter((value: UserPresetOption | null): value is UserPresetOption => value != null);
+
+        this.userPresets.set(presets);
+      },
+      error: () => {
+        this.userPresets.set([]);
       },
     });
   }

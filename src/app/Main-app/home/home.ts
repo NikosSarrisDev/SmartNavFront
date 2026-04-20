@@ -13,6 +13,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { Toast } from 'primeng/toast';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 type RouteFeatureMarkerType = 'toll' | 'highway' | 'ferry' | 'ev';
 type RouteFeatureMarker = {
@@ -20,6 +21,29 @@ type RouteFeatureMarker = {
   position: google.maps.LatLngLiteral;
   title: string;
   options: google.maps.MarkerOptions;
+};
+type StationAddressSuggestion = {
+  placeId: string;
+  description: string;
+};
+type PresetIconOption = {
+  id: number;
+  iconData: string;
+  translationField: string;
+  safeIconSvg: SafeHtml | null;
+};
+type FastPresetFormState = {
+  street: string;
+  number: string;
+  cityArea: string;
+  postalCode: string;
+  presetIconId: number | null;
+};
+type ParsedAddress = {
+  street: string;
+  number: string;
+  cityArea: string;
+  postalCode: string;
 };
 
 @Component({
@@ -139,6 +163,19 @@ export class Home implements OnInit, OnDestroy {
     ferry: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png',
     ev: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
   };
+  fastPresetsModalVisible = false;
+  fastPresetConfirmVisible = false;
+  fastPresetSaving = false;
+  fastPresetIconsLoading = false;
+  readonly fastPresetIcons = signal<PresetIconOption[]>([]);
+  fastPresetForm: FastPresetFormState = this.createInitialFastPresetForm();
+  private fastPresetAutocompleteService: google.maps.places.AutocompleteService | null = null;
+  private fastPresetPlaceDetailsService: google.maps.places.PlacesService | null = null;
+  private fastPresetAutocompleteSessionToken: google.maps.places.AutocompleteSessionToken | null = null;
+  private fastPresetAutocompleteRequestVersion = 0;
+  private fastPresetHideSuggestionsTimeout: number | null = null;
+  readonly fastPresetSuggestions = signal<StationAddressSuggestion[]>([]);
+  fastPresetSuggestionListVisible = false;
 
   constructor(
     public navService: NavigationService,
@@ -147,6 +184,8 @@ export class Home implements OnInit, OnDestroy {
     private dataService: DataService,
     private router: Router,
     private translate: TranslateService,
+    private messageService: MessageService,
+    private sanitizer: DomSanitizer,
   ) {}
 
   async ngOnInit() {
@@ -168,6 +207,7 @@ export class Home implements OnInit, OnDestroy {
     this.getCurrentUserRoleAndAvatar(this.currentUserId);
     this.getActivePreference(this.currentUserId);
     this.loadVehicleLookup();
+    this.initializeFastPresetAutocompleteServices();
   }
 
   getCurrentUserRoleAndAvatar(userId: number) {
@@ -383,6 +423,186 @@ export class Home implements OnInit, OnDestroy {
     return !!this.latestDirections?.routes?.length;
   }
 
+  openFastPresetsModal(): void {
+    this.fastPresetsModalVisible = true;
+    this.fastPresetConfirmVisible = false;
+    this.loadFastPresetIcons();
+    this.initializeFastPresetAutocompleteServices();
+  }
+
+  closeFastPresetsModal(): void {
+    if (this.fastPresetSaving) {
+      return;
+    }
+
+    this.fastPresetsModalVisible = false;
+    this.fastPresetConfirmVisible = false;
+    this.fastPresetForm = this.createInitialFastPresetForm();
+    this.fastPresetSuggestions.set([]);
+    this.fastPresetSuggestionListVisible = false;
+    this.fastPresetAutocompleteSessionToken = null;
+    this.clearFastPresetHideSuggestionsTimeout();
+  }
+
+  onFastPresetOverlayClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeFastPresetsModal();
+    }
+  }
+
+  onFastPresetStreetInput(): void {
+    this.clearFastPresetHideSuggestionsTimeout();
+
+    const streetValue = `${this.fastPresetForm.street ?? ''}`.trim();
+    if (!streetValue || !this.fastPresetAutocompleteService) {
+      this.fastPresetSuggestions.set([]);
+      this.fastPresetSuggestionListVisible = false;
+      return;
+    }
+
+    this.fastPresetAutocompleteRequestVersion++;
+    const requestVersion = this.fastPresetAutocompleteRequestVersion;
+    const request: google.maps.places.AutocompletionRequest = {
+      input: this.buildFastPresetAutocompleteQuery(),
+      sessionToken: this.getFastPresetAutocompleteSessionToken(),
+      types: ['address'],
+    };
+
+    this.fastPresetAutocompleteService.getPlacePredictions(request, (predictions, status) => {
+      if (this.fastPresetAutocompleteRequestVersion !== requestVersion) {
+        return;
+      }
+
+      if (
+        status !== google.maps.places.PlacesServiceStatus.OK ||
+        !predictions ||
+        predictions.length === 0
+      ) {
+        this.fastPresetSuggestions.set([]);
+        this.fastPresetSuggestionListVisible = false;
+        return;
+      }
+
+      const nextSuggestions = predictions
+        .filter(
+          (prediction) =>
+            !!prediction.place_id &&
+            prediction.place_id.length > 0 &&
+            !!prediction.description &&
+            prediction.description.length > 0,
+        )
+        .slice(0, 6)
+        .map((prediction) => ({
+          placeId: prediction.place_id,
+          description: prediction.description,
+        }));
+
+      this.fastPresetSuggestions.set(nextSuggestions);
+      this.fastPresetSuggestionListVisible = nextSuggestions.length > 0;
+    });
+  }
+
+  onFastPresetStreetFocus(): void {
+    this.clearFastPresetHideSuggestionsTimeout();
+    if (this.fastPresetSuggestions().length > 0) {
+      this.fastPresetSuggestionListVisible = true;
+    }
+  }
+
+  onFastPresetStreetBlur(): void {
+    this.clearFastPresetHideSuggestionsTimeout();
+    this.fastPresetHideSuggestionsTimeout = window.setTimeout(() => {
+      this.fastPresetSuggestionListVisible = false;
+    }, 120);
+  }
+
+  selectFastPresetSuggestion(suggestion: StationAddressSuggestion, event: MouseEvent): void {
+    event.preventDefault();
+    this.clearFastPresetHideSuggestionsTimeout();
+
+    if (!this.fastPresetPlaceDetailsService) {
+      this.fastPresetSuggestions.set([]);
+      this.fastPresetSuggestionListVisible = false;
+      return;
+    }
+
+    const request: google.maps.places.PlaceDetailsRequest = {
+      placeId: suggestion.placeId,
+      fields: ['address_components', 'formatted_address', 'name'],
+      sessionToken: this.fastPresetAutocompleteSessionToken ?? undefined,
+    };
+
+    this.fastPresetPlaceDetailsService.getDetails(request, (place, status) => {
+      if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+        return;
+      }
+
+      const parsedAddress = this.parseAddressFromPlace(place);
+      this.fastPresetForm = {
+        ...this.fastPresetForm,
+        street: parsedAddress.street || this.fastPresetForm.street,
+        number: parsedAddress.number || this.fastPresetForm.number,
+        cityArea: parsedAddress.cityArea || this.fastPresetForm.cityArea,
+        postalCode: parsedAddress.postalCode || this.fastPresetForm.postalCode,
+      };
+
+      this.fastPresetAutocompleteSessionToken = null;
+      this.fastPresetSuggestions.set([]);
+      this.fastPresetSuggestionListVisible = false;
+    });
+  }
+
+  canSaveFastPreset(): boolean {
+    const selectedIconId = Number(this.fastPresetForm.presetIconId);
+    const hasIcon = Number.isInteger(selectedIconId) && selectedIconId > 0;
+    return hasIcon && this.hasAnyFastPresetAddressField();
+  }
+
+  onFastPresetSaveClick(): void {
+    if (!this.canSaveFastPreset() || this.fastPresetSaving) {
+      return;
+    }
+
+    this.fastPresetConfirmVisible = true;
+  }
+
+  onFastPresetConfirmAnswer(shouldSave: boolean): void {
+    this.fastPresetConfirmVisible = false;
+    if (!shouldSave) {
+      return;
+    }
+
+    this.saveFastPreset();
+  }
+
+  getFastPresetIconOptionLabel(icon: PresetIconOption): string {
+    const translationField = `${icon.translationField ?? ''}`.trim();
+    const translated = translationField ? this.translate.instant(translationField) : '';
+    return translated && translated !== translationField ? translated : translationField;
+  }
+
+  getSelectedFastPresetIconOption(): PresetIconOption | null {
+    const selectedId = Number(this.fastPresetForm.presetIconId);
+    if (!Number.isInteger(selectedId) || selectedId <= 0) {
+      return null;
+    }
+
+    return this.fastPresetIcons().find((icon) => icon.id === selectedId) ?? null;
+  }
+
+  getSelectedFastPresetIconLabel(): string {
+    const selected = this.getSelectedFastPresetIconOption();
+    if (!selected) {
+      return this.translate.instant('HOME_FAST_PRESETS_ICON_PLACEHOLDER');
+    }
+
+    return this.getFastPresetIconOptionLabel(selected);
+  }
+
+  getSelectedFastPresetIconSvg(): SafeHtml | null {
+    return this.getSelectedFastPresetIconOption()?.safeIconSvg ?? null;
+  }
+
   trackRouteFeatureMarker(_index: number, marker: RouteFeatureMarker): string {
     return marker.id;
   }
@@ -391,6 +611,7 @@ export class Home implements OnInit, OnDestroy {
     this.persistHomeDraft();
     this.stopCameraAnimation();
     this.stopNavigationSimulation();
+    this.clearFastPresetHideSuggestionsTimeout();
   }
 
   private enableNavigationView(route: google.maps.DirectionsRoute): void {
@@ -821,6 +1042,196 @@ export class Home implements OnInit, OnDestroy {
     }
 
     return sampled;
+  }
+
+  private loadFastPresetIcons(): void {
+    this.fastPresetIconsLoading = true;
+
+    this.dataService.getPresetIcons({}).subscribe({
+      next: (response: any) => {
+        const options = (response?.data ?? [])
+          .map((item: any) => {
+            const id = Number(item?.id ?? item?.Id);
+            const iconData = `${item?.iconData ?? item?.IconData ?? item?.icon_data ?? ''}`.trim();
+            const translationField = `${item?.translationField ?? item?.TranslationField ?? ''}`.trim();
+
+            if (!Number.isInteger(id) || id <= 0) {
+              return null;
+            }
+
+            return {
+              id,
+              iconData,
+              translationField,
+              safeIconSvg: iconData
+                ? this.sanitizer.bypassSecurityTrustHtml(iconData)
+                : null,
+            } as PresetIconOption;
+          })
+          .filter((value: PresetIconOption | null): value is PresetIconOption => value != null);
+
+        this.fastPresetIcons.set(options);
+        this.fastPresetIconsLoading = false;
+      },
+      error: () => {
+        this.fastPresetIcons.set([]);
+        this.fastPresetIconsLoading = false;
+      },
+    });
+  }
+
+  private initializeFastPresetAutocompleteServices(): void {
+    if (
+      this.fastPresetAutocompleteService &&
+      this.fastPresetPlaceDetailsService
+    ) {
+      return;
+    }
+
+    if (
+      typeof google === 'undefined' ||
+      !google.maps?.places?.AutocompleteService ||
+      !google.maps?.places?.PlacesService
+    ) {
+      return;
+    }
+
+    this.fastPresetAutocompleteService = new google.maps.places.AutocompleteService();
+    this.fastPresetPlaceDetailsService = new google.maps.places.PlacesService(document.createElement('div'));
+  }
+
+  private getFastPresetAutocompleteSessionToken():
+    | google.maps.places.AutocompleteSessionToken
+    | undefined {
+    if (
+      !this.fastPresetAutocompleteSessionToken &&
+      typeof google !== 'undefined' &&
+      !!google.maps?.places?.AutocompleteSessionToken
+    ) {
+      this.fastPresetAutocompleteSessionToken = new google.maps.places.AutocompleteSessionToken();
+    }
+
+    return this.fastPresetAutocompleteSessionToken ?? undefined;
+  }
+
+  private buildFastPresetAutocompleteQuery(): string {
+    const street = `${this.fastPresetForm.street ?? ''}`.trim();
+    const number = `${this.fastPresetForm.number ?? ''}`.trim();
+    const cityArea = `${this.fastPresetForm.cityArea ?? ''}`.trim();
+    const postalCode = `${this.fastPresetForm.postalCode ?? ''}`.trim();
+
+    return [street, number, cityArea, postalCode].filter((value) => value.length > 0).join(' ');
+  }
+
+  private parseAddressFromPlace(place: google.maps.places.PlaceResult): ParsedAddress {
+    const components = place.address_components ?? [];
+    const street =
+      this.getAddressComponent(components, 'route') ||
+      this.getFirstAddressSegment(place.formatted_address) ||
+      `${place.name ?? ''}`.trim();
+
+    return {
+      street,
+      number: this.getAddressComponent(components, 'street_number'),
+      cityArea:
+        this.getAddressComponent(components, 'locality') ||
+        this.getAddressComponent(components, 'postal_town') ||
+        this.getAddressComponent(components, 'administrative_area_level_3') ||
+        this.getAddressComponent(components, 'sublocality') ||
+        this.getAddressComponent(components, 'administrative_area_level_2'),
+      postalCode: this.getAddressComponent(components, 'postal_code'),
+    };
+  }
+
+  private getAddressComponent(
+    components: google.maps.GeocoderAddressComponent[],
+    componentType: string,
+  ): string {
+    const component = components.find((item) => item.types.includes(componentType));
+    return `${component?.long_name ?? ''}`.trim();
+  }
+
+  private getFirstAddressSegment(formattedAddress?: string | null): string {
+    if (!formattedAddress) {
+      return '';
+    }
+
+    return formattedAddress.split(',')[0]?.trim() ?? '';
+  }
+
+  private clearFastPresetHideSuggestionsTimeout(): void {
+    if (this.fastPresetHideSuggestionsTimeout != null) {
+      window.clearTimeout(this.fastPresetHideSuggestionsTimeout);
+      this.fastPresetHideSuggestionsTimeout = null;
+    }
+  }
+
+  private saveFastPreset(): void {
+    const userId = Number(this.currentUserId);
+    const presetIconId = Number(this.fastPresetForm.presetIconId);
+
+    if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(presetIconId) || presetIconId <= 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: this.translate.instant('HOME_FAST_PRESETS_ERROR_TITLE'),
+        detail: this.translate.instant('HOME_FAST_PRESETS_ERROR_MESSAGE'),
+      });
+      return;
+    }
+
+    const payload = {
+      userID: userId,
+      street: this.normalizeFastPresetField(this.fastPresetForm.street),
+      number: this.normalizeFastPresetField(this.fastPresetForm.number),
+      cityArea: this.normalizeFastPresetField(this.fastPresetForm.cityArea),
+      postalCode: this.normalizeFastPresetField(this.fastPresetForm.postalCode),
+      presetIconId,
+    };
+
+    this.fastPresetSaving = true;
+    this.dataService.presetCreate(payload).subscribe({
+      next: () => {
+        this.fastPresetSaving = false;
+        this.messageService.add({
+          severity: 'success',
+          summary: this.translate.instant('HOME_FAST_PRESETS_SUCCESS_TITLE'),
+          detail: this.translate.instant('HOME_FAST_PRESETS_SUCCESS_MESSAGE'),
+        });
+        this.closeFastPresetsModal();
+      },
+      error: () => {
+        this.fastPresetSaving = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: this.translate.instant('HOME_FAST_PRESETS_ERROR_TITLE'),
+          detail: this.translate.instant('HOME_FAST_PRESETS_ERROR_MESSAGE'),
+        });
+      },
+    });
+  }
+
+  private hasAnyFastPresetAddressField(): boolean {
+    return (
+      this.normalizeFastPresetField(this.fastPresetForm.street) !== null ||
+      this.normalizeFastPresetField(this.fastPresetForm.number) !== null ||
+      this.normalizeFastPresetField(this.fastPresetForm.cityArea) !== null ||
+      this.normalizeFastPresetField(this.fastPresetForm.postalCode) !== null
+    );
+  }
+
+  private normalizeFastPresetField(value: string): string | null {
+    const normalized = `${value ?? ''}`.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+
+  private createInitialFastPresetForm(): FastPresetFormState {
+    return {
+      street: '',
+      number: '',
+      cityArea: '',
+      postalCode: '',
+      presetIconId: null,
+    };
   }
 
   private persistHomeDraft(): void {

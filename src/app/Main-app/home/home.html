@@ -105,6 +105,11 @@
     </aside>
 
     <main class="map-container">
+      <button type="button" class="fast-presets-button" (click)="openFastPresetsModal()">
+        <i class="pi pi-bolt" aria-hidden="true"></i>
+        <span>{{ 'HOME_FAST_PRESETS_BUTTON' | translate }}</span>
+      </button>
+
       <google-map
         [center]="center"
         [zoom]="mapZoom"
@@ -185,6 +190,145 @@
           </div>
         </div>
       </section>
+
+      @if (fastPresetsModalVisible) {
+        <div
+          class="fast-presets-overlay"
+          role="dialog"
+          aria-modal="true"
+          (click)="onFastPresetOverlayClick($event)"
+        >
+          <section class="fast-presets-card" (click)="$event.stopPropagation()">
+            <h3>{{ 'HOME_FAST_PRESETS_MODAL_TITLE' | translate }}</h3>
+            <p>{{ 'HOME_FAST_PRESETS_MODAL_SUBTITLE' | translate }}</p>
+
+            <div class="fast-presets-grid">
+              <div class="fast-preset-street-wrapper">
+                <label for="fast-preset-street">{{ 'FILTER_STREET_LABEL' | translate }}</label>
+                <input
+                  id="fast-preset-street"
+                  type="text"
+                  [(ngModel)]="fastPresetForm.street"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="'FILTER_STREET_PLACEHOLDER' | translate"
+                  autocomplete="off"
+                  (input)="onFastPresetStreetInput()"
+                  (focus)="onFastPresetStreetFocus()"
+                  (blur)="onFastPresetStreetBlur()"
+                />
+                @if (fastPresetSuggestionListVisible && fastPresetSuggestions().length > 0) {
+                  <div class="fast-preset-address-suggestions">
+                    @for (suggestion of fastPresetSuggestions(); track suggestion.placeId) {
+                      <button
+                        type="button"
+                        class="fast-preset-address-suggestion"
+                        (mousedown)="selectFastPresetSuggestion(suggestion, $event)"
+                      >
+                        {{ suggestion.description }}
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+              <div>
+                <label for="fast-preset-number">{{ 'FILTER_NUMBER_LABEL' | translate }}</label>
+                <input
+                  id="fast-preset-number"
+                  type="text"
+                  [(ngModel)]="fastPresetForm.number"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="'FILTER_NUMBER_PLACEHOLDER' | translate"
+                />
+              </div>
+              <div>
+                <label for="fast-preset-city">{{ 'FILTER_CITY_LABEL' | translate }}</label>
+                <input
+                  id="fast-preset-city"
+                  type="text"
+                  [(ngModel)]="fastPresetForm.cityArea"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="'FILTER_CITY_PLACEHOLDER' | translate"
+                />
+              </div>
+              <div>
+                <label for="fast-preset-postal">{{ 'FILTER_POSTAL_LABEL' | translate }}</label>
+                <input
+                  id="fast-preset-postal"
+                  type="text"
+                  [(ngModel)]="fastPresetForm.postalCode"
+                  [ngModelOptions]="{ standalone: true }"
+                  [placeholder]="'FILTER_POSTAL_PLACEHOLDER' | translate"
+                />
+              </div>
+            </div>
+
+            <div class="fast-presets-icon-row">
+              <label for="fast-preset-icon">{{ 'HOME_FAST_PRESETS_ICON_LABEL' | translate }}</label>
+              <select
+                id="fast-preset-icon"
+                [(ngModel)]="fastPresetForm.presetIconId"
+                [ngModelOptions]="{ standalone: true }"
+                [disabled]="fastPresetIconsLoading"
+              >
+                <option [ngValue]="null">
+                  {{ 'HOME_FAST_PRESETS_ICON_PLACEHOLDER' | translate }}
+                </option>
+                @for (icon of fastPresetIcons(); track icon.id) {
+                  <option [ngValue]="icon.id">
+                    {{ getFastPresetIconOptionLabel(icon) }}
+                  </option>
+                }
+              </select>
+
+              @if (getSelectedFastPresetIconOption()) {
+                <div class="fast-preset-selected-icon">
+                  <span class="fast-preset-icon-preview" [innerHTML]="getSelectedFastPresetIconSvg()"></span>
+                  <strong>{{ getSelectedFastPresetIconLabel() }}</strong>
+                </div>
+              }
+            </div>
+
+            <div class="fast-presets-actions">
+              <button type="button" class="fast-presets-cancel" (click)="closeFastPresetsModal()">
+                {{ 'FILTER_CANCEL' | translate }}
+              </button>
+              <button
+                type="button"
+                class="fast-presets-save"
+                (click)="onFastPresetSaveClick()"
+                [disabled]="fastPresetSaving || !canSaveFastPreset()"
+              >
+                {{ 'HOME_FAST_PRESETS_SAVE' | translate }}
+              </button>
+            </div>
+
+            @if (fastPresetConfirmVisible) {
+              <div class="fast-presets-confirm-overlay">
+                <section class="fast-presets-confirm-card">
+                  <h4>{{ 'FILTER_CONFIRM_TITLE' | translate }}</h4>
+                  <p>{{ 'HOME_FAST_PRESETS_SAVE_CONFIRM' | translate }}</p>
+                  <div class="fast-presets-confirm-actions">
+                    <button
+                      type="button"
+                      class="fast-presets-confirm-yes"
+                      (click)="onFastPresetConfirmAnswer(true)"
+                    >
+                      {{ 'FILTER_CONFIRM_YES' | translate }}
+                    </button>
+                    <button
+                      type="button"
+                      class="fast-presets-confirm-no"
+                      (click)="onFastPresetConfirmAnswer(false)"
+                    >
+                      {{ 'FILTER_CONFIRM_NO' | translate }}
+                    </button>
+                  </div>
+                </section>
+              </div>
+            }
+          </section>
+        </div>
+      }
     </main>
   </div>
 }

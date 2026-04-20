@@ -64,6 +64,30 @@
               </button>
             </div>
 
+            <div class="station-preset-wrapper">
+              <label [for]="'station-preset-' + $index">{{
+                'FILTER_STATION_PRESET_LABEL' | translate
+              }}</label>
+              <select
+                [id]="'station-preset-' + $index"
+                formControlName="presetId"
+                [disabled]="userPresets().length === 0"
+                (change)="onStationPresetChange($index)"
+              >
+                <option [ngValue]="null">
+                  {{ 'FILTER_STATION_PRESET_PLACEHOLDER' | translate }}
+                </option>
+                @for (preset of userPresets(); track preset.id) {
+                  <option [ngValue]="preset.id">
+                    {{ getUserPresetOptionLabel(preset) }}
+                  </option>
+                }
+              </select>
+              @if (userPresets().length === 0) {
+                <small>{{ 'FILTER_STATION_PRESET_EMPTY' | translate }}</small>
+              }
+            </div>
+
             <label [for]="'station-street-' + $index">{{
               'FILTER_STREET_LABEL' | translate
             }}</label>
