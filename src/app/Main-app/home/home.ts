@@ -22,6 +22,14 @@ type RouteFeatureMarker = {
   title: string;
   options: google.maps.MarkerOptions;
 };
+type RouteChoiceOption = {
+  routeIndex: number;
+  title: string;
+  summary: string;
+  distanceKm: number;
+  durationMin: number;
+  isRecommended: boolean;
+};
 type StationAddressSuggestion = {
   placeId: string;
   description: string;
@@ -152,8 +160,11 @@ export class Home implements OnInit, OnDestroy {
     streetViewControl: false,
     fullscreenControl: false,
   };
+  selectedRouteDirections?: google.maps.DirectionsResult;
   route?: google.maps.DirectionsResult;
   explanation: string = '';
+  routeChoiceOptions: RouteChoiceOption[] = [];
+  selectedRouteIndex = 0;
   readonly routeFeatureMarkers = signal<RouteFeatureMarker[]>([]);
   private readonly vehicleIdByCode = new Map<string, number>();
   private routeFeatureRequestToken = 0;
@@ -289,6 +300,10 @@ export class Home implements OnInit, OnDestroy {
     this.destinationMarker = undefined;
     this.userStartMarker = undefined;
     this.activeRoutePath = [];
+    this.latestDirections = undefined;
+    this.selectedRouteDirections = undefined;
+    this.routeChoiceOptions = [];
+    this.selectedRouteIndex = 0;
     this.routeFeatureRequestToken++;
     this.routeFeatureMarkers.set([]);
     this.stopNavigationSimulation();
@@ -300,22 +315,9 @@ export class Home implements OnInit, OnDestroy {
       tap((data) => {
         if (data && data.explanation) {
           this.latestDirections = data.result;
-          const route = data.result.routes[0];
-          let totalDistance = 0;
-          let totalDuration = 0;
-
-          route.legs.forEach((leg: any) => {
-            totalDistance += leg.distance?.value ?? 0;
-            totalDuration += leg.duration?.value ?? 0;
-          });
-
-          this.distance = (totalDistance / 1000).toFixed(1) + ' km';
-          this.duration = Math.round(totalDuration / 60) + ' min';
-
           this.explanation = data.explanation;
-          const routeFilters = this.navService.getJourneyRouteFiltersSnapshot();
-          const currentToken = this.routeFeatureRequestToken;
-          void this.loadRouteFeatureMarkers(route, routeFilters, currentToken);
+          this.buildRouteChoiceOptions(data.result);
+          this.selectRouteChoice(0);
         }
       }),
       finalize(() => this.isLoaderFullCompEnabled.setLoadingToFalse()),
@@ -328,7 +330,8 @@ export class Home implements OnInit, OnDestroy {
       return;
     }
 
-    const selectedRoute = this.latestDirections.routes[0];
+    const selectedRoute =
+      this.latestDirections.routes[this.selectedRouteIndex] ?? this.latestDirections.routes[0];
     if (!selectedRoute.legs?.length) {
       this.navService.errorMessage$.next('No route legs were found.');
       return;
@@ -420,7 +423,37 @@ export class Home implements OnInit, OnDestroy {
   }
 
   canStartNavigation(): boolean {
-    return !!this.latestDirections?.routes?.length;
+    return !!this.latestDirections?.routes?.length && this.routeChoiceOptions.length > 0;
+  }
+
+  selectRouteChoice(routeIndex: number): void {
+    if (!this.latestDirections?.routes?.length) {
+      return;
+    }
+
+    const boundedIndex = Math.max(0, Math.min(routeIndex, this.latestDirections.routes.length - 1));
+    const selectedRoute = this.latestDirections.routes[boundedIndex];
+    if (!selectedRoute?.legs?.length) {
+      return;
+    }
+
+    this.selectedRouteIndex = boundedIndex;
+    this.selectedRouteDirections = this.createDirectionsResultForSelectedRoute(boundedIndex);
+
+    let totalDistance = 0;
+    let totalDuration = 0;
+    selectedRoute.legs.forEach((leg: any) => {
+      totalDistance += leg.distance?.value ?? 0;
+      totalDuration += leg.duration?.value ?? 0;
+    });
+
+    this.distance = (totalDistance / 1000).toFixed(1) + ' km';
+    this.duration = Math.round(totalDuration / 60) + ' min';
+
+    const routeFilters = this.navService.getJourneyRouteFiltersSnapshot();
+    this.routeFeatureRequestToken++;
+    const currentToken = this.routeFeatureRequestToken;
+    void this.loadRouteFeatureMarkers(selectedRoute, routeFilters, currentToken);
   }
 
   openFastPresetsModal(): void {
@@ -603,6 +636,10 @@ export class Home implements OnInit, OnDestroy {
     return this.getSelectedFastPresetIconOption()?.safeIconSvg ?? null;
   }
 
+  trackRouteChoice(_index: number, option: RouteChoiceOption): number {
+    return option.routeIndex;
+  }
+
   trackRouteFeatureMarker(_index: number, marker: RouteFeatureMarker): string {
     return marker.id;
   }
@@ -773,6 +810,54 @@ export class Home implements OnInit, OnDestroy {
           repeat: '26px',
         },
       ],
+    };
+  }
+
+  private buildRouteChoiceOptions(directions: google.maps.DirectionsResult): void {
+    const routes = directions.routes ?? [];
+    const limitedRoutes = routes.slice(0, 3);
+
+    this.routeChoiceOptions = limitedRoutes
+      .map((route, index) => {
+        const legs = route.legs ?? [];
+        if (legs.length === 0) {
+          return null;
+        }
+
+        const totalDistanceMeters = legs.reduce((sum, leg) => sum + (leg.distance?.value ?? 0), 0);
+        const totalDurationSeconds = legs.reduce((sum, leg) => sum + (leg.duration?.value ?? 0), 0);
+        const summary = `${route.summary ?? ''}`.trim();
+
+        return {
+          routeIndex: index,
+          title: this.translate.instant('HOME_ROUTE_OPTION_LABEL', { index: index + 1 }),
+          summary:
+            summary.length > 0
+              ? summary
+              : this.translate.instant('HOME_ROUTE_OPTION_SUMMARY_FALLBACK'),
+          distanceKm: Number((totalDistanceMeters / 1000).toFixed(1)),
+          durationMin: Math.max(1, Math.round(totalDurationSeconds / 60)),
+          isRecommended: index === 0,
+        } as RouteChoiceOption;
+      })
+      .filter((value: RouteChoiceOption | null): value is RouteChoiceOption => value != null);
+  }
+
+  private createDirectionsResultForSelectedRoute(
+    routeIndex: number,
+  ): google.maps.DirectionsResult | undefined {
+    if (!this.latestDirections?.routes?.length) {
+      return undefined;
+    }
+
+    const selectedRoute = this.latestDirections.routes[routeIndex];
+    if (!selectedRoute) {
+      return undefined;
+    }
+
+    return {
+      ...this.latestDirections,
+      routes: [selectedRoute],
     };
   }
 

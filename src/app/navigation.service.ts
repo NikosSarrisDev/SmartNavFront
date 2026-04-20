@@ -205,6 +205,7 @@ Rules:
           waypoints: formattedStations.map((stop: string) => ({ location: stop, stopover: true })),
           travelMode: google.maps.TravelMode.DRIVING,
           optimizeWaypoints: true,
+          provideRouteAlternatives: true,
           avoidTolls: savedRouteFilters.avoidTolls,
           avoidHighways: savedRouteFilters.avoidHighways,
           avoidFerries: savedRouteFilters.avoidFerries,

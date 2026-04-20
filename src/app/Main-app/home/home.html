@@ -75,6 +75,40 @@
           >
         </div>
 
+        <div class="route-choice-wrap" *ngIf="!navigationStarted && routeChoiceOptions.length > 0">
+          <div class="route-choice-head">
+            <strong>{{ 'HOME_ROUTE_CHOOSER_TITLE' | translate }}</strong>
+            <small>{{ 'HOME_ROUTE_CHOOSER_SUBTITLE' | translate }}</small>
+          </div>
+          <div class="route-choice-list">
+            <button
+              type="button"
+              class="route-choice-card"
+              *ngFor="let option of routeChoiceOptions; trackBy: trackRouteChoice"
+              [class.active]="selectedRouteIndex === option.routeIndex"
+              (click)="selectRouteChoice(option.routeIndex)"
+            >
+              <div class="route-choice-title-row">
+                <span>{{ option.title }}</span>
+                <span class="route-choice-badge" *ngIf="option.isRecommended">{{
+                  'HOME_ROUTE_OPTION_RECOMMENDED' | translate
+                }}</span>
+              </div>
+              <p>{{ option.summary }}</p>
+              <div class="route-choice-metrics">
+                <span
+                  ><strong>{{ 'HOME_ROUTE_OPTION_DISTANCE' | translate }}:</strong>
+                  {{ option.distanceKm | number: '1.1-1' }} km</span
+                >
+                <span
+                  ><strong>{{ 'HOME_ROUTE_OPTION_DURATION' | translate }}:</strong>
+                  {{ option.durationMin }} min</span
+                >
+              </div>
+            </button>
+          </div>
+        </div>
+
         <button
           class="start-nav-btn"
           (click)="startNavigation()"
@@ -118,8 +152,11 @@
         width="100%"
       >
         <p-toast />
-        <ng-container *ngIf="routeData$ | async as data">
-          <map-directions-renderer *ngIf="!navigationStarted" [directions]="data.result!">
+        <ng-container *ngIf="routeData$ | async">
+          <map-directions-renderer
+            *ngIf="!navigationStarted && selectedRouteDirections"
+            [directions]="selectedRouteDirections"
+          >
           </map-directions-renderer>
         </ng-container>
         <map-polyline

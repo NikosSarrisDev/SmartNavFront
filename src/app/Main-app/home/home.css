@@ -80,6 +80,83 @@
   margin-bottom: 15px;
 }
 
+.route-choice-wrap {
+  margin-top: 0.9rem;
+}
+
+.route-choice-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.55rem;
+}
+
+.route-choice-head strong {
+  color: #1f2937;
+}
+
+.route-choice-head small {
+  color: #64748b;
+}
+
+.route-choice-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.route-choice-card {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.72rem 0.8rem;
+  color: #0f172a;
+}
+
+.route-choice-card:hover {
+  border-color: #93c5fd;
+  background: #f8fbff;
+}
+
+.route-choice-card.active {
+  border-color: #38bdf8;
+  background: #e0f2fe;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+.route-choice-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+}
+
+.route-choice-badge {
+  font-size: 0.74rem;
+  color: #0c4a6e;
+  background: #bae6fd;
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+}
+
+.route-choice-card p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #334155;
+}
+
+.route-choice-metrics {
+  margin-top: 0.45rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
 .start-nav-btn {
   width: 100%;
   padding: 12px;
