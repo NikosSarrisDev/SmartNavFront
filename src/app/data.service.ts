@@ -258,6 +258,20 @@ export class DataService {
 
   }
 
+  tripRate(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/Rate', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+
+  }
+
   filteredPreferenceCreate(data:any) {
     return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Create', data, httpOptions).pipe(
       map(

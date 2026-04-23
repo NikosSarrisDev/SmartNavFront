@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
 import { JourneyRouteFilters, NavigationService } from '../../navigation.service';
 import { AsyncPipe, DatePipe, DecimalPipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMap, GoogleMapsModule } from '@angular/google-maps';
@@ -101,35 +101,37 @@ export class Home implements OnInit, OnDestroy {
   navigationArrowOptions: google.maps.MarkerOptions = {
     clickable: false,
     zIndex: 1000,
-    icon: {
-      path: 'M 0 -2 L 1.5 2 L 0 1 L -1.5 2 Z',
-      fillColor: '#007bff',
-      fillOpacity: 1,
-      strokeColor: '#ffffff',
-      strokeWeight: 1,
-      scale: 6,
-      rotation: 0,
-    },
+    optimized: false,
+    icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+  };
+  navigationPulseOptions: google.maps.CircleOptions = {
+    strokeColor: '#1d4ed8',
+    strokeOpacity: 0.95,
+    strokeWeight: 2,
+    fillColor: '#38bdf8',
+    fillOpacity: 0.35,
+    zIndex: 999,
   };
   userStartMarkerOptions: google.maps.MarkerOptions = {
     zIndex: 998,
     clickable: false,
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
-      fillColor: '#1d4ed8',
-      fillOpacity: 1,
+      fillColor: '#94a3b8',
+      fillOpacity: 0.75,
       strokeColor: '#ffffff',
       strokeWeight: 2,
-      scale: 7,
+      scale: 6,
     },
   };
   loadingAvatar = signal(false);
   public routeData$!: Observable<any>;
   private latestDirections?: google.maps.DirectionsResult;
-  private navigationPath: google.maps.LatLng[] = [];
+  private navigationPath: google.maps.LatLngLiteral[] = [];
   private navigationPathIndex = 0;
   private navigationAnimationTimer: number | null = null;
   private cameraAnimationTimer: number | null = null;
+  private routeRatingPopupDelayTimer: number | null = null;
   private antOffset = 0;
 
   activeRouteBaseOptions: google.maps.PolylineOptions = {
@@ -165,9 +167,15 @@ export class Home implements OnInit, OnDestroy {
   explanation: string = '';
   routeChoiceOptions: RouteChoiceOption[] = [];
   selectedRouteIndex = 0;
+  activeTripId: number | null = null;
+  routeRatingPopupVisible = false;
+  routeRatingValue = 0;
+  routeRatingSaving = false;
+  readonly routeRatingStars = [1, 2, 3, 4, 5];
   readonly routeFeatureMarkers = signal<RouteFeatureMarker[]>([]);
   private readonly vehicleIdByCode = new Map<string, number>();
   private routeFeatureRequestToken = 0;
+  private hasHandledNavigationArrival = false;
   private readonly routeFeatureIconByType: Record<RouteFeatureMarkerType, string> = {
     toll: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
     highway: 'https://maps.google.com/mapfiles/ms/icons/yellow-dot.png',
@@ -197,6 +205,8 @@ export class Home implements OnInit, OnDestroy {
     private translate: TranslateService,
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   async ngOnInit() {
@@ -304,8 +314,14 @@ export class Home implements OnInit, OnDestroy {
     this.selectedRouteDirections = undefined;
     this.routeChoiceOptions = [];
     this.selectedRouteIndex = 0;
+    this.activeTripId = null;
+    this.routeRatingPopupVisible = false;
+    this.routeRatingValue = 0;
+    this.routeRatingSaving = false;
+    this.hasHandledNavigationArrival = false;
     this.routeFeatureRequestToken++;
     this.routeFeatureMarkers.set([]);
+    this.clearRouteRatingPopupDelayTimer();
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
 
@@ -373,7 +389,12 @@ export class Home implements OnInit, OnDestroy {
     };
 
     this.dataService.tripCreate(payload).subscribe({
-      next: () => {
+      next: (response: any) => {
+        this.activeTripId = this.resolveActiveTripId(response);
+        this.routeRatingPopupVisible = false;
+        this.routeRatingValue = 0;
+        this.routeRatingSaving = false;
+        this.hasHandledNavigationArrival = false;
         this.navigationStarted = true;
         this.navigationStartAt = new Date();
         this.navigationPanelVisible = true;
@@ -383,20 +404,17 @@ export class Home implements OnInit, OnDestroy {
         this.remainingDurationMinutes = this.totalDurationMinutes;
         this.navigationProgress = 0;
         this.navigationEta = new Date(Date.now() + this.totalDurationMinutes * 60000);
-        this.activeRoutePath = (selectedRoute.overview_path ?? []).map((point) => ({
-          lat: point.lat(),
-          lng: point.lng(),
-        }));
+        this.activeRoutePath = this.buildNavigationPath(selectedRoute);
         this.antOffset = 0;
         this.updateAntPathStyle();
-        this.destinationMarker = {
-          lat: lastLeg.end_location.lat(),
-          lng: lastLeg.end_location.lng(),
-        };
-        this.userStartMarker = {
-          lat: firstLeg.start_location.lat(),
-          lng: firstLeg.start_location.lng(),
-        };
+        const destinationMarker = this.toLatLngLiteral(lastLeg.end_location);
+        const startMarker = this.toLatLngLiteral(firstLeg.start_location);
+        this.destinationMarker =
+          destinationMarker ?? this.activeRoutePath[this.activeRoutePath.length - 1] ?? undefined;
+        this.userStartMarker = startMarker ?? this.activeRoutePath[0] ?? undefined;
+        // TEMP testing flow:
+        // Open rating popup 4 seconds after navigation starts.
+        this.scheduleRouteRatingPopupOpen();
         this.enableNavigationView(selectedRoute);
         this.navService.errorMessage$.next(null);
       },
@@ -407,6 +425,10 @@ export class Home implements OnInit, OnDestroy {
   }
 
   cancelNavigation() {
+    if (this.routeRatingPopupVisible || this.routeRatingSaving) {
+      return;
+    }
+
     this.navigationStarted = false;
     this.navigationStartAt = null;
     this.navigationPanelVisible = false;
@@ -418,6 +440,12 @@ export class Home implements OnInit, OnDestroy {
     this.navigationEta = null;
     this.userStartMarker = undefined;
     this.activeRoutePath = [];
+    this.activeTripId = null;
+    this.hasHandledNavigationArrival = false;
+    this.routeRatingPopupVisible = false;
+    this.routeRatingValue = 0;
+    this.routeRatingSaving = false;
+    this.clearRouteRatingPopupDelayTimer();
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
   }
@@ -454,6 +482,57 @@ export class Home implements OnInit, OnDestroy {
     this.routeFeatureRequestToken++;
     const currentToken = this.routeFeatureRequestToken;
     void this.loadRouteFeatureMarkers(selectedRoute, routeFilters, currentToken);
+  }
+
+  selectRouteRating(value: number): void {
+    if (this.routeRatingSaving) {
+      return;
+    }
+
+    this.routeRatingValue = Math.max(1, Math.min(5, value));
+  }
+
+  submitRouteRating(): void {
+    if (this.routeRatingSaving) {
+      return;
+    }
+
+    if (this.routeRatingValue < 1 || this.routeRatingValue > 5) {
+      return;
+    }
+
+    const userId = Number(this.currentUserId);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return;
+    }
+
+    this.routeRatingSaving = true;
+    this.dataService
+      .tripRate({
+        userId,
+        tripId: this.activeTripId,
+        score: this.routeRatingValue,
+      })
+      .subscribe({
+        next: () => {
+          this.routeRatingSaving = false;
+          this.routeRatingPopupVisible = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: this.translate.instant('HOME_ROUTE_RATING_SUCCESS_TITLE'),
+            detail: this.translate.instant('HOME_ROUTE_RATING_SUCCESS_MESSAGE'),
+          });
+          this.cancelNavigation();
+        },
+        error: () => {
+          this.routeRatingSaving = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: this.translate.instant('HOME_ROUTE_RATING_ERROR_TITLE'),
+            detail: this.translate.instant('HOME_ROUTE_RATING_ERROR_MESSAGE'),
+          });
+        },
+      });
   }
 
   openFastPresetsModal(): void {
@@ -647,12 +726,13 @@ export class Home implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.persistHomeDraft();
     this.stopCameraAnimation();
+    this.clearRouteRatingPopupDelayTimer();
     this.stopNavigationSimulation();
     this.clearFastPresetHideSuggestionsTimeout();
   }
 
   private enableNavigationView(route: google.maps.DirectionsRoute): void {
-    this.navigationPath = route.overview_path ?? [];
+    this.navigationPath = this.normalizeNavigationPath(this.buildNavigationPath(route));
     this.navigationPathIndex = 0;
 
     if (!this.navigationPath.length) {
@@ -660,7 +740,7 @@ export class Home implements OnInit, OnDestroy {
     }
 
     const startPosition = this.navigationPath[0];
-    this.navigationArrow = { lat: startPosition.lat(), lng: startPosition.lng() };
+    this.navigationArrow = { lat: startPosition.lat, lng: startPosition.lng };
     this.runCinematicZoom(this.navigationArrow, 18, 65);
 
     this.startNavigationSimulation();
@@ -670,39 +750,38 @@ export class Home implements OnInit, OnDestroy {
     this.stopNavigationSimulation();
 
     if (this.navigationPath.length < 2) {
+      this.onNavigationArrived();
       return;
     }
 
-    this.navigationAnimationTimer = window.setInterval(() => {
-      if (!this.navigationStarted || this.navigationPathIndex >= this.navigationPath.length - 1) {
-        this.stopNavigationSimulation();
+    const runTick = (): void => {
+      if (!this.navigationStarted) {
+        this.clearNavigationAnimationTimer();
+        return;
+      }
+
+      if (this.navigationPathIndex >= this.navigationPath.length) {
+        this.clearNavigationAnimationTimer();
+        this.onNavigationArrived();
         return;
       }
 
       const current = this.navigationPath[this.navigationPathIndex];
-      const next = this.navigationPath[this.navigationPathIndex + 1];
+      const isLastPoint = this.navigationPathIndex >= this.navigationPath.length - 1;
+      const next = isLastPoint
+        ? current
+        : this.navigationPath[this.navigationPathIndex + 1];
 
-      const currentPoint = { lat: current.lat(), lng: current.lng() };
-      const heading = this.calculateHeading(currentPoint, { lat: next.lat(), lng: next.lng() });
+      const currentPoint = { lat: current.lat, lng: current.lng };
+      const heading = this.calculateHeading(currentPoint, { lat: next.lat, lng: next.lng });
 
       this.navigationArrow = currentPoint;
-      this.center = currentPoint;
       this.mapOptions = {
         ...this.mapOptions,
         heading,
       };
 
-      const icon = this.navigationArrowOptions.icon as google.maps.Symbol;
-      this.navigationArrowOptions = {
-        ...this.navigationArrowOptions,
-        icon: {
-          ...icon,
-          rotation: heading,
-        },
-      };
-
-      this.navigationPathIndex++;
-      const ratio = this.navigationPathIndex / (this.navigationPath.length - 1);
+      const ratio = this.navigationPathIndex / Math.max(1, this.navigationPath.length - 1);
       this.navigationProgress = Math.min(100, Math.round(ratio * 100));
       this.remainingDistanceKm = Number((this.totalDistanceKm * (1 - ratio)).toFixed(2));
       this.remainingDurationMinutes = Math.max(
@@ -712,17 +791,72 @@ export class Home implements OnInit, OnDestroy {
       this.navigationEta = new Date(Date.now() + this.remainingDurationMinutes * 60000);
       this.antOffset = (this.antOffset + 4) % 100;
       this.updateAntPathStyle();
-    }, 900);
+
+      if (isLastPoint) {
+        this.navigationProgress = 100;
+        this.remainingDistanceKm = 0;
+        this.remainingDurationMinutes = 0;
+        this.navigationEta = new Date();
+        this.clearNavigationAnimationTimer();
+        this.onNavigationArrived();
+        return;
+      }
+
+      this.navigationPathIndex++;
+    };
+
+    runTick();
+    this.navigationAnimationTimer = window.setInterval(runTick, 420);
+  }
+
+  private onNavigationArrived(): void {
+    if (this.hasHandledNavigationArrival) {
+      return;
+    }
+
+    this.hasHandledNavigationArrival = true;
+    this.navigationPanelVisible = true;
+
+    this.routeRatingValue = 0;
+    // Rating popup is intentionally not opened on arrival.
+    // It is scheduled after startNavigation() for testing.
+  }
+
+  private scheduleRouteRatingPopupOpen(): void {
+    this.clearRouteRatingPopupDelayTimer();
+    this.routeRatingPopupDelayTimer = window.setTimeout(() => {
+      this.routeRatingPopupDelayTimer = null;
+      this.ngZone.run(() => {
+        if (!this.navigationStarted || this.routeRatingSaving) {
+          return;
+        }
+
+        this.routeRatingValue = 0;
+        this.routeRatingPopupVisible = true;
+        this.cdr.detectChanges();
+      });
+    }, 4000);
+  }
+
+  private clearRouteRatingPopupDelayTimer(): void {
+    if (this.routeRatingPopupDelayTimer != null) {
+      window.clearTimeout(this.routeRatingPopupDelayTimer);
+      this.routeRatingPopupDelayTimer = null;
+    }
   }
 
   private stopNavigationSimulation(): void {
+    this.clearNavigationAnimationTimer();
+    this.navigationPath = [];
+    this.navigationPathIndex = 0;
+    this.navigationArrow = undefined;
+  }
+
+  private clearNavigationAnimationTimer(): void {
     if (this.navigationAnimationTimer != null) {
       window.clearInterval(this.navigationAnimationTimer);
       this.navigationAnimationTimer = null;
     }
-    this.navigationPath = [];
-    this.navigationPathIndex = 0;
-    this.navigationArrow = undefined;
   }
 
   private resetMapToClassicView(): void {
@@ -813,6 +947,192 @@ export class Home implements OnInit, OnDestroy {
     };
   }
 
+  private buildNavigationPath(route: google.maps.DirectionsRoute): google.maps.LatLngLiteral[] {
+    const overviewPath = route.overview_path ?? [];
+    const overviewPoints = overviewPath
+      .map((point) => this.toLatLngLiteral(point))
+      .filter((point): point is google.maps.LatLngLiteral => point != null);
+
+    if (overviewPoints.length >= 2) {
+      return overviewPoints;
+    }
+
+    const points: google.maps.LatLngLiteral[] = [];
+    const seen = new Set<string>();
+    const pushPoint = (point: unknown): void => {
+      const parsed = this.toLatLngLiteral(point);
+      if (!parsed) {
+        return;
+      }
+
+      const key = `${parsed.lat.toFixed(6)}|${parsed.lng.toFixed(6)}`;
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+      points.push(parsed);
+    };
+
+    for (const leg of route.legs ?? []) {
+      pushPoint(leg.start_location);
+
+      for (const step of leg.steps ?? []) {
+        if (step.path?.length) {
+          step.path.forEach((stepPoint) => pushPoint(stepPoint));
+        } else {
+          pushPoint(step.start_location);
+          pushPoint(step.end_location);
+        }
+      }
+
+      pushPoint(leg.end_location);
+    }
+
+    return points;
+  }
+
+  private normalizeNavigationPath(path: google.maps.LatLngLiteral[]): google.maps.LatLngLiteral[] {
+    if (!path.length) {
+      return [];
+    }
+
+    const deduped: google.maps.LatLngLiteral[] = [];
+    const seen = new Set<string>();
+    for (const point of path) {
+      const key = `${point.lat.toFixed(6)}|${point.lng.toFixed(6)}`;
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      deduped.push(point);
+    }
+
+    if (deduped.length < 2) {
+      return deduped;
+    }
+
+    const maxAnimationPoints = 140;
+    const minAnimationPoints = 80;
+    let normalized = deduped;
+
+    if (normalized.length > maxAnimationPoints) {
+      normalized = this.sampleNavigationPath(normalized, maxAnimationPoints);
+    }
+
+    if (normalized.length < minAnimationPoints) {
+      normalized = this.densifyNavigationPath(normalized, minAnimationPoints);
+    }
+
+    return normalized.length >= 2 ? normalized : deduped;
+  }
+
+  private sampleNavigationPath(
+    path: google.maps.LatLngLiteral[],
+    maxPoints: number,
+  ): google.maps.LatLngLiteral[] {
+    if (path.length <= maxPoints) {
+      return path;
+    }
+
+    const step = (path.length - 1) / (maxPoints - 1);
+    const sampled: google.maps.LatLngLiteral[] = [];
+    const seen = new Set<string>();
+
+    for (let i = 0; i < maxPoints; i++) {
+      const index = Math.round(i * step);
+      const point = path[index];
+      if (!point) {
+        continue;
+      }
+
+      const key = `${point.lat.toFixed(6)}|${point.lng.toFixed(6)}`;
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      sampled.push(point);
+    }
+
+    const finalPoint = path[path.length - 1];
+    if (sampled.length === 0 || sampled[sampled.length - 1] !== finalPoint) {
+      sampled.push(finalPoint);
+    }
+
+    return sampled.length >= 2 ? sampled : path;
+  }
+
+  private densifyNavigationPath(
+    path: google.maps.LatLngLiteral[],
+    targetPoints: number,
+  ): google.maps.LatLngLiteral[] {
+    if (path.length < 2 || path.length >= targetPoints) {
+      return path;
+    }
+
+    const segmentLengths: number[] = [];
+    let totalDistance = 0;
+    for (let i = 0; i < path.length - 1; i++) {
+      const segmentLength = this.getApproxDistanceMeters(path[i], path[i + 1]);
+      segmentLengths.push(segmentLength);
+      totalDistance += segmentLength;
+    }
+
+    if (totalDistance <= 0) {
+      return path;
+    }
+
+    const densified: google.maps.LatLngLiteral[] = [path[0]];
+    const maxIndex = targetPoints - 1;
+    let segmentIndex = 0;
+    let traversed = 0;
+
+    for (let i = 1; i < maxIndex; i++) {
+      const targetDistance = (totalDistance * i) / maxIndex;
+      while (
+        segmentIndex < segmentLengths.length - 1 &&
+        traversed + segmentLengths[segmentIndex] < targetDistance
+      ) {
+        traversed += segmentLengths[segmentIndex];
+        segmentIndex++;
+      }
+
+      const start = path[segmentIndex];
+      const end = path[Math.min(segmentIndex + 1, path.length - 1)];
+      const currentSegmentLength = Math.max(0.0001, segmentLengths[segmentIndex] ?? 0.0001);
+      const distanceInsideSegment = targetDistance - traversed;
+      const ratio = Math.min(1, Math.max(0, distanceInsideSegment / currentSegmentLength));
+
+      densified.push({
+        lat: start.lat + (end.lat - start.lat) * ratio,
+        lng: start.lng + (end.lng - start.lng) * ratio,
+      });
+    }
+
+    densified.push(path[path.length - 1]);
+    return densified;
+  }
+
+  private getApproxDistanceMeters(
+    from: google.maps.LatLngLiteral,
+    to: google.maps.LatLngLiteral,
+  ): number {
+    const toRad = (value: number): number => (value * Math.PI) / 180;
+    const earthRadius = 6371000;
+    const dLat = toRad(to.lat - from.lat);
+    const dLng = toRad(to.lng - from.lng);
+    const lat1 = toRad(from.lat);
+    const lat2 = toRad(to.lat);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return earthRadius * c;
+  }
+
   private buildRouteChoiceOptions(directions: google.maps.DirectionsResult): void {
     const routes = directions.routes ?? [];
     const limitedRoutes = routes.slice(0, 3);
@@ -859,6 +1179,24 @@ export class Home implements OnInit, OnDestroy {
       ...this.latestDirections,
       routes: [selectedRoute],
     };
+  }
+
+  private resolveActiveTripId(response: any): number | null {
+    const candidates = [
+      response?.data?.id,
+      response?.data?.Id,
+      response?.id,
+      response?.Id,
+    ];
+
+    for (const candidate of candidates) {
+      const parsed = Number(candidate);
+      if (Number.isInteger(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+
+    return null;
   }
 
   private async loadRouteFeatureMarkers(
@@ -992,15 +1330,21 @@ export class Home implements OnInit, OnDestroy {
     return keywords.some((keyword) => text.includes(keyword));
   }
 
-  private toLatLngLiteral(value?: google.maps.LatLng | null): google.maps.LatLngLiteral {
-    if (!value) {
-      return this.center;
+  private toLatLngLiteral(value: unknown): google.maps.LatLngLiteral | null {
+    if (!value || typeof value !== 'object') {
+      return null;
     }
 
-    return {
-      lat: value.lat(),
-      lng: value.lng(),
-    };
+    const latSource = (value as { lat?: number | (() => number) }).lat;
+    const lngSource = (value as { lng?: number | (() => number) }).lng;
+    const lat = typeof latSource === 'function' ? Number(latSource()) : Number(latSource);
+    const lng = typeof lngSource === 'function' ? Number(lngSource()) : Number(lngSource);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return null;
+    }
+
+    return { lat, lng };
   }
 
   private async findEvChargingMarkers(
@@ -1092,31 +1436,35 @@ export class Home implements OnInit, OnDestroy {
     });
   }
 
-  private sampleRoutePoints(
-    path: google.maps.LatLng[],
-    maxSamples: number,
-  ): google.maps.LatLngLiteral[] {
+  private sampleRoutePoints(path: unknown[], maxSamples: number): google.maps.LatLngLiteral[] {
     if (!path || path.length === 0 || maxSamples <= 0) {
       return [];
     }
 
-    if (path.length <= maxSamples) {
-      return path.map((point) => ({ lat: point.lat(), lng: point.lng() }));
+    const parsedPath = path
+      .map((point) => this.toLatLngLiteral(point))
+      .filter((point): point is google.maps.LatLngLiteral => point != null);
+    if (parsedPath.length === 0) {
+      return [];
     }
 
-    const step = (path.length - 1) / (maxSamples - 1);
+    if (parsedPath.length <= maxSamples) {
+      return parsedPath;
+    }
+
+    const step = (parsedPath.length - 1) / (maxSamples - 1);
     const sampled: google.maps.LatLngLiteral[] = [];
     const seen = new Set<string>();
 
     for (let i = 0; i < maxSamples; i++) {
       const index = Math.round(i * step);
-      const point = path[index];
+      const point = parsedPath[index];
       if (!point) {
         continue;
       }
 
-      const lat = point.lat();
-      const lng = point.lng();
+      const lat = point.lat;
+      const lng = point.lng;
       const key = `${lat.toFixed(5)}|${lng.toFixed(5)}`;
       if (seen.has(key)) {
         continue;

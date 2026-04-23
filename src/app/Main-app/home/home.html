@@ -319,7 +319,10 @@
 
               @if (getSelectedFastPresetIconOption()) {
                 <div class="fast-preset-selected-icon">
-                  <span class="fast-preset-icon-preview" [innerHTML]="getSelectedFastPresetIconSvg()"></span>
+                  <span
+                    class="fast-preset-icon-preview"
+                    [innerHTML]="getSelectedFastPresetIconSvg()"
+                  ></span>
                   <strong>{{ getSelectedFastPresetIconLabel() }}</strong>
                 </div>
               }
@@ -366,6 +369,37 @@
           </section>
         </div>
       }
+
+            <div class="route-rating-overlay" role="dialog" aria-modal="true" *ngIf="routeRatingPopupVisible">
+        <section class="route-rating-card">
+          <h3>{{ 'HOME_ROUTE_RATING_TITLE' | translate }}</h3>
+          <p>{{ 'HOME_ROUTE_RATING_SUBTITLE' | translate }}</p>
+          <small>{{ 'HOME_ROUTE_RATING_REQUIRED' | translate }}</small>
+
+          <div class="route-rating-stars">
+            <button
+              type="button"
+              class="route-rating-star"
+              *ngFor="let star of routeRatingStars"
+              [class.active]="routeRatingValue >= star"
+              [disabled]="routeRatingSaving"
+              (click)="selectRouteRating(star)"
+            >
+              &#9733;
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="route-rating-submit"
+            [disabled]="routeRatingSaving || routeRatingValue < 1"
+            (click)="submitRouteRating()"
+          >
+            {{ 'HOME_ROUTE_RATING_SUBMIT' | translate }}
+          </button>
+        </section>
+      </div>
     </main>
   </div>
 }
+
