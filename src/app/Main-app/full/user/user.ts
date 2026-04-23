@@ -187,6 +187,10 @@ export class User implements OnInit {
     this.router.navigate(['/']);
   }
 
+  goToChangePassword() {
+    this.router.navigate(['/change-password']);
+  }
+
   switchMode(){
     this.isEditMode.update(prev => !prev);
   }

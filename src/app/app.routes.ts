@@ -6,6 +6,8 @@ import { PasswordRecovery } from './Main-app/password-recovery/password-recovery
 import { Full } from './Main-app/full/full';
 import { User } from './Main-app/full/user/user';
 import { FilterOptions } from './Main-app/filter-options/filter-options';
+import { ResetPassword } from './Main-app/reset-password/reset-password';
+import { ChangePassword } from './Main-app/change-password/change-password';
 
 export const routes: Routes = [
   {
@@ -34,6 +36,15 @@ export const routes: Routes = [
   {
     path: 'forgetPass',
     component: PasswordRecovery
+  },
+  {
+    path: 'reset-password',
+    component: ResetPassword,
+  },
+  {
+    path: 'change-password',
+    component: ChangePassword,
+    canActivate: [authGuard]
   },
   {
     path: 'user',

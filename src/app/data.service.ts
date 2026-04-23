@@ -132,6 +132,48 @@ export class DataService {
 
   }
 
+  recoverPasswordWithResetLink(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/forgotPasswordSendResetLink', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+
+  }
+
+  resetPassword(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/resetPassword', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+
+  }
+
+  changePassword(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/changePassword', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+
+  }
+
   getPresetIcons(data:any) {
     return this.http.post<any>(this.remoteDataService.serviceURL + 'Preset/Icons', data, httpOptions).pipe(
       map(
