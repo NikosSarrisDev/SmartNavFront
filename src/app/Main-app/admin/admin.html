@@ -1,0 +1,134 @@
+<div class="admin-page">
+  <div class="admin-header">
+    <h2>{{ 'ADMIN_PANEL_TITLE' | translate }}</h2>
+    <button type="button" class="btn-secondary" (click)="backToHome()">
+      {{ 'BACK_TO_HOME' | translate }}
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <span>{{ 'ADMIN_LOADING' | translate }}</span>
+    </div>
+  } @else {
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-value">{{ dashboard()?.totalUsers ?? 0 }}</span>
+        <span class="stat-label">{{ 'ADMIN_STAT_TOTAL_USERS' | translate }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ dashboard()?.verifiedUsers ?? 0 }}</span>
+        <span class="stat-label">{{ 'ADMIN_STAT_VERIFIED_USERS' | translate }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ dashboard()?.totalTrips ?? 0 }}</span>
+        <span class="stat-label">{{ 'ADMIN_STAT_TOTAL_TRIPS' | translate }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ dashboard()?.averageScore ?? 0 }}</span>
+        <span class="stat-label">{{ 'ADMIN_STAT_AVG_SCORE' | translate }}</span>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="section-header">
+        <h3>{{ 'ADMIN_USERS_TITLE' | translate }}</h3>
+        <div class="search-group">
+          <input
+            type="text"
+            [(ngModel)]="search"
+            [placeholder]="'ADMIN_USERS_SEARCH' | translate"
+          />
+          <button type="button" class="btn-primary" (click)="onSearch()">
+            {{ 'ADMIN_SEARCH' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>{{ 'ADMIN_COL_USERNAME' | translate }}</th>
+              <th>{{ 'ADMIN_COL_EMAIL' | translate }}</th>
+              <th>{{ 'ADMIN_COL_ROLE' | translate }}</th>
+              <th>{{ 'ADMIN_COL_VERIFIED' | translate }}</th>
+              <th>{{ 'ADMIN_COL_ACTIONS' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.id) {
+              <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.userName }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <select
+                    [value]="user.roleId"
+                    (change)="updateRole(user, ($any($event.target)).value)"
+                  >
+                    @for (role of roles(); track role.roleID) {
+                      <option [value]="role.roleID">{{ role.roleName }}</option>
+                    }
+                  </select>
+                </td>
+                <td>
+                  <span [class.ok]="user.isVerified" [class.bad]="!user.isVerified">
+                    {{ user.isVerified ? ('ADMIN_YES' | translate) : ('ADMIN_NO' | translate) }}
+                  </span>
+                </td>
+                <td class="actions">
+                  <button type="button" class="btn-secondary" (click)="toggleVerification(user)">
+                    {{ 'ADMIN_TOGGLE_VERIFY' | translate }}
+                  </button>
+                  <button type="button" class="btn-danger" (click)="deleteUser(user)">
+                    {{ 'ADMIN_DELETE' | translate }}
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6">{{ 'ADMIN_NO_USERS' | translate }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>{{ 'ADMIN_AUDIT_TITLE' | translate }}</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>{{ 'ADMIN_COL_DATE' | translate }}</th>
+              <th>{{ 'ADMIN_COL_ADMIN' | translate }}</th>
+              <th>{{ 'ADMIN_COL_TARGET' | translate }}</th>
+              <th>{{ 'ADMIN_COL_ACTION_TYPE' | translate }}</th>
+              <th>{{ 'ADMIN_COL_DETAILS' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of auditLogs(); track log.id) {
+              <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.createdAt | date: 'short' }}</td>
+                <td>{{ log.adminUserName || log.adminUserId }}</td>
+                <td>{{ log.targetUserName || log.targetUserId || '-' }}</td>
+                <td>{{ log.actionType }}</td>
+                <td>{{ log.details }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6">{{ 'ADMIN_NO_AUDIT' | translate }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>

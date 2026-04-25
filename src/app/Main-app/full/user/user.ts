@@ -38,6 +38,7 @@ export class User implements OnInit {
   loadingRoleAvatar = signal(false);
   loadingTrips = signal(false);
   isEditMode = signal(false);
+  isAdmin = signal(false);
   languages: MenuItem[] | undefined;
   dialogAvatars: any[] = [];
 
@@ -118,6 +119,8 @@ export class User implements OnInit {
           this.loadingRoleAvatar.set(false);
           this.currentRole = response.data.roleName;
           this.currentAvatar = response.data.avatarURL;
+          const roleName = (response?.data?.roleName ?? '').toString().toLowerCase();
+          this.isAdmin.set(roleName.includes('admin') || roleName.includes('διαχ'));
         },
         error: (err) => console.error("Avatar Load Failed", err)
       });
@@ -189,6 +192,10 @@ export class User implements OnInit {
 
   goToChangePassword() {
     this.router.navigate(['/change-password']);
+  }
+
+  goToAdminPanel() {
+    this.router.navigate(['/admin']);
   }
 
   switchMode(){

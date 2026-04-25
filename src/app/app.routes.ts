@@ -8,6 +8,8 @@ import { User } from './Main-app/full/user/user';
 import { FilterOptions } from './Main-app/filter-options/filter-options';
 import { ResetPassword } from './Main-app/reset-password/reset-password';
 import { ChangePassword } from './Main-app/change-password/change-password';
+import { Admin } from './Main-app/admin/admin';
+import { adminGuard } from './admin-guard';
 
 export const routes: Routes = [
   {
@@ -50,6 +52,11 @@ export const routes: Routes = [
     path: 'user',
     component: User,
     canActivate: [authGuard]
+  },
+  {
+    path: 'admin',
+    component: Admin,
+    canActivate: [authGuard, adminGuard]
   },
   {
     path: '**',

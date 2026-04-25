@@ -70,6 +70,13 @@
           <i class="pi pi-key"></i> {{ 'CHANGE_PASSWORD' | translate }}
         </a>
       </div>
+      @if (isAdmin()) {
+        <div style="display: flex; align-items: center; margin-top: 2rem">
+          <a class="back-to-home" (click)="goToAdminPanel()">
+            <i class="pi pi-shield"></i> {{ 'ADMIN_PANEL_NAV' | translate }}
+          </a>
+        </div>
+      }
       <div style="display: flex; align-items: center; margin-top: 2rem">
         <a class="back-to-home" (click)="logout()">
           <i class="pi pi-sign-out"></i> {{ 'LOGOUT' | translate }}

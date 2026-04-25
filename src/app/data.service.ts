@@ -392,6 +392,84 @@ export class DataService {
       }));
   }
 
+  adminDashboard(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/Dashboard', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  adminUsers(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/Users', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  adminUpdateUserRole(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/UpdateUserRole', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  adminUpdateUserVerification(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/UpdateUserVerification', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  adminDeleteUser(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/DeleteUser', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  adminAuditLogs(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/AuditLogs', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
   private handleError(error:any) {
     var status = error.error.status;
     if (status == undefined) {
