@@ -49,11 +49,11 @@ export class AuthenticationService {
     }
     return this.user;
   }
-  login(password: string ,email: string) {
+  login(userName: string, password: string) {
     return this.http.post<any>(this.remoteDataService.serviceURL + 'user/login',
         {
+          userName: userName,
           password: password,
-          email: email,
         } , httpOptions)
         .pipe(map(user => {
           if (user.data && user.data.isVerified) {

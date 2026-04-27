@@ -1,4 +1,4 @@
-<div class="main-full-div" style="position: relative;">
+﻿<div class="main-full-div" style="position: relative;">
   <div *ngIf="loading" class="loader-background"></div>
   <p-progress-spinner strokeWidth="8" fill="transparent" animationDuration=".5s" [style]="{ width: '70px', height: '70px', position: 'fixed', top: '50%', left: '50%', zIndex: 1000 }" *ngIf="loading"/>
   <div class="app-globe">
@@ -15,41 +15,43 @@
       <img src="assets/images/SmartNavLogo.png" alt="Login Image" class="login-image" width="400" height="400"/>
     </div>
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <div  style="font-size: 1rem; margin: 3rem 0 0.5rem 0.3rem; font-weight: bold">{{'ΕΙΣΟΔΟΣ_ΜΕ_EMAIL' | translate}}</div>
+      <div  style="font-size: 1rem; margin: 3rem 0 0.5rem 0.3rem; font-weight: bold">{{'LOGIN_WITH_USERNAME' | translate}}</div>
       <div style="margin-bottom: 1rem">
         <p-floatlabel variant="on">
-          <input pInputText style="width: 100%" id="email" type="text" formControlName="email"/>
-          <label for="email">Email</label>
+          <input pInputText style="width: 100%" id="username" type="text" formControlName="username"/>
+          <label for="username">{{'USERNAME_LABEL' | translate}}</label>
         </p-floatlabel>
-        <div *ngIf="loginForm.controls['email'].invalid && !loginForm.controls['email'].untouched">
-          <small  style="color: red" *ngIf="loginForm.controls['email'].hasError('required')">{{'EMAIL_REQUIRED' | translate}}</small>
+        <div *ngIf="loginForm.controls['username'].invalid && !loginForm.controls['username'].untouched">
+          <small style="color: red" *ngIf="loginForm.controls['username'].hasError('required')">{{'USERNAME_REQUIRED' | translate}}</small>
+          <small style="color: red" *ngIf="loginForm.controls['username'].hasError('minlength')">{{'USERNAME_MINLENGTH' | translate}}</small>
         </div>
       </div>
       <div style="margin-bottom: 1rem">
         <p-floatlabel variant="on" [style]="{'height': '42px'}">
           <p-password [style]="{'width': '100%'}" formControlName="password" inputId="over_label" [feedback]="false" [toggleMask]="true"/>
-          <label  for="over_label">{{'ΚΩΔΙΚΟΣ' | translate}}</label>
+          <label  for="over_label">{{'PASSWORD_LABEL' | translate}}</label>
         </p-floatlabel>
         <div *ngIf="loginForm.controls['password'].invalid && !loginForm.controls['password'].untouched">
-          <small  style="color: red" *ngIf="loginForm.controls['password'].errors?.['required']">{{'ΚΩΔΙΚΟΣ_REQUIRED' | translate}}</small>
+          <small style="color: red" *ngIf="loginForm.controls['password'].errors?.['required']">{{'PASSWORD_REQUIRED' | translate}}</small>
+          <small style="color: red" *ngIf="loginForm.controls['password'].errors?.['minlength']">{{'PASS_REQ_LENGTH' | translate}}</small>
         </div>
       </div>
 
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem">
-        <a  class="forget-pass-link" routerLink="/forgetPass">{{'ΞΕΧΑΣΕΣ_ΚΩΔΙΚΟ' | translate}}</a>
+        <a  class="forget-pass-link" routerLink="/forgetPass">{{'FORGOT_PASSWORD' | translate}}</a>
         <div>
-          <label  style="padding-right: 0.5rem" class="ml-2">{{'ΝΑ_ΜΕ_ΘΥΜΑΣΑΙ' | translate}}</label>
+          <label  style="padding-right: 0.5rem" class="ml-2">{{'REMEMBER_ME' | translate}}</label>
           <p-checkbox formControlName="rememberMe" value="rememberMe" binary="true"/>
         </div>
       </div>
 
       <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 1rem">
-        <button  pButton class="fb-gl-buttons" type="submit" [disabled]="loginForm.invalid">{{'ΕΙΣΟΔΟΣ' | translate}} <i class="pi pi-arrow-right"></i></button>
+        <button  pButton class="fb-gl-buttons" type="submit" [disabled]="loginForm.invalid">{{'LOGIN_BUTTON' | translate}} <i class="pi pi-arrow-right"></i></button>
       </div>
       <div class="legend-container">
-        <label  class="legend">{{'ΔΕΝ_ΕΧΕΙΣ_ΛΟΓΑΡΙΑΣΜΟ' | translate}}</label>
+        <label  class="legend">{{'NO_ACCOUNT_REGISTER_PROMPT' | translate}}</label>
         <p-toast />
-        <button  pButton class="fb-gl-buttons" (click)="navigateToRegister()">{{'ΕΓΓΡΑΦΗ' | translate}}</button>
+        <button  pButton class="fb-gl-buttons" (click)="navigateToRegister()">{{'REGISTER_BUTTON' | translate}}</button>
       </div>
     </form>
   </div>

@@ -49,7 +49,7 @@ export class Login implements OnInit{
   rememberMe : boolean = false;
   loading: boolean = false;
   password: string = '';
-  email: string = '';
+  username: string = '';
   submitted: boolean = false;
   error = '';
   languages: MenuItem[] | undefined;
@@ -87,20 +87,20 @@ export class Login implements OnInit{
             }
         ];
 
-    const emailStorageKey = this.remoteDataService.platform + '_rememberMe_email';
+    const usernameStorageKey = this.remoteDataService.platform + '_rememberMe_username';
     const passwordStorageKey = this.remoteDataService.platform + '_rememberMe_password';
-    const storedUserEmail = localStorage.getItem(emailStorageKey);
+    const storedUserName = localStorage.getItem(usernameStorageKey);
     const storedUserPassword = localStorage.getItem(passwordStorageKey);
 
-    if (storedUserEmail && storedUserPassword) {
-      this.email = storedUserEmail;
+    if (storedUserName && storedUserPassword) {
+      this.username = storedUserName;
       this.password = storedUserPassword;
       this.rememberMe = true;
     }
 
     this.loginForm = this.formBuilder.group({
-      email: [this.email, [Validators.required, Validators.email]],
-      password : [this.password, Validators.required],
+      username: [this.username, [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
+      password : [this.password, [Validators.required, Validators.minLength(8)]],
       rememberMe : [this.rememberMe],
     });
 
@@ -128,21 +128,21 @@ export class Login implements OnInit{
     this.loading = true;
 
     // Extract values from the form
-    const email = this.loginForm.get('email')?.value;
+    const username = this.loginForm.get('username')?.value;
     const password = this.loginForm.get('password')?.value;
     const rememberMe = this.loginForm.get('rememberMe')?.value;
 
-    this.authenticationService.login(password,email)
+    this.authenticationService.login(username, password)
       .pipe(first()).subscribe(
         (httpResponse: any) => {
           if (httpResponse.status == "success"){
 
             if(rememberMe){
               localStorage.setItem(this.remoteDataService.platform + '_rememberMe_password', password)
-              localStorage.setItem(this.remoteDataService.platform + '_rememberMe_email', email)
+              localStorage.setItem(this.remoteDataService.platform + '_rememberMe_username', username)
             } else {
               localStorage.removeItem(this.remoteDataService.platform + '_rememberMe_password');
-              localStorage.removeItem(this.remoteDataService.platform + '_rememberMe_email');
+              localStorage.removeItem(this.remoteDataService.platform + '_rememberMe_username');
             }
             this.messageService.add({severity: 'success', summary: 'Success!', detail: httpResponse.message});
             this.router.navigate([''])

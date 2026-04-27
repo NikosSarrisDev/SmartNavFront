@@ -1,4 +1,4 @@
-@if (loadingRoleAvatar() || loadingTrips()) {
+﻿@if (loadingRoleAvatar() || loadingTrips()) {
   <div class="centerfy" style="min-height: 100vh">
     <p-progress-spinner
       strokeWidth="8"
@@ -40,7 +40,7 @@
                 type="text"
                 formControlName="username"
               />
-              <label for="username">{{ 'ΟΝΟΜΑ_ΧΡΗΣΤΗ' | translate }}</label>
+              <label for="username">{{ 'USERNAME_LABEL' | translate }}</label>
             </p-floatlabel>
           }
           <p class="email">{{ currentEmail }}</p>
@@ -105,7 +105,7 @@
                   <td>{{ trip.departure }}</td>
                   <td>{{ trip.destination }}</td>
                   <td>{{ trip.distanceKM }}</td>
-                  <td>⭐ {{ trip.score }}</td>
+                  <td>{{ trip.score }}</td>
                 </tr>
               } @empty {
                 <tr>
@@ -132,3 +132,4 @@
     </p-dialog>
   </div>
 }
+
