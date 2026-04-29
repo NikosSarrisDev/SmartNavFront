@@ -6,10 +6,13 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DataService } from '../../data.service';
 import { AuthenticationService } from '../../auth.service';
 import { ChartModule } from 'primeng/chart';
+import { MenuModule } from 'primeng/menu';
+import { ButtonModule } from 'primeng/button';
+import { MenuItem } from 'primeng/api';
 
 @Component({
   selector: 'app-admin',
-  imports: [CommonModule, FormsModule, TranslatePipe, ChartModule],
+  imports: [CommonModule, FormsModule, TranslatePipe, ChartModule, MenuModule, ButtonModule],
   templateUrl: './admin.html',
   styleUrl: './admin.css'
 })
@@ -26,6 +29,7 @@ export class Admin implements OnInit {
   confirmVisible = signal(false);
   confirmTitle = '';
   confirmMessage = '';
+  languages: MenuItem[] = [];
   private pendingAction: (() => void) | null = null;
 
   constructor(
@@ -36,6 +40,7 @@ export class Admin implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.buildLanguageMenu();
     const userId = this.auth.currentUser()?.data?.id;
     this.adminUserId = Number(userId ?? 0);
 
@@ -161,6 +166,23 @@ export class Admin implements OnInit {
     this.router.navigate(['/home']);
   }
 
+  changeLanguage(lang: string): void {
+    this.translate.use(lang).subscribe(() => {
+      this.buildLanguageMenu();
+      this.loadAll();
+    });
+  }
+
+  getActionLabel(actionType: string): string {
+    if (!actionType) {
+      return '';
+    }
+
+    const key = `ADMIN_ACTION_${actionType}`;
+    const translated = this.translate.instant(key);
+    return translated === key ? actionType : translated;
+  }
+
   canChangeRole(user: any): boolean {
     return user?.id !== this.adminUserId;
   }
@@ -193,7 +215,9 @@ export class Admin implements OnInit {
 
   private bindVehicleChart(vehicleUsage: any[]): void {
     this.vehicleChartData.set({
-      labels: vehicleUsage.map(x => x.vehicleLabel),
+      labels: vehicleUsage.map(x => x.vehicleId == null
+        ? this.translate.instant('ADMIN_VEHICLE_ANY')
+        : x.vehicleLabel),
       datasets: [
         {
           label: this.translate.instant('ADMIN_CHART_VEHICLE_DATASET'),
@@ -218,5 +242,28 @@ export class Admin implements OnInit {
         }
       ]
     });
+  }
+
+  private buildLanguageMenu(): void {
+    this.translate.get(['LANGUAGE_MENU_TITLE', 'LANGUAGE_OPTION_EL', 'LANGUAGE_OPTION_EN'])
+      .subscribe((t) => {
+        this.languages = [
+          {
+            label: t['LANGUAGE_MENU_TITLE'],
+            items: [
+              {
+                label: t['LANGUAGE_OPTION_EL'],
+                icon: '',
+                command: () => this.changeLanguage('el')
+              },
+              {
+                label: t['LANGUAGE_OPTION_EN'],
+                icon: '',
+                command: () => this.changeLanguage('en')
+              }
+            ]
+          }
+        ];
+      });
   }
 }

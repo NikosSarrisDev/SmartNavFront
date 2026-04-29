@@ -1,9 +1,19 @@
 <div class="admin-page">
   <div class="admin-header">
     <h2>{{ 'ADMIN_PANEL_TITLE' | translate }}</h2>
-    <button type="button" class="btn-secondary" (click)="backToHome()">
-      {{ 'BACK_TO_HOME' | translate }}
-    </button>
+    <div class="admin-header-actions">
+      <button
+        pButton
+        icon="pi pi-globe"
+        (click)="menu.toggle($event)"
+        [rounded]="true"
+        severity="secondary"
+      ></button>
+      <p-menu #menu [model]="languages" [popup]="true"></p-menu>
+      <button type="button" class="btn-secondary" (click)="backToHome()">
+        {{ 'BACK_TO_HOME' | translate }}
+      </button>
+    </div>
   </div>
 
   @if (loading()) {
@@ -67,7 +77,7 @@
                   <select
                     [value]="user.roleId"
                     [disabled]="!canChangeRole(user)"
-                    (change)="updateRole(user, ($any($event.target)).value)"
+                    (change)="updateRole(user, $any($event.target).value)"
                   >
                     @for (role of roles(); track role.roleID) {
                       <option [value]="role.roleID">{{ role.roleName }}</option>
@@ -83,7 +93,12 @@
                   <button type="button" class="btn-secondary" (click)="toggleVerification(user)">
                     {{ 'ADMIN_TOGGLE_VERIFY' | translate }}
                   </button>
-                  <button type="button" class="btn-danger" [disabled]="!canChangeRole(user)" (click)="deleteUser(user)">
+                  <button
+                    type="button"
+                    class="btn-danger"
+                    [disabled]="!canChangeRole(user)"
+                    (click)="deleteUser(user)"
+                  >
                     {{ 'ADMIN_DELETE' | translate }}
                   </button>
                 </td>
@@ -119,7 +134,7 @@
                 <td>{{ log.createdAt | date: 'short' }}</td>
                 <td>{{ log.adminUserName || log.adminUserId }}</td>
                 <td>{{ log.targetUserName || log.targetUserId || '-' }}</td>
-                <td>{{ log.actionType }}</td>
+                <td>{{ getActionLabel(log.actionType) }}</td>
                 <td>{{ log.details }}</td>
               </tr>
             } @empty {

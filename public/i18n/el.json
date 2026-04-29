@@ -267,6 +267,10 @@
   "ADMIN_CHART_STATIONS_TITLE": "Διαδρομές ανά πλήθος στάσεων",
   "ADMIN_CHART_STATIONS_NOTE": "Μια στάση μετράει μόνο αν έχει τουλάχιστον ένα πεδίο διεύθυνσης συμπληρωμένο. Εγγραφές με όλα τα πεδία στάσης null μετρούν ως 0 στάσεις.",
   "ADMIN_CHART_STATION_DATASET": "Διαδρομές",
-  "ADMIN_CHART_EMPTY": "Δεν υπάρχουν διαθέσιμα δεδομένα γραφήματος."
+  "ADMIN_CHART_EMPTY": "Δεν υπάρχουν διαθέσιμα δεδομένα γραφήματος.",
+  "ADMIN_VEHICLE_ANY": "Οποιοδήποτε όχημα (χωρίς επιλογή)",
+  "ADMIN_ACTION_UPDATE_USER_ROLE": "Αλλαγή Ρόλου Χρήστη",
+  "ADMIN_ACTION_UPDATE_USER_VERIFICATION": "Αλλαγή Επιβεβαίωσης Χρήστη",
+  "ADMIN_ACTION_DELETE_USER": "Διαγραφή Χρήστη"
 }
 

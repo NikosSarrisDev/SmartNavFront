@@ -267,6 +267,10 @@
   "ADMIN_CHART_STATIONS_TITLE": "Trips by number of stations",
   "ADMIN_CHART_STATIONS_NOTE": "A station counts only when at least one address field is filled. Rows with all station fields null count as 0 stations.",
   "ADMIN_CHART_STATION_DATASET": "Trips",
-  "ADMIN_CHART_EMPTY": "No chart data available."
+  "ADMIN_CHART_EMPTY": "No chart data available.",
+  "ADMIN_VEHICLE_ANY": "Any vehicle (not selected)",
+  "ADMIN_ACTION_UPDATE_USER_ROLE": "User Role Updated",
+  "ADMIN_ACTION_UPDATE_USER_VERIFICATION": "User Verification Updated",
+  "ADMIN_ACTION_DELETE_USER": "User Deleted"
 }
 
