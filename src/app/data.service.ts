@@ -470,6 +470,19 @@ export class DataService {
       }));
   }
 
+  adminAnalytics(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/Analytics', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
   private handleError(error:any) {
     var status = error.error.status;
     if (status == undefined) {

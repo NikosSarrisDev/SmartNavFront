@@ -66,6 +66,7 @@
                 <td>
                   <select
                     [value]="user.roleId"
+                    [disabled]="!canChangeRole(user)"
                     (change)="updateRole(user, ($any($event.target)).value)"
                   >
                     @for (role of roles(); track role.roleID) {
@@ -82,7 +83,7 @@
                   <button type="button" class="btn-secondary" (click)="toggleVerification(user)">
                     {{ 'ADMIN_TOGGLE_VERIFY' | translate }}
                   </button>
-                  <button type="button" class="btn-danger" (click)="deleteUser(user)">
+                  <button type="button" class="btn-danger" [disabled]="!canChangeRole(user)" (click)="deleteUser(user)">
                     {{ 'ADMIN_DELETE' | translate }}
                   </button>
                 </td>
@@ -130,5 +131,42 @@
         </table>
       </div>
     </section>
+
+    <section class="card">
+      <h3>{{ 'ADMIN_CHART_VEHICLE_TITLE' | translate }}</h3>
+      <p class="chart-note">{{ 'ADMIN_CHART_VEHICLE_NOTE' | translate }}</p>
+      @if (vehicleChartData()) {
+        <p-chart type="bar" [data]="vehicleChartData()"></p-chart>
+      } @else {
+        <p>{{ 'ADMIN_CHART_EMPTY' | translate }}</p>
+      }
+    </section>
+
+    <section class="card">
+      <h3>{{ 'ADMIN_CHART_STATIONS_TITLE' | translate }}</h3>
+      <p class="chart-note">{{ 'ADMIN_CHART_STATIONS_NOTE' | translate }}</p>
+      @if (stationChartData()) {
+        <p-chart type="line" [data]="stationChartData()"></p-chart>
+      } @else {
+        <p>{{ 'ADMIN_CHART_EMPTY' | translate }}</p>
+      }
+    </section>
+
+    @if (confirmVisible()) {
+      <div class="admin-confirm-overlay" role="dialog" aria-modal="true">
+        <div class="admin-confirm-card">
+          <h4>{{ confirmTitle }}</h4>
+          <p>{{ confirmMessage }}</p>
+          <div class="admin-confirm-actions">
+            <button type="button" class="btn-primary" (click)="confirmYes()">
+              {{ 'ADMIN_CONFIRM_YES' | translate }}
+            </button>
+            <button type="button" class="btn-secondary" (click)="confirmNo()">
+              {{ 'ADMIN_CONFIRM_NO' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   }
 </div>

@@ -255,6 +255,18 @@
   "ADMIN_COL_TARGET": "Target User",
   "ADMIN_COL_ACTION_TYPE": "Action",
   "ADMIN_COL_DETAILS": "Details",
-  "ADMIN_NO_AUDIT": "No audit records found."
+  "ADMIN_NO_AUDIT": "No audit records found.",
+  "ADMIN_CONFIRM_TITLE": "Please confirm",
+  "ADMIN_CONFIRM_YES": "Yes",
+  "ADMIN_CONFIRM_NO": "No",
+  "ADMIN_CHANGE_ROLE_CONFIRM": "Are you sure you want to change role for {{user}} to {{role}}?",
+  "ADMIN_TOGGLE_VERIFY_CONFIRM": "Are you sure you want to change verification status for {{user}}?",
+  "ADMIN_CHART_VEHICLE_TITLE": "Trips by selected vehicle",
+  "ADMIN_CHART_VEHICLE_NOTE": "Trips with empty vehicle are shown as \"Any vehicle (not selected)\".",
+  "ADMIN_CHART_VEHICLE_DATASET": "Trips",
+  "ADMIN_CHART_STATIONS_TITLE": "Trips by number of stations",
+  "ADMIN_CHART_STATIONS_NOTE": "A station counts only when at least one address field is filled. Rows with all station fields null count as 0 stations.",
+  "ADMIN_CHART_STATION_DATASET": "Trips",
+  "ADMIN_CHART_EMPTY": "No chart data available."
 }
 

@@ -255,6 +255,18 @@
   "ADMIN_COL_TARGET": "Χρήστης-στόχος",
   "ADMIN_COL_ACTION_TYPE": "Ενέργεια",
   "ADMIN_COL_DETAILS": "Λεπτομέρειες",
-  "ADMIN_NO_AUDIT": "Δεν βρέθηκαν εγγραφές ιστορικού."
+  "ADMIN_NO_AUDIT": "Δεν βρέθηκαν εγγραφές ιστορικού.",
+  "ADMIN_CONFIRM_TITLE": "Παρακαλώ επιβεβαιώστε",
+  "ADMIN_CONFIRM_YES": "Ναι",
+  "ADMIN_CONFIRM_NO": "Όχι",
+  "ADMIN_CHANGE_ROLE_CONFIRM": "Είστε σίγουρος ότι θέλετε να αλλάξετε τον ρόλο του χρήστη {{user}} σε {{role}};",
+  "ADMIN_TOGGLE_VERIFY_CONFIRM": "Είστε σίγουρος ότι θέλετε να αλλάξετε την επιβεβαίωση του χρήστη {{user}};",
+  "ADMIN_CHART_VEHICLE_TITLE": "Διαδρομές ανά επιλεγμένο όχημα",
+  "ADMIN_CHART_VEHICLE_NOTE": "Διαδρομές με κενό όχημα εμφανίζονται ως \"Οποιοδήποτε όχημα (χωρίς επιλογή)\".",
+  "ADMIN_CHART_VEHICLE_DATASET": "Διαδρομές",
+  "ADMIN_CHART_STATIONS_TITLE": "Διαδρομές ανά πλήθος στάσεων",
+  "ADMIN_CHART_STATIONS_NOTE": "Μια στάση μετράει μόνο αν έχει τουλάχιστον ένα πεδίο διεύθυνσης συμπληρωμένο. Εγγραφές με όλα τα πεδία στάσης null μετρούν ως 0 στάσεις.",
+  "ADMIN_CHART_STATION_DATASET": "Διαδρομές",
+  "ADMIN_CHART_EMPTY": "Δεν υπάρχουν διαθέσιμα δεδομένα γραφήματος."
 }
 
