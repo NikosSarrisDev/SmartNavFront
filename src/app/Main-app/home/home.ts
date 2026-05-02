@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
-import { JourneyRouteFilters, NavigationService } from '../../navigation.service';
+import { JourneyRouteFilters, NavigationService, VehicleSize } from '../../navigation.service';
 import { AsyncPipe, DatePipe, DecimalPipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMap, GoogleMapsModule } from '@angular/google-maps';
 import { Observable, tap } from 'rxjs';
@@ -52,6 +52,11 @@ type ParsedAddress = {
   number: string;
   cityArea: string;
   postalCode: string;
+};
+type RoutePreferenceLookupItem = {
+  code: string;
+  prompt: string;
+  translationField: string;
 };
 
 @Component({
@@ -174,6 +179,8 @@ export class Home implements OnInit, OnDestroy {
   readonly routeRatingStars = [1, 2, 3, 4, 5];
   readonly routeFeatureMarkers = signal<RouteFeatureMarker[]>([]);
   private readonly vehicleIdByCode = new Map<string, number>();
+  private readonly preferencePromptByCode = new Map<string, string>();
+  private readonly preferenceTranslationFieldByCode = new Map<string, string>();
   private routeFeatureRequestToken = 0;
   private hasHandledNavigationArrival = false;
   private readonly routeFeatureIconByType: Record<RouteFeatureMarkerType, string> = {
@@ -216,9 +223,8 @@ export class Home implements OnInit, OnDestroy {
     this.currentUserName = currentUser?.data?.userName;
     const homeDraft = this.navService.getHomeDraftSnapshot();
     this.currentSearchText = homeDraft.searchText;
-    this.selectedChip = homeDraft.selectedChip || 'fastest';
-    this.selectedChipPrompt =
-      homeDraft.selectedChipPrompt || 'Find the fastest possible driving route.';
+    this.selectedChip = this.normalizePreferenceCode(homeDraft.selectedChip);
+    this.selectedChipPrompt = `${homeDraft.selectedChipPrompt ?? ''}`.trim();
 
     try {
       this.center = await this.navService.getCurrentLocation();
@@ -228,6 +234,7 @@ export class Home implements OnInit, OnDestroy {
     this.getCurrentUserRoleAndAvatar(this.currentUserId);
     this.getActivePreference(this.currentUserId);
     this.loadVehicleLookup();
+    this.loadPreferenceLookup();
     this.initializeFastPresetAutocompleteServices();
   }
 
@@ -266,20 +273,15 @@ export class Home implements OnInit, OnDestroy {
 
   async findPath() {
     const latestDraft = this.navService.getHomeDraftSnapshot();
-    this.selectedChip = latestDraft.selectedChip || this.selectedChip || 'fastest';
-    this.selectedChipPrompt =
-      latestDraft.selectedChipPrompt ||
-      this.selectedChipPrompt ||
-      'Find the fastest possible driving route.';
+    this.selectedChip = this.normalizePreferenceCode(latestDraft.selectedChip || this.selectedChip);
+    this.selectedChipPrompt = `${latestDraft.selectedChipPrompt ?? this.selectedChipPrompt ?? ''}`.trim();
+    if (!this.selectedChipPrompt && this.selectedChip) {
+      this.selectedChipPrompt = this.getPreferencePromptByCode(this.selectedChip);
+    }
 
     const trimmedQuery = (this.currentSearchText || '').trim();
     if (!trimmedQuery) {
       this.navService.errorMessage$.next('Please fill in the destination details first.');
-      return;
-    }
-
-    if (!this.selectedChipPrompt) {
-      this.navService.errorMessage$.next('Please choose one route preference chip first.');
       return;
     }
 
@@ -325,7 +327,9 @@ export class Home implements OnInit, OnDestroy {
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
 
-    const geminiPrompt = `${this.selectedChipPrompt}. User request: "${trimmedQuery}"`;
+    const geminiPrompt = this.selectedChipPrompt
+      ? `${this.selectedChipPrompt}. User request: "${trimmedQuery}"`
+      : `User request: "${trimmedQuery}"`;
 
     this.routeData$ = this.navService.getSmartRoute(geminiPrompt, latestPosition).pipe(
       tap((data) => {
@@ -713,6 +717,72 @@ export class Home implements OnInit, OnDestroy {
 
   getSelectedFastPresetIconSvg(): SafeHtml | null {
     return this.getSelectedFastPresetIconOption()?.safeIconSvg ?? null;
+  }
+
+  getAppliedFilterChipLabels(): string[] {
+    const chips: string[] = [];
+    const preferenceCode = this.getSelectedPreferenceCode();
+    if (preferenceCode) {
+      const preferenceLabel = this.getPreferenceChipLabel(preferenceCode);
+      if (preferenceLabel) {
+        chips.push(preferenceLabel);
+      }
+    }
+
+    const stations = this.navService.getJourneyFiltersSnapshot();
+    if (stations.length > 0) {
+      const stationsKey =
+        stations.length === 1 ? 'HOME_ACTIVE_STATIONS_SINGLE' : 'HOME_ACTIVE_STATIONS_MULTI';
+      chips.push(this.translate.instant(stationsKey, { count: stations.length }));
+    }
+
+    const vehicleSize = this.navService.getVehicleSizeSnapshot();
+    const vehicleLabel = this.getVehicleSizeChipLabel(vehicleSize);
+    if (vehicleLabel) {
+      chips.push(vehicleLabel);
+    }
+
+    const routeFilters = this.navService.getJourneyRouteFiltersSnapshot();
+    if (routeFilters.avoidTolls) {
+      chips.push(this.translate.instant('HOME_FILTER_AVOID_TOLLS'));
+    }
+    if (routeFilters.avoidHighways) {
+      chips.push(this.translate.instant('HOME_FILTER_AVOID_HIGHWAYS'));
+    }
+    if (routeFilters.avoidFerries) {
+      chips.push(this.translate.instant('HOME_FILTER_AVOID_FERRIES'));
+    }
+    if (routeFilters.trafficTimeMode === 'departure') {
+      chips.push(this.translate.instant('HOME_FILTER_TRAFFIC_MODE_DEPARTURE'));
+    } else if (routeFilters.trafficTimeMode === 'arrival') {
+      chips.push(this.translate.instant('HOME_FILTER_TRAFFIC_MODE_ARRIVAL'));
+    }
+
+    if (routeFilters.trafficStartDateTime) {
+      chips.push(
+        this.translate.instant('HOME_FILTER_TRAFFIC_START_AT', {
+          date: this.formatAppliedFilterChipDate(routeFilters.trafficStartDateTime),
+        }),
+      );
+    }
+
+    if (routeFilters.trafficEndDateTime) {
+      chips.push(
+        this.translate.instant('HOME_FILTER_TRAFFIC_END_AT', {
+          date: this.formatAppliedFilterChipDate(routeFilters.trafficEndDateTime),
+        }),
+      );
+    }
+
+    if (routeFilters.includeEvChargingStations) {
+      chips.push(this.translate.instant('HOME_FILTER_EV_CHARGERS'));
+    }
+
+    return chips;
+  }
+
+  trackAppliedFilterChip(index: number): number {
+    return index;
   }
 
   trackRouteChoice(_index: number, option: RouteChoiceOption): number {
@@ -1657,6 +1727,26 @@ export class Home implements OnInit, OnDestroy {
     return normalized.length > 0 ? normalized : null;
   }
 
+  private getVehicleSizeChipLabel(vehicleSize: VehicleSize | null): string | null {
+    if (!vehicleSize) {
+      return null;
+    }
+
+    const key = `FILTER_VEHICLE_SIZE_${vehicleSize.toUpperCase()}`;
+    const translated = this.translate.instant(key);
+    return translated && translated !== key ? translated : vehicleSize;
+  }
+
+  private formatAppliedFilterChipDate(value: string): string {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+
+    const lang = `${this.translate.currentLang || this.translate.getDefaultLang() || 'en'}`.trim();
+    return parsed.toLocaleString(lang);
+  }
+
   private createInitialFastPresetForm(): FastPresetFormState {
     return {
       street: '',
@@ -1695,5 +1785,84 @@ export class Home implements OnInit, OnDestroy {
         this.vehicleIdByCode.clear();
       },
     });
+  }
+
+  private loadPreferenceLookup(): void {
+    this.dataService.getPreferences({}).subscribe({
+      next: (response: any) => {
+        this.preferencePromptByCode.clear();
+        this.preferenceTranslationFieldByCode.clear();
+
+        const preferences = (response?.data ?? [])
+          .map((item: any) => ({
+            code: this.normalizePreferenceCode(item?.code ?? item?.Code),
+            prompt: `${item?.prompt ?? item?.Prompt ?? ''}`.trim(),
+            translationField: `${item?.translationField ?? item?.TranslationField ?? ''}`.trim(),
+          }))
+          .filter((item: RoutePreferenceLookupItem) => item.code.length > 0);
+
+        preferences.forEach((item: RoutePreferenceLookupItem) => {
+          if (item.prompt.length > 0) {
+            this.preferencePromptByCode.set(item.code, item.prompt);
+          }
+
+          if (item.translationField.length > 0) {
+            this.preferenceTranslationFieldByCode.set(item.code, item.translationField);
+          }
+        });
+
+        if (!this.selectedChipPrompt && this.selectedChip) {
+          const mappedPrompt = this.getPreferencePromptByCode(this.selectedChip);
+          if (mappedPrompt) {
+            this.selectedChipPrompt = mappedPrompt;
+            this.persistHomeDraft();
+          }
+        }
+      },
+      error: () => {
+        this.preferencePromptByCode.clear();
+        this.preferenceTranslationFieldByCode.clear();
+      },
+    });
+  }
+
+  private getSelectedPreferenceCode(): string {
+    const fromDraft = this.normalizePreferenceCode(this.navService.getHomeDraftSnapshot().selectedChip);
+    if (fromDraft) {
+      return fromDraft;
+    }
+
+    return this.normalizePreferenceCode(this.selectedChip);
+  }
+
+  private getPreferencePromptByCode(code: string): string {
+    const normalized = this.normalizePreferenceCode(code);
+    if (!normalized) {
+      return '';
+    }
+
+    return `${this.preferencePromptByCode.get(normalized) ?? ''}`.trim();
+  }
+
+  private getPreferenceChipLabel(code: string): string {
+    const normalized = this.normalizePreferenceCode(code);
+    if (!normalized) {
+      return '';
+    }
+
+    const translationField = `${this.preferenceTranslationFieldByCode.get(normalized) ?? ''}`.trim();
+    if (translationField.length > 0) {
+      const translated = this.translate.instant(translationField);
+      if (translated && translated !== translationField) {
+        return translated;
+      }
+      return translationField;
+    }
+
+    return normalized;
+  }
+
+  private normalizePreferenceCode(value: unknown): string {
+    return `${value ?? ''}`.trim().toLowerCase();
   }
 }

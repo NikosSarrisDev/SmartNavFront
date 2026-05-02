@@ -34,7 +34,7 @@
           />
           <button
             [ngClass]="
-              currentSearchText.trim() && selectedChip && !navigationStarted
+              currentSearchText.trim() && !navigationStarted
                 ? 'goal-button-enable'
                 : 'goal-button-disable'
             "
@@ -42,7 +42,6 @@
             [disabled]="
               (navService.isLoading$ | async) ||
               currentSearchText.trim() === '' ||
-              !selectedChip ||
               navigationStarted
             "
           >
@@ -143,6 +142,19 @@
         <i class="pi pi-bolt" aria-hidden="true"></i>
         <span>{{ 'HOME_FAST_PRESETS_BUTTON' | translate }}</span>
       </button>
+
+      @if (!navigationStarted && getAppliedFilterChipLabels(); as appliedFilterChips) {
+        @if (appliedFilterChips.length > 0) {
+          <div class="applied-filter-chip-stack">
+            <div
+              class="applied-filter-chip"
+              *ngFor="let chipLabel of appliedFilterChips; trackBy: trackAppliedFilterChip"
+            >
+              {{ chipLabel }}
+            </div>
+          </div>
+        }
+      }
 
       <google-map
         [center]="center"
@@ -370,7 +382,12 @@
         </div>
       }
 
-            <div class="route-rating-overlay" role="dialog" aria-modal="true" *ngIf="routeRatingPopupVisible">
+      <div
+        class="route-rating-overlay"
+        role="dialog"
+        aria-modal="true"
+        *ngIf="routeRatingPopupVisible"
+      >
         <section class="route-rating-card">
           <h3>{{ 'HOME_ROUTE_RATING_TITLE' | translate }}</h3>
           <p>{{ 'HOME_ROUTE_RATING_SUBTITLE' | translate }}</p>
@@ -402,4 +419,3 @@
     </main>
   </div>
 }
-
