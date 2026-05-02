@@ -1,4 +1,13 @@
-import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  effect,
+  signal,
+} from '@angular/core';
 import { JourneyRouteFilters, NavigationService, VehicleSize } from '../../navigation.service';
 import { AsyncPipe, DatePipe, DecimalPipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMap, GoogleMapsModule } from '@angular/google-maps';
@@ -202,6 +211,9 @@ export class Home implements OnInit, OnDestroy {
   private fastPresetHideSuggestionsTimeout: number | null = null;
   readonly fastPresetSuggestions = signal<StationAddressSuggestion[]>([]);
   fastPresetSuggestionListVisible = false;
+  private hasSeenHomeDraftEffectInitialRun = false;
+  private isPersistingHomeDraftLocally = false;
+  private shouldShowAppliedPreferenceChip = false;
 
   constructor(
     public navService: NavigationService,
@@ -214,7 +226,22 @@ export class Home implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private ngZone: NgZone,
     private cdr: ChangeDetectorRef,
-  ) {}
+  ) {
+    effect(() => {
+      this.navService.homeDraft();
+
+      if (!this.hasSeenHomeDraftEffectInitialRun) {
+        this.hasSeenHomeDraftEffectInitialRun = true;
+        return;
+      }
+
+      if (this.isPersistingHomeDraftLocally) {
+        return;
+      }
+
+      this.shouldShowAppliedPreferenceChip = true;
+    });
+  }
 
   async ngOnInit() {
     this.loadingAvatar.set(true);
@@ -722,7 +749,7 @@ export class Home implements OnInit, OnDestroy {
   getAppliedFilterChipLabels(): string[] {
     const chips: string[] = [];
     const preferenceCode = this.getSelectedPreferenceCode();
-    if (preferenceCode) {
+    if (preferenceCode && this.shouldShowAppliedPreferenceChip) {
       const preferenceLabel = this.getPreferenceChipLabel(preferenceCode);
       if (preferenceLabel) {
         chips.push(preferenceLabel);
@@ -1758,11 +1785,13 @@ export class Home implements OnInit, OnDestroy {
   }
 
   private persistHomeDraft(): void {
+    this.isPersistingHomeDraftLocally = true;
     this.navService.setHomeDraft({
       searchText: this.currentSearchText,
       selectedChip: this.selectedChip,
       selectedChipPrompt: this.selectedChipPrompt,
     });
+    this.isPersistingHomeDraftLocally = false;
   }
 
   private loadVehicleLookup(): void {
