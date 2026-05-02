@@ -206,7 +206,8 @@ export class Home implements OnInit, OnDestroy {
   fastPresetForm: FastPresetFormState = this.createInitialFastPresetForm();
   private fastPresetAutocompleteService: google.maps.places.AutocompleteService | null = null;
   private fastPresetPlaceDetailsService: google.maps.places.PlacesService | null = null;
-  private fastPresetAutocompleteSessionToken: google.maps.places.AutocompleteSessionToken | null = null;
+  private fastPresetAutocompleteSessionToken: google.maps.places.AutocompleteSessionToken | null =
+    null;
   private fastPresetAutocompleteRequestVersion = 0;
   private fastPresetHideSuggestionsTimeout: number | null = null;
   readonly fastPresetSuggestions = signal<StationAddressSuggestion[]>([]);
@@ -301,7 +302,8 @@ export class Home implements OnInit, OnDestroy {
   async findPath() {
     const latestDraft = this.navService.getHomeDraftSnapshot();
     this.selectedChip = this.normalizePreferenceCode(latestDraft.selectedChip || this.selectedChip);
-    this.selectedChipPrompt = `${latestDraft.selectedChipPrompt ?? this.selectedChipPrompt ?? ''}`.trim();
+    this.selectedChipPrompt =
+      `${latestDraft.selectedChipPrompt ?? this.selectedChipPrompt ?? ''}`.trim();
     if (!this.selectedChipPrompt && this.selectedChip) {
       this.selectedChipPrompt = this.getPreferencePromptByCode(this.selectedChip);
     }
@@ -865,9 +867,7 @@ export class Home implements OnInit, OnDestroy {
 
       const current = this.navigationPath[this.navigationPathIndex];
       const isLastPoint = this.navigationPathIndex >= this.navigationPath.length - 1;
-      const next = isLastPoint
-        ? current
-        : this.navigationPath[this.navigationPathIndex + 1];
+      const next = isLastPoint ? current : this.navigationPath[this.navigationPathIndex + 1];
 
       const currentPoint = { lat: current.lat, lng: current.lng };
       const heading = this.calculateHeading(currentPoint, { lat: next.lat, lng: next.lng });
@@ -1279,12 +1279,7 @@ export class Home implements OnInit, OnDestroy {
   }
 
   private resolveActiveTripId(response: any): number | null {
-    const candidates = [
-      response?.data?.id,
-      response?.data?.Id,
-      response?.id,
-      response?.Id,
-    ];
+    const candidates = [response?.data?.id, response?.data?.Id, response?.id, response?.Id];
 
     for (const candidate of candidates) {
       const parsed = Number(candidate);
@@ -1583,7 +1578,8 @@ export class Home implements OnInit, OnDestroy {
           .map((item: any) => {
             const id = Number(item?.id ?? item?.Id);
             const iconData = `${item?.iconData ?? item?.IconData ?? item?.icon_data ?? ''}`.trim();
-            const translationField = `${item?.translationField ?? item?.TranslationField ?? ''}`.trim();
+            const translationField =
+              `${item?.translationField ?? item?.TranslationField ?? ''}`.trim();
 
             if (!Number.isInteger(id) || id <= 0) {
               return null;
@@ -1593,9 +1589,7 @@ export class Home implements OnInit, OnDestroy {
               id,
               iconData,
               translationField,
-              safeIconSvg: iconData
-                ? this.sanitizer.bypassSecurityTrustHtml(iconData)
-                : null,
+              safeIconSvg: iconData ? this.sanitizer.bypassSecurityTrustHtml(iconData) : null,
             } as PresetIconOption;
           })
           .filter((value: PresetIconOption | null): value is PresetIconOption => value != null);
@@ -1611,10 +1605,7 @@ export class Home implements OnInit, OnDestroy {
   }
 
   private initializeFastPresetAutocompleteServices(): void {
-    if (
-      this.fastPresetAutocompleteService &&
-      this.fastPresetPlaceDetailsService
-    ) {
+    if (this.fastPresetAutocompleteService && this.fastPresetPlaceDetailsService) {
       return;
     }
 
@@ -1627,7 +1618,9 @@ export class Home implements OnInit, OnDestroy {
     }
 
     this.fastPresetAutocompleteService = new google.maps.places.AutocompleteService();
-    this.fastPresetPlaceDetailsService = new google.maps.places.PlacesService(document.createElement('div'));
+    this.fastPresetPlaceDetailsService = new google.maps.places.PlacesService(
+      document.createElement('div'),
+    );
   }
 
   private getFastPresetAutocompleteSessionToken():
@@ -1700,7 +1693,12 @@ export class Home implements OnInit, OnDestroy {
     const userId = Number(this.currentUserId);
     const presetIconId = Number(this.fastPresetForm.presetIconId);
 
-    if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(presetIconId) || presetIconId <= 0) {
+    if (
+      !Number.isInteger(userId) ||
+      userId <= 0 ||
+      !Number.isInteger(presetIconId) ||
+      presetIconId <= 0
+    ) {
       this.messageService.add({
         severity: 'error',
         summary: this.translate.instant('HOME_FAST_PRESETS_ERROR_TITLE'),
@@ -1856,7 +1854,9 @@ export class Home implements OnInit, OnDestroy {
   }
 
   private getSelectedPreferenceCode(): string {
-    const fromDraft = this.normalizePreferenceCode(this.navService.getHomeDraftSnapshot().selectedChip);
+    const fromDraft = this.normalizePreferenceCode(
+      this.navService.getHomeDraftSnapshot().selectedChip,
+    );
     if (fromDraft) {
       return fromDraft;
     }
@@ -1879,7 +1879,8 @@ export class Home implements OnInit, OnDestroy {
       return '';
     }
 
-    const translationField = `${this.preferenceTranslationFieldByCode.get(normalized) ?? ''}`.trim();
+    const translationField =
+      `${this.preferenceTranslationFieldByCode.get(normalized) ?? ''}`.trim();
     if (translationField.length > 0) {
       const translated = this.translate.instant(translationField);
       if (translated && translated !== translationField) {

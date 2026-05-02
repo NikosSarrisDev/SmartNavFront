@@ -9,15 +9,38 @@
 .dashboard-container {
   display: grid;
   grid-template-columns: 1fr;
+  grid-template-areas:
+    "lang"
+    "sidebar"
+    "main"
+    "actions";
   gap: 20px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.language-switcher {
+  grid-area: lang;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.user-sidebar {
+  grid-area: sidebar;
+}
+
+.main-content {
+  grid-area: main;
 }
 
 /* Desktop Breakpoint */
 @media (min-width: 992px) {
   .dashboard-container {
     grid-template-columns: 350px 1fr;
+    grid-template-areas:
+      "lang lang"
+      "sidebar main"
+      "actions actions";
     padding: 40px;
   }
 }
@@ -123,4 +146,113 @@ th, td {
   display: flex;
   justify-content: flex-end;
   cursor: pointer;
+}
+
+.quick-actions-grid {
+  grid-area: actions;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.quick-action-card {
+  position: relative;
+  border: none;
+  border-radius: 18px;
+  min-height: 122px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  text-align: left;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.quick-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 34px rgba(15, 23, 42, 0.22);
+}
+
+.quick-action-card:active {
+  transform: translateY(0);
+}
+
+.action-home {
+  background: linear-gradient(145deg, #22c55e 0%, #16a34a 100%);
+  color: #f0fdf4;
+}
+
+.action-password {
+  background: linear-gradient(145deg, #facc15 0%, #eab308 100%);
+  color: #422006;
+}
+
+.action-logout {
+  background: linear-gradient(145deg, #ef4444 0%, #dc2626 100%);
+  color: #fef2f2;
+}
+
+.action-admin {
+  background: linear-gradient(145deg, #3b82f6 0%, #2563eb 100%);
+  color: #eff6ff;
+}
+
+.action-ornament {
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  width: clamp(128px, 22vw, 188px);
+  height: clamp(88px, 16vw, 128px);
+  opacity: 0.58;
+  pointer-events: none;
+}
+
+.action-ornament svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.action-icon {
+  position: relative;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(1px);
+}
+
+.action-password .action-icon {
+  background: rgba(255, 255, 255, 0.36);
+}
+
+.action-icon i {
+  font-size: 1.4rem;
+}
+
+.action-label {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+@media (max-width: 991px) {
+  .quick-action-card {
+    min-height: 106px;
+  }
+
+  .action-ornament {
+    width: clamp(118px, 40vw, 182px);
+    height: clamp(80px, 24vw, 126px);
+  }
 }
