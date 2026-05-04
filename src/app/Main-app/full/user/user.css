@@ -204,18 +204,26 @@ th, td {
 
 .action-ornament {
   position: absolute;
-  right: -10px;
-  top: -10px;
-  width: clamp(128px, 22vw, 188px);
-  height: clamp(88px, 16vw, 128px);
-  opacity: 0.58;
+  right: -14px;
+  top: -14px;
+  width: clamp(136px, 24vw, 204px);
+  height: clamp(96px, 18vw, 142px);
+  opacity: 0.88;
   pointer-events: none;
+  filter: drop-shadow(0 12px 14px rgba(15, 23, 42, 0.24));
+  transform: translateZ(0);
+  transition: transform 220ms ease, opacity 220ms ease;
 }
 
 .action-ornament svg {
   width: 100%;
   height: 100%;
   display: block;
+}
+
+.quick-action-card:hover .action-ornament {
+  transform: translate3d(-2px, -2px, 0) scale(1.03);
+  opacity: 0.96;
 }
 
 .action-icon {
@@ -252,7 +260,8 @@ th, td {
   }
 
   .action-ornament {
-    width: clamp(118px, 40vw, 182px);
-    height: clamp(80px, 24vw, 126px);
+    width: clamp(118px, 42vw, 186px);
+    height: clamp(84px, 26vw, 132px);
+    opacity: 0.84;
   }
 }
