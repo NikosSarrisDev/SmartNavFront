@@ -198,6 +198,10 @@ export class User implements OnInit {
     this.router.navigate(['/admin']);
   }
 
+  goToSettings() {
+    this.router.navigate(['/settings']);
+  }
+
   switchMode(){
     this.isEditMode.update(prev => !prev);
   }

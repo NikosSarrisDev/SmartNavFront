@@ -10,6 +10,7 @@ import { ResetPassword } from './Main-app/reset-password/reset-password';
 import { ChangePassword } from './Main-app/change-password/change-password';
 import { Admin } from './Main-app/admin/admin';
 import { adminGuard } from './admin-guard';
+import { Settings } from './Main-app/settings/settings';
 
 export const routes: Routes = [
   {
@@ -57,6 +58,11 @@ export const routes: Routes = [
     path: 'admin',
     component: Admin,
     canActivate: [authGuard, adminGuard]
+  },
+  {
+    path: 'settings',
+    component: Settings,
+    canActivate: [authGuard]
   },
   {
     path: '**',

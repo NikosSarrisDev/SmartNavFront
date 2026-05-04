@@ -346,6 +346,48 @@
           <span class="action-label">{{ 'ADMIN_PANEL_NAV' | translate }}</span>
         </button>
       }
+
+      <button type="button" class="quick-action-card action-settings" (click)="goToSettings()">
+        <span class="action-ornament" aria-hidden="true">
+          <svg viewBox="0 0 240 160" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <filter id="settingsShadow" x="-30%" y="-30%" width="170%" height="190%">
+                <feDropShadow dx="0" dy="9" stdDeviation="7" flood-color="#0f172a" flood-opacity="0.46"></feDropShadow>
+              </filter>
+              <linearGradient id="settingsTop" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#e2e8f0"></stop>
+                <stop offset="1" stop-color="#94a3b8"></stop>
+              </linearGradient>
+              <linearGradient id="settingsLeft" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#64748b"></stop>
+                <stop offset="1" stop-color="#334155"></stop>
+              </linearGradient>
+              <linearGradient id="settingsRight" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#475569"></stop>
+                <stop offset="1" stop-color="#1e293b"></stop>
+              </linearGradient>
+            </defs>
+            <ellipse cx="132" cy="121" rx="68" ry="18" fill="#020617" opacity="0.28"></ellipse>
+            <g filter="url(#settingsShadow)">
+              <polygon points="84,80 132,58 180,80 132,102" fill="url(#settingsTop)"></polygon>
+              <polygon points="84,80 132,102 132,132 84,110" fill="url(#settingsLeft)"></polygon>
+              <polygon points="180,80 132,102 132,132 180,110" fill="url(#settingsRight)"></polygon>
+              <circle cx="132" cy="92" r="16" fill="#0f172a" opacity="0.75"></circle>
+              <circle cx="132" cy="92" r="7" fill="#cbd5e1" opacity="0.95"></circle>
+              <rect x="130" y="66" width="4" height="10" rx="2" fill="#f8fafc" opacity="0.9"></rect>
+              <rect x="130" y="108" width="4" height="10" rx="2" fill="#f8fafc" opacity="0.9"></rect>
+              <rect x="108" y="90" width="10" height="4" rx="2" fill="#f8fafc" opacity="0.9"></rect>
+              <rect x="146" y="90" width="10" height="4" rx="2" fill="#f8fafc" opacity="0.9"></rect>
+              <rect x="116" y="74" width="8" height="4" rx="2" transform="rotate(-40 120 76)" fill="#f8fafc" opacity="0.9"></rect>
+              <rect x="141" y="106" width="8" height="4" rx="2" transform="rotate(-40 145 108)" fill="#f8fafc" opacity="0.9"></rect>
+              <rect x="141" y="74" width="8" height="4" rx="2" transform="rotate(40 145 76)" fill="#f8fafc" opacity="0.9"></rect>
+              <rect x="116" y="106" width="8" height="4" rx="2" transform="rotate(40 120 108)" fill="#f8fafc" opacity="0.9"></rect>
+            </g>
+          </svg>
+        </span>
+        <span class="action-icon"><i class="pi pi-cog"></i></span>
+        <span class="action-label">{{ 'SETTINGS_TITLE' | translate }}</span>
+      </button>
     </section>
 
     <p-dialog [(visible)]="visibleDialog" [modal]="true" [style]="{ width: '30rem' }">

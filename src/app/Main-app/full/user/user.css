@@ -202,6 +202,12 @@ th, td {
   color: #eff6ff;
 }
 
+.action-settings {
+  background: linear-gradient(145deg, #111827 0%, #020617 100%);
+  color: #f8fafc;
+  grid-column: 1 / -1;
+}
+
 .action-ornament {
   position: absolute;
   right: -14px;

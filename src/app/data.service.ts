@@ -483,6 +483,71 @@ export class DataService {
       }));
   }
 
+  getUserSettings(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/GetByUser', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  saveUserSettings(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/SaveByUser', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  exportUserData(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/ExportData', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  deleteUserHistory(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/DeleteHistory', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
+  deleteUserAccount(data:any) {
+    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/DeleteAccount', data, httpOptions).pipe(
+      map(
+        (response: any) => {
+          return response;
+        }
+      ),
+      catchError((error: any) => {
+        this.handleError(error);
+        return throwError(error);
+      }));
+  }
+
   private handleError(error:any) {
     var status = error.error.status;
     if (status == undefined) {
