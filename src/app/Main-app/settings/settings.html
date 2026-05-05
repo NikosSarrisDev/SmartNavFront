@@ -1,164 +1,164 @@
-@if (isLoading) {
-  <div class="centerfy" style="min-height: 100vh">
-    <p-progress-spinner
-      strokeWidth="8"
-      fill="transparent"
-      animationDuration=".5s"
-      [style]="{ width: '50px', height: '50px' }"
-    />
-  </div>
-} @else {
-  <div class="settings-page">
-    <header class="settings-header">
-      <div>
-        <h1>{{ 'SETTINGS_TITLE' | translate }}</h1>
-        <p>{{ 'SETTINGS_SUBTITLE' | translate }}</p>
-      </div>
-      <button type="button" class="back-btn" (click)="backToUser()">
-        {{ 'SETTINGS_BACK_TO_PROFILE' | translate }}
-      </button>
-    </header>
+<div class="settings-page">
+  <header class="settings-header">
+    <div>
+      <h1>{{ 'SETTINGS_TITLE' | translate }}</h1>
+      <p>{{ 'SETTINGS_SUBTITLE' | translate }}</p>
+    </div>
+    <button type="button" class="back-btn" (click)="backToUser()">
+      {{ 'SETTINGS_BACK_TO_PROFILE' | translate }}
+    </button>
+  </header>
 
-    @if (feedbackMessageKey) {
-      <div class="feedback" [class.success]="feedbackType === 'success'" [class.error]="feedbackType === 'error'">
-        {{ feedbackMessageKey | translate }}
-      </div>
-    }
-
-    <form [formGroup]="settingsForm" class="settings-grid">
-      <section class="settings-card">
-        <h2>{{ 'SETTINGS_AI_TITLE' | translate }}</h2>
-        <div class="field">
-          <label for="ai-aggressive">{{ 'SETTINGS_AI_AGGRESSIVENESS' | translate }}</label>
-          <input id="ai-aggressive" type="range" min="1" max="5" formControlName="aiAggressiveness" />
-          <small>{{ settingsForm.get('aiAggressiveness')?.value }}</small>
-        </div>
-        <div class="field inline">
-          <label for="always-expl">{{ 'SETTINGS_AI_ALWAYS_EXPLAIN' | translate }}</label>
-          <input id="always-expl" type="checkbox" formControlName="alwaysShowRouteExplanation" />
-        </div>
-        <div class="field">
-          <label for="alt-routes">{{ 'SETTINGS_AI_ALTERNATIVE_ROUTES' | translate }}</label>
-          <select id="alt-routes" formControlName="alternativeRoutesCount">
-            <option [ngValue]="1">1</option>
-            <option [ngValue]="2">2</option>
-            <option [ngValue]="3">3</option>
-          </select>
-        </div>
-        <div class="field inline">
-          <label for="history-personal">{{ 'SETTINGS_AI_PERSONALIZATION' | translate }}</label>
-          <input id="history-personal" type="checkbox" formControlName="useHistoryPersonalization" />
-        </div>
-      </section>
-
-      <section class="settings-card">
-        <h2>{{ 'SETTINGS_MAP_UI_TITLE' | translate }}</h2>
-        <div class="field">
-          <label for="theme">{{ 'SETTINGS_THEME' | translate }}</label>
-          <select id="theme" formControlName="theme">
-            <option value="light">{{ 'SETTINGS_THEME_LIGHT' | translate }}</option>
-            <option value="dark">{{ 'SETTINGS_THEME_DARK' | translate }}</option>
-            <option value="system">{{ 'SETTINGS_THEME_SYSTEM' | translate }}</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="map-style">{{ 'SETTINGS_MAP_STYLE' | translate }}</label>
-          <select id="map-style" formControlName="mapStyle">
-            <option value="standard">{{ 'SETTINGS_MAP_STYLE_STANDARD' | translate }}</option>
-            <option value="satellite">{{ 'SETTINGS_MAP_STYLE_SATELLITE' | translate }}</option>
-            <option value="terrain">{{ 'SETTINGS_MAP_STYLE_TERRAIN' | translate }}</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="distance-unit">{{ 'SETTINGS_DISTANCE_UNIT' | translate }}</label>
-          <select id="distance-unit" formControlName="distanceUnit">
-            <option value="km">KM</option>
-            <option value="mi">MI</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="time-format">{{ 'SETTINGS_TIME_FORMAT' | translate }}</label>
-          <select id="time-format" formControlName="timeFormat">
-            <option value="24h">24h</option>
-            <option value="12h">12h</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="chip-density">{{ 'SETTINGS_CHIP_DENSITY' | translate }}</label>
-          <select id="chip-density" formControlName="chipDensity">
-            <option value="compact">{{ 'SETTINGS_CHIP_DENSITY_COMPACT' | translate }}</option>
-            <option value="comfortable">{{ 'SETTINGS_CHIP_DENSITY_COMFORTABLE' | translate }}</option>
-          </select>
-        </div>
-        <div class="field inline">
-          <label for="large-text">{{ 'SETTINGS_LARGE_TEXT' | translate }}</label>
-          <input id="large-text" type="checkbox" formControlName="largeText" />
-        </div>
-        <div class="field inline">
-          <label for="high-contrast">{{ 'SETTINGS_HIGH_CONTRAST' | translate }}</label>
-          <input id="high-contrast" type="checkbox" formControlName="highContrast" />
-        </div>
-      </section>
-
-      <section class="settings-card settings-card-wide">
-        <h2>{{ 'SETTINGS_PRIVACY_TITLE' | translate }}</h2>
-        <p>{{ 'SETTINGS_PRIVACY_WHAT_STORED' | translate }}</p>
-        <div class="field inline">
-          <label for="store-trips">{{ 'SETTINGS_STORE_TRIPS' | translate }}</label>
-          <input id="store-trips" type="checkbox" formControlName="storeTrips" />
-        </div>
-        <div class="field inline">
-          <label for="store-ratings">{{ 'SETTINGS_STORE_RATINGS' | translate }}</label>
-          <input id="store-ratings" type="checkbox" formControlName="storeRatings" />
-        </div>
-        <div class="field inline">
-          <label for="store-stations">{{ 'SETTINGS_STORE_STATIONS' | translate }}</label>
-          <input id="store-stations" type="checkbox" formControlName="storeStations" />
-        </div>
-        <div class="field inline">
-          <label for="consent-location">{{ 'SETTINGS_CONSENT_LOCATION' | translate }}</label>
-          <input id="consent-location" type="checkbox" formControlName="consentLocationHistory" />
-        </div>
-        <div class="field inline">
-          <label for="consent-ai">{{ 'SETTINGS_CONSENT_AI' | translate }}</label>
-          <input id="consent-ai" type="checkbox" formControlName="consentAiTraining" />
-        </div>
-
-        <div class="privacy-actions">
-          <button type="button" class="secondary" (click)="exportData()" [disabled]="isExporting">
-            {{ 'SETTINGS_EXPORT_DATA' | translate }}
-          </button>
-          <button type="button" class="danger" (click)="requestDeleteHistory()" [disabled]="isDeletingHistory">
-            {{ 'SETTINGS_DELETE_HISTORY' | translate }}
-          </button>
-          <button type="button" class="danger solid" (click)="requestDeleteAccount()" [disabled]="isDeletingAccount">
-            {{ 'SETTINGS_DELETE_ACCOUNT' | translate }}
-          </button>
-        </div>
-      </section>
-    </form>
-
-    <footer class="settings-footer">
-      <button type="button" class="save-btn" (click)="saveSettings()" [disabled]="isSaving">
-        {{ 'SETTINGS_SAVE' | translate }}
-      </button>
-    </footer>
-  </div>
-
-  @if (confirmVisible) {
-    <div class="confirm-overlay" role="dialog" aria-modal="true">
-      <section class="confirm-card">
-        <h3>{{ 'SETTINGS_CONFIRM_TITLE' | translate }}</h3>
-        <p>{{ confirmMessageKey | translate }}</p>
-        <div class="confirm-actions">
-          <button type="button" class="confirm-yes" (click)="onConfirm(true)">
-            {{ 'SETTINGS_CONFIRM_YES' | translate }}
-          </button>
-          <button type="button" class="confirm-no" (click)="onConfirm(false)">
-            {{ 'SETTINGS_CONFIRM_NO' | translate }}
-          </button>
-        </div>
-      </section>
+  @if (isLoading) {
+    <div class="inline-loader">
+      <p-progress-spinner
+        strokeWidth="8"
+        fill="transparent"
+        animationDuration=".5s"
+        [style]="{ width: '36px', height: '36px' }"
+      />
     </div>
   }
+
+  @if (feedbackMessageKey) {
+    <div class="feedback" [class.success]="feedbackType === 'success'" [class.error]="feedbackType === 'error'">
+      {{ feedbackMessageKey | translate }}
+    </div>
+  }
+
+  <form [formGroup]="settingsForm" class="settings-grid">
+    <section class="settings-card">
+      <h2>{{ 'SETTINGS_AI_TITLE' | translate }}</h2>
+      <div class="field">
+        <label for="ai-aggressive">{{ 'SETTINGS_AI_AGGRESSIVENESS' | translate }}</label>
+        <input id="ai-aggressive" type="range" min="1" max="5" formControlName="aiAggressiveness" />
+        <small>{{ settingsForm.get('aiAggressiveness')?.value }}</small>
+      </div>
+      <div class="field inline">
+        <label for="always-expl">{{ 'SETTINGS_AI_ALWAYS_EXPLAIN' | translate }}</label>
+        <input id="always-expl" type="checkbox" formControlName="alwaysShowRouteExplanation" />
+      </div>
+      <div class="field">
+        <label for="alt-routes">{{ 'SETTINGS_AI_ALTERNATIVE_ROUTES' | translate }}</label>
+        <select id="alt-routes" formControlName="alternativeRoutesCount">
+          <option [ngValue]="1">1</option>
+          <option [ngValue]="2">2</option>
+          <option [ngValue]="3">3</option>
+        </select>
+      </div>
+      <div class="field inline">
+        <label for="history-personal">{{ 'SETTINGS_AI_PERSONALIZATION' | translate }}</label>
+        <input id="history-personal" type="checkbox" formControlName="useHistoryPersonalization" />
+      </div>
+    </section>
+
+    <section class="settings-card">
+      <h2>{{ 'SETTINGS_MAP_UI_TITLE' | translate }}</h2>
+      <div class="field">
+        <label for="theme">{{ 'SETTINGS_THEME' | translate }}</label>
+        <select id="theme" formControlName="theme">
+          <option value="light">{{ 'SETTINGS_THEME_LIGHT' | translate }}</option>
+          <option value="dark">{{ 'SETTINGS_THEME_DARK' | translate }}</option>
+          <option value="system">{{ 'SETTINGS_THEME_SYSTEM' | translate }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="map-style">{{ 'SETTINGS_MAP_STYLE' | translate }}</label>
+        <select id="map-style" formControlName="mapStyle">
+          <option value="standard">{{ 'SETTINGS_MAP_STYLE_STANDARD' | translate }}</option>
+          <option value="satellite">{{ 'SETTINGS_MAP_STYLE_SATELLITE' | translate }}</option>
+          <option value="terrain">{{ 'SETTINGS_MAP_STYLE_TERRAIN' | translate }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="distance-unit">{{ 'SETTINGS_DISTANCE_UNIT' | translate }}</label>
+        <select id="distance-unit" formControlName="distanceUnit">
+          <option value="km">KM</option>
+          <option value="mi">MI</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="time-format">{{ 'SETTINGS_TIME_FORMAT' | translate }}</label>
+        <select id="time-format" formControlName="timeFormat">
+          <option value="24h">24h</option>
+          <option value="12h">12h</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="chip-density">{{ 'SETTINGS_CHIP_DENSITY' | translate }}</label>
+        <select id="chip-density" formControlName="chipDensity">
+          <option value="compact">{{ 'SETTINGS_CHIP_DENSITY_COMPACT' | translate }}</option>
+          <option value="comfortable">{{ 'SETTINGS_CHIP_DENSITY_COMFORTABLE' | translate }}</option>
+        </select>
+      </div>
+      <div class="field inline">
+        <label for="large-text">{{ 'SETTINGS_LARGE_TEXT' | translate }}</label>
+        <input id="large-text" type="checkbox" formControlName="largeText" />
+      </div>
+      <div class="field inline">
+        <label for="high-contrast">{{ 'SETTINGS_HIGH_CONTRAST' | translate }}</label>
+        <input id="high-contrast" type="checkbox" formControlName="highContrast" />
+      </div>
+    </section>
+
+    <section class="settings-card settings-card-wide">
+      <h2>{{ 'SETTINGS_PRIVACY_TITLE' | translate }}</h2>
+      <p>{{ 'SETTINGS_PRIVACY_WHAT_STORED' | translate }}</p>
+      <div class="field inline">
+        <label for="store-trips">{{ 'SETTINGS_STORE_TRIPS' | translate }}</label>
+        <input id="store-trips" type="checkbox" formControlName="storeTrips" />
+      </div>
+      <div class="field inline">
+        <label for="store-ratings">{{ 'SETTINGS_STORE_RATINGS' | translate }}</label>
+        <input id="store-ratings" type="checkbox" formControlName="storeRatings" />
+      </div>
+      <div class="field inline">
+        <label for="store-stations">{{ 'SETTINGS_STORE_STATIONS' | translate }}</label>
+        <input id="store-stations" type="checkbox" formControlName="storeStations" />
+      </div>
+      <div class="field inline">
+        <label for="consent-location">{{ 'SETTINGS_CONSENT_LOCATION' | translate }}</label>
+        <input id="consent-location" type="checkbox" formControlName="consentLocationHistory" />
+      </div>
+      <div class="field inline">
+        <label for="consent-ai">{{ 'SETTINGS_CONSENT_AI' | translate }}</label>
+        <input id="consent-ai" type="checkbox" formControlName="consentAiTraining" />
+      </div>
+
+      <div class="privacy-actions">
+        <button type="button" class="secondary" (click)="exportData()" [disabled]="isExporting">
+          {{ 'SETTINGS_EXPORT_DATA' | translate }}
+        </button>
+        <button type="button" class="danger" (click)="requestDeleteHistory()" [disabled]="isDeletingHistory">
+          {{ 'SETTINGS_DELETE_HISTORY' | translate }}
+        </button>
+        <button type="button" class="danger solid" (click)="requestDeleteAccount()" [disabled]="isDeletingAccount">
+          {{ 'SETTINGS_DELETE_ACCOUNT' | translate }}
+        </button>
+      </div>
+    </section>
+  </form>
+
+  <footer class="settings-footer">
+    <button type="button" class="save-btn" (click)="saveSettings()" [disabled]="isSaving">
+      {{ 'SETTINGS_SAVE' | translate }}
+    </button>
+  </footer>
+</div>
+
+@if (confirmVisible) {
+  <div class="confirm-overlay" role="dialog" aria-modal="true">
+    <section class="confirm-card">
+      <h3>{{ 'SETTINGS_CONFIRM_TITLE' | translate }}</h3>
+      <p>{{ confirmMessageKey | translate }}</p>
+      <div class="confirm-actions">
+        <button type="button" class="confirm-yes" (click)="onConfirm(true)">
+          {{ 'SETTINGS_CONFIRM_YES' | translate }}
+        </button>
+        <button type="button" class="confirm-no" (click)="onConfirm(false)">
+          {{ 'SETTINGS_CONFIRM_NO' | translate }}
+        </button>
+      </div>
+    </section>
+  </div>
 }

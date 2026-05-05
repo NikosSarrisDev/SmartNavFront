@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { finalize, timeout } from 'rxjs/operators';
 import { AuthenticationService } from '../../auth.service';
 import { DataService } from '../../data.service';
 
@@ -79,40 +80,44 @@ export class Settings implements OnInit {
     const raw = this.settingsForm.getRawValue();
     this.isSaving = true;
     this.feedbackMessageKey = '';
-
-    this.dataService
-      .saveUserSettings({
-        userId: this.currentUserId,
-        aiAggressiveness: Number(raw.aiAggressiveness ?? 3),
-        alwaysShowRouteExplanation: !!raw.alwaysShowRouteExplanation,
-        alternativeRoutesCount: Number(raw.alternativeRoutesCount ?? 2),
-        useHistoryPersonalization: !!raw.useHistoryPersonalization,
-        theme: `${raw.theme ?? 'system'}`,
-        mapStyle: `${raw.mapStyle ?? 'standard'}`,
-        distanceUnit: `${raw.distanceUnit ?? 'km'}`,
-        timeFormat: `${raw.timeFormat ?? '24h'}`,
-        chipDensity: `${raw.chipDensity ?? 'comfortable'}`,
-        largeText: !!raw.largeText,
-        highContrast: !!raw.highContrast,
-        storeTrips: !!raw.storeTrips,
-        storeRatings: !!raw.storeRatings,
-        storeStations: !!raw.storeStations,
-        consentLocationHistory: !!raw.consentLocationHistory,
-        consentAiTraining: !!raw.consentAiTraining,
-      })
-      .subscribe({
-        next: (response: any) => {
-          this.isSaving = false;
-          this.patchForm(response?.data);
-          this.feedbackType = 'success';
-          this.feedbackMessageKey = 'SETTINGS_SAVE_SUCCESS';
-        },
-        error: () => {
-          this.isSaving = false;
-          this.feedbackType = 'error';
-          this.feedbackMessageKey = 'SETTINGS_SAVE_ERROR';
-        },
-      });
+    try {
+      this.dataService
+        .saveUserSettings({
+          userId: this.currentUserId,
+          aiAggressiveness: Number(raw.aiAggressiveness ?? 3),
+          alwaysShowRouteExplanation: !!raw.alwaysShowRouteExplanation,
+          alternativeRoutesCount: Number(raw.alternativeRoutesCount ?? 2),
+          useHistoryPersonalization: !!raw.useHistoryPersonalization,
+          theme: `${raw.theme ?? 'system'}`,
+          mapStyle: `${raw.mapStyle ?? 'standard'}`,
+          distanceUnit: `${raw.distanceUnit ?? 'km'}`,
+          timeFormat: `${raw.timeFormat ?? '24h'}`,
+          chipDensity: `${raw.chipDensity ?? 'comfortable'}`,
+          largeText: !!raw.largeText,
+          highContrast: !!raw.highContrast,
+          storeTrips: !!raw.storeTrips,
+          storeRatings: !!raw.storeRatings,
+          storeStations: !!raw.storeStations,
+          consentLocationHistory: !!raw.consentLocationHistory,
+          consentAiTraining: !!raw.consentAiTraining,
+        })
+        .pipe(finalize(() => (this.isSaving = false)))
+        .subscribe({
+          next: (response: any) => {
+            this.patchForm(response?.data);
+            this.feedbackType = 'success';
+            this.feedbackMessageKey = 'SETTINGS_SAVE_SUCCESS';
+          },
+          error: () => {
+            this.feedbackType = 'error';
+            this.feedbackMessageKey = 'SETTINGS_SAVE_ERROR';
+          },
+        });
+    } catch {
+      this.isSaving = false;
+      this.feedbackType = 'error';
+      this.feedbackMessageKey = 'SETTINGS_SAVE_ERROR';
+    }
   }
 
   exportData(): void {
@@ -122,28 +127,34 @@ export class Settings implements OnInit {
 
     this.isExporting = true;
     this.feedbackMessageKey = '';
-    this.dataService.exportUserData({ userId: this.currentUserId }).subscribe({
-      next: (response: any) => {
-        this.isExporting = false;
+    try {
+      this.dataService
+        .exportUserData({ userId: this.currentUserId })
+        .pipe(finalize(() => (this.isExporting = false)))
+        .subscribe({
+          next: (response: any) => {
+            const payload = response?.data ?? {};
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `smartnav-user-data-${this.currentUserId}.json`;
+            anchor.click();
+            window.URL.revokeObjectURL(url);
 
-        const payload = response?.data ?? {};
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = window.URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = `smartnav-user-data-${this.currentUserId}.json`;
-        anchor.click();
-        window.URL.revokeObjectURL(url);
-
-        this.feedbackType = 'success';
-        this.feedbackMessageKey = 'SETTINGS_EXPORT_SUCCESS';
-      },
-      error: () => {
-        this.isExporting = false;
-        this.feedbackType = 'error';
-        this.feedbackMessageKey = 'SETTINGS_EXPORT_ERROR';
-      },
-    });
+            this.feedbackType = 'success';
+            this.feedbackMessageKey = 'SETTINGS_EXPORT_SUCCESS';
+          },
+          error: () => {
+            this.feedbackType = 'error';
+            this.feedbackMessageKey = 'SETTINGS_EXPORT_ERROR';
+          },
+        });
+    } catch {
+      this.isExporting = false;
+      this.feedbackType = 'error';
+      this.feedbackMessageKey = 'SETTINGS_EXPORT_ERROR';
+    }
   }
 
   requestDeleteHistory(): void {
@@ -180,17 +191,37 @@ export class Settings implements OnInit {
     }
 
     this.isLoading = true;
-    this.dataService.getUserSettings({ userId: this.currentUserId }).subscribe({
-      next: (response: any) => {
-        this.isLoading = false;
-        this.patchForm(response?.data);
-      },
-      error: () => {
+    const loadFailSafe = window.setTimeout(() => {
+      if (this.isLoading) {
         this.isLoading = false;
         this.feedbackType = 'error';
         this.feedbackMessageKey = 'SETTINGS_LOAD_ERROR';
-      },
-    });
+      }
+    }, 12000);
+    try {
+      this.dataService
+        .getUserSettings({ userId: this.currentUserId })
+        .pipe(timeout(15000))
+        .pipe(
+          finalize(() => {
+            window.clearTimeout(loadFailSafe);
+            this.isLoading = false;
+          }),
+        )
+        .subscribe({
+          next: (response: any) => {
+            this.patchForm(response?.data);
+          },
+          error: () => {
+            this.feedbackType = 'error';
+            this.feedbackMessageKey = 'SETTINGS_LOAD_ERROR';
+          },
+        });
+    } catch {
+      this.isLoading = false;
+      this.feedbackType = 'error';
+      this.feedbackMessageKey = 'SETTINGS_LOAD_ERROR';
+    }
   }
 
   private patchForm(data: any): void {
@@ -225,18 +256,25 @@ export class Settings implements OnInit {
 
     this.isDeletingHistory = true;
     this.feedbackMessageKey = '';
-    this.dataService.deleteUserHistory({ userId: this.currentUserId }).subscribe({
-      next: () => {
-        this.isDeletingHistory = false;
-        this.feedbackType = 'success';
-        this.feedbackMessageKey = 'SETTINGS_DELETE_HISTORY_SUCCESS';
-      },
-      error: () => {
-        this.isDeletingHistory = false;
-        this.feedbackType = 'error';
-        this.feedbackMessageKey = 'SETTINGS_DELETE_HISTORY_ERROR';
-      },
-    });
+    try {
+      this.dataService
+        .deleteUserHistory({ userId: this.currentUserId })
+        .pipe(finalize(() => (this.isDeletingHistory = false)))
+        .subscribe({
+          next: () => {
+            this.feedbackType = 'success';
+            this.feedbackMessageKey = 'SETTINGS_DELETE_HISTORY_SUCCESS';
+          },
+          error: () => {
+            this.feedbackType = 'error';
+            this.feedbackMessageKey = 'SETTINGS_DELETE_HISTORY_ERROR';
+          },
+        });
+    } catch {
+      this.isDeletingHistory = false;
+      this.feedbackType = 'error';
+      this.feedbackMessageKey = 'SETTINGS_DELETE_HISTORY_ERROR';
+    }
   }
 
   private executeDeleteAccount(): void {
@@ -246,17 +284,24 @@ export class Settings implements OnInit {
 
     this.isDeletingAccount = true;
     this.feedbackMessageKey = '';
-    this.dataService.deleteUserAccount({ userId: this.currentUserId }).subscribe({
-      next: () => {
-        this.isDeletingAccount = false;
-        this.auth.logout();
-        this.router.navigate(['/login']);
-      },
-      error: () => {
-        this.isDeletingAccount = false;
-        this.feedbackType = 'error';
-        this.feedbackMessageKey = 'SETTINGS_DELETE_ACCOUNT_ERROR';
-      },
-    });
+    try {
+      this.dataService
+        .deleteUserAccount({ userId: this.currentUserId })
+        .pipe(finalize(() => (this.isDeletingAccount = false)))
+        .subscribe({
+          next: () => {
+            this.auth.logout();
+            this.router.navigate(['/login']);
+          },
+          error: () => {
+            this.feedbackType = 'error';
+            this.feedbackMessageKey = 'SETTINGS_DELETE_ACCOUNT_ERROR';
+          },
+        });
+    } catch {
+      this.isDeletingAccount = false;
+      this.feedbackType = 'error';
+      this.feedbackMessageKey = 'SETTINGS_DELETE_ACCOUNT_ERROR';
+    }
   }
 }

@@ -1,558 +1,618 @@
-import {Injectable} from "@angular/core";
-import { RemoteDataService } from "./remotedata.service";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
-import {catchError, map} from "rxjs/operators";
-import {Subject, throwError} from "rxjs";
-import {AuthenticationService} from "./auth.service";
-import { authGuard } from "./auth-guard";
+import { Injectable } from '@angular/core';
+import { RemoteDataService } from './remotedata.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { catchError, map } from 'rxjs/operators';
+import { Subject, throwError } from 'rxjs';
+import { AuthenticationService } from './auth.service';
+import { authGuard } from './auth-guard';
 
 const httpOptions = {
-  headers: new HttpHeaders({'Content-Type': 'application/json'}),
-  withCredentials: true
+  headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+  withCredentials: true,
 };
 
 @Injectable({
-  providedIn: "root"
+  providedIn: 'root',
 })
 export class DataService {
-  constructor(public authenticationService: AuthenticationService,
-              private http: HttpClient,
-              public remoteDataService: RemoteDataService) {
-  }
+  constructor(
+    public authenticationService: AuthenticationService,
+    private http: HttpClient,
+    public remoteDataService: RemoteDataService,
+  ) {}
 
-  recoverPassword(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/forgotPasswordSendEmail', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  recoverPassword(data: any) {
+    return this.http
+      .post<any>(
+        this.remoteDataService.serviceURL + 'user/forgotPasswordSendEmail',
+        data,
+        httpOptions,
+      )
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  createUser(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/CreateUser', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  createUser(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'user/CreateUser', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  getUser(id: any){
-    return this.http.get<any>(this.remoteDataService.serviceURL + 'user/GetUser/' + id, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getUser(id: any) {
+    return this.http
+      .get<any>(this.remoteDataService.serviceURL + 'user/GetUser/' + id, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  updateUserDetails(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/updateUserDetails', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  updateUserDetails(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'user/updateUserDetails', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  getAvatars(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Avatars', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getAvatars(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Avatars', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  getRoles(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Roles', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getRoles(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Roles', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  getPreferences(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Preference', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getPreferences(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Preference', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  getVehicles(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Vehicle', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getVehicles(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'GetlookUps/Vehicle', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  recoverPasswordWithResetLink(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/forgotPasswordSendResetLink', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  recoverPasswordWithResetLink(data: any) {
+    return this.http
+      .post<any>(
+        this.remoteDataService.serviceURL + 'user/forgotPasswordSendResetLink',
+        data,
+        httpOptions,
+      )
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  resetPassword(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/resetPassword', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  resetPassword(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'user/resetPassword', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  changePassword(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'user/changePassword', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  changePassword(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'user/changePassword', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  getPresetIcons(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Preset/Icons', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getPresetIcons(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Preset/Icons', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  presetCreate(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Preset/Create', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  presetCreate(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Preset/Create', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  getPresetsByUser(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Preset/GetByUser', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getPresetsByUser(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Preset/GetByUser', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  getCurrentUserActivePreference(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/CurrentUserActivePreference', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getCurrentUserActivePreference(data: any) {
+    return this.http
+      .post<any>(
+        this.remoteDataService.serviceURL + 'GetlookUps/CurrentUserActivePreference',
+        data,
+        httpOptions,
+      )
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  getCurrentUserRoleAndAvatar(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'GetlookUps/CurrentUserRoleAndAvatar', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getCurrentUserRoleAndAvatar(data: any) {
+    return this.http
+      .post<any>(
+        this.remoteDataService.serviceURL + 'GetlookUps/CurrentUserRoleAndAvatar',
+        data,
+        httpOptions,
+      )
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  getUserTripDetails(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/GetUserTripDetails', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getUserTripDetails(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Trip/GetUserTripDetails', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  tripCreate(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/Create', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  tripCreate(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Trip/Create', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  tripUpdate(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/Update', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  tripUpdate(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Trip/Update', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  tripDelete(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/Delete', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  tripDelete(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Trip/Delete', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error); // Rethrow the error to be handled by the caller
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error); // Rethrow the error to be handled by the caller
+        }),
+      );
   }
 
-  tripRate(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Trip/Rate', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  tripRate(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Trip/Rate', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
-
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  filteredPreferenceCreate(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Create', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  filteredPreferenceCreate(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Create', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  filteredPreferenceListAll(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/ListAll', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  filteredPreferenceListAll(data: any) {
+    return this.http
+      .post<any>(
+        this.remoteDataService.serviceURL + 'FilteredPreference/ListAll',
+        data,
+        httpOptions,
+      )
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  filteredPreferenceGetByUser(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/GetByUser', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  filteredPreferenceGetByUser(data: any) {
+    return this.http
+      .post<any>(
+        this.remoteDataService.serviceURL + 'FilteredPreference/GetByUser',
+        data,
+        httpOptions,
+      )
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  filteredPreferenceGetLatestByUser(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/GetLatestByUser', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  filteredPreferenceGetLatestByUser(data: any) {
+    return this.http
+      .post<any>(
+        this.remoteDataService.serviceURL + 'FilteredPreference/GetLatestByUser',
+        data,
+        httpOptions,
+      )
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  filteredPreferenceUpdate(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Update', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  filteredPreferenceUpdate(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Update', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  filteredPreferenceDelete(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Delete', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  filteredPreferenceDelete(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'FilteredPreference/Delete', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  adminDashboard(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/Dashboard', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  adminDashboard(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Admin/Dashboard', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  adminUsers(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/Users', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  adminUsers(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Admin/Users', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  adminUpdateUserRole(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/UpdateUserRole', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  adminUpdateUserRole(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Admin/UpdateUserRole', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  adminUpdateUserVerification(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/UpdateUserVerification', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  adminUpdateUserVerification(data: any) {
+    return this.http
+      .post<any>(
+        this.remoteDataService.serviceURL + 'Admin/UpdateUserVerification',
+        data,
+        httpOptions,
+      )
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  adminDeleteUser(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/DeleteUser', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  adminDeleteUser(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Admin/DeleteUser', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  adminAuditLogs(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/AuditLogs', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  adminAuditLogs(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Admin/AuditLogs', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  adminAnalytics(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Admin/Analytics', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  adminAnalytics(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Admin/Analytics', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  getUserSettings(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/GetByUser', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  getUserSettings(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Settings/GetByUser', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  saveUserSettings(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/SaveByUser', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  saveUserSettings(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Settings/SaveByUser', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  exportUserData(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/ExportData', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  exportUserData(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Settings/ExportData', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  deleteUserHistory(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/DeleteHistory', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  deleteUserHistory(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Settings/DeleteHistory', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  deleteUserAccount(data:any) {
-    return this.http.post<any>(this.remoteDataService.serviceURL + 'Settings/DeleteAccount', data, httpOptions).pipe(
-      map(
-        (response: any) => {
+  deleteUserAccount(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Settings/DeleteAccount', data, httpOptions)
+      .pipe(
+        map((response: any) => {
           return response;
-        }
-      ),
-      catchError((error: any) => {
-        this.handleError(error);
-        return throwError(error);
-      }));
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
   }
 
-  private handleError(error:any) {
-    var status = error.error.status;
+  private handleError(error: any) {
+    let status: any = error?.error?.status;
     if (status == undefined) {
-      let errorJson = JSON.parse(error.error);
-      status = errorJson.status;
+      try {
+        if (typeof error?.error === 'string' && error.error.trim().length > 0) {
+          const errorJson = JSON.parse(error.error);
+          status = errorJson?.status;
+        }
+      } catch {
+        status = error?.status;
+      }
+    }
+    if (status == undefined) {
+      status = error?.status;
     }
     if (status == '403') {
       this.authenticationService.logout();
@@ -562,5 +622,4 @@ export class DataService {
       //this.toastr.error('Δεν έχετε τα απαραίτητα δικαιώματα γιαυτήν την ενέργεια', 'warning');
     }
   }
-
 }

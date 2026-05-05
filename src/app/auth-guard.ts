@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { Router, ActivatedRouteSnapshot, RouterStateSnapshot, CanActivateFn } from '@angular/router';
 import { AuthenticationService } from "./auth.service";
 import { DataService } from "./data.service";
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 
 export const authGuard: CanActivateFn = async (
     route: ActivatedRouteSnapshot, 
@@ -22,7 +22,9 @@ export const authGuard: CanActivateFn = async (
                 return router.createUrlTree(['login']);
             }
 
-            const userResponse = await firstValueFrom(dataService.getUser(userId));
+            const userResponse = await firstValueFrom(
+                dataService.getUser(userId).pipe(timeout(8000))
+            );
             if (userResponse?.status === 'success') {
                 return true;
             }
