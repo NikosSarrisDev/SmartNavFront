@@ -313,6 +313,8 @@
   "ADMIN_CHART_VEHICLE_TITLE": "Διαδρομές ανά επιλεγμένο όχημα",
   "ADMIN_CHART_VEHICLE_NOTE": "Διαδρομές με κενό όχημα εμφανίζονται ως \"Οποιοδήποτε όχημα (χωρίς επιλογή)\".",
   "ADMIN_CHART_VEHICLE_DATASET": "Διαδρομές",
+  "ADMIN_USER_LABEL": "Χρήστης",
+  "ADMIN_TRIP_SELECT": "Ταξίδι",
   "ADMIN_CHART_STATIONS_TITLE": "Διαδρομές ανά πλήθος στάσεων",
   "ADMIN_CHART_STATIONS_NOTE": "Μια στάση μετράει μόνο αν έχει τουλάχιστον ένα πεδίο διεύθυνσης συμπληρωμένο. Εγγραφές με όλα τα πεδία στάσης null μετρούν ως 0 στάσεις.",
   "ADMIN_CHART_STATION_DATASET": "Διαδρομές",

@@ -543,6 +543,20 @@ export class DataService {
       );
   }
 
+  adminAnalyticsByUser(data: any) {
+    return this.http
+      .post<any>(this.remoteDataService.serviceURL + 'Admin/AnalyticsByUser', data, httpOptions)
+      .pipe(
+        map((response: any) => {
+          return response;
+        }),
+        catchError((error: any) => {
+          this.handleError(error);
+          return throwError(error);
+        }),
+      );
+  }
+
   getUserSettings(data: any) {
     return this.http
       .post<any>(this.remoteDataService.serviceURL + 'Settings/GetByUser', data, httpOptions)

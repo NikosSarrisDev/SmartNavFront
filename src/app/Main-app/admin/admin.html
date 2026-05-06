@@ -10,8 +10,8 @@
         severity="secondary"
       ></button>
       <p-menu #menu [model]="languages" [popup]="true"></p-menu>
-      <button type="button" class="btn-secondary" (click)="backToHome()">
-        {{ 'BACK_TO_HOME' | translate }}
+      <button type="button" class="back-profile-btn" (click)="backToUser()">
+        {{ 'SETTINGS_BACK_TO_PROFILE' | translate }}
       </button>
     </div>
   </div>
@@ -108,7 +108,7 @@
                   </span>
                 </td>
                 <td class="actions">
-                  <button type="button" class="btn-secondary" (click)="toggleVerification(user)">
+                  <button type="button" class="btn-verify" (click)="toggleVerification(user)">
                     {{ 'ADMIN_TOGGLE_VERIFY' | translate }}
                   </button>
                   <button
@@ -166,20 +166,82 @@
     </section>
 
     <section class="card">
-      <h3>{{ 'ADMIN_CHART_VEHICLE_TITLE' | translate }}</h3>
+      <div class="chart-header">
+        <div>
+          <h3>{{ 'ADMIN_CHART_VEHICLE_TITLE' | translate }}</h3>
+          <p class="chart-user-label">
+            {{ 'ADMIN_USER_LABEL' | translate }}: {{ getCurrentAnalyticsUserName() }}
+          </p>
+        </div>
+        <div class="carousel-actions">
+          <button
+            type="button"
+            class="btn-secondary carousel-btn"
+            (click)="previousAnalyticsUser()"
+          >
+            <span class="carousel-arrow" aria-hidden="true">‹</span>
+          </button>
+          <button type="button" class="btn-secondary carousel-btn" (click)="nextAnalyticsUser()">
+            <span class="carousel-arrow" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </div>
       <p class="chart-note">{{ 'ADMIN_CHART_VEHICLE_NOTE' | translate }}</p>
       @if (vehicleChartData()) {
-        <p-chart type="bar" [data]="vehicleChartData()"></p-chart>
+        <p-chart
+          type="bar"
+          [data]="vehicleChartData()"
+          [options]="vehicleChartOptions"
+          class="chart-short"
+        ></p-chart>
       } @else {
         <p>{{ 'ADMIN_CHART_EMPTY' | translate }}</p>
       }
     </section>
 
     <section class="card">
-      <h3>{{ 'ADMIN_CHART_STATIONS_TITLE' | translate }}</h3>
+      <div class="chart-header">
+        <div>
+          <h3>{{ 'ADMIN_CHART_STATIONS_TITLE' | translate }}</h3>
+          <p class="chart-user-label">
+            {{ 'ADMIN_USER_LABEL' | translate }}: {{ getCurrentAnalyticsUserName() }}
+          </p>
+        </div>
+        <div class="carousel-actions">
+          <button
+            type="button"
+            class="btn-secondary carousel-btn"
+            (click)="previousAnalyticsUser()"
+          >
+            <span class="carousel-arrow" aria-hidden="true">‹</span>
+          </button>
+          <button type="button" class="btn-secondary carousel-btn" (click)="nextAnalyticsUser()">
+            <span class="carousel-arrow" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </div>
+      <div class="trip-selector">
+        <label for="trip-select">{{ 'ADMIN_TRIP_SELECT' | translate }}</label>
+        <select
+          id="trip-select"
+          [ngModel]="selectedTripId()"
+          (ngModelChange)="onTripSelectionChange($event)"
+        >
+          @for (trip of tripsForSelectedUser(); track trip.tripId) {
+            <option [ngValue]="trip.tripId">{{ trip.displayLabel }}</option>
+          } @empty {
+            <option [ngValue]="0">-</option>
+          }
+        </select>
+      </div>
       <p class="chart-note">{{ 'ADMIN_CHART_STATIONS_NOTE' | translate }}</p>
       @if (stationChartData()) {
-        <p-chart type="line" [data]="stationChartData()"></p-chart>
+        <p-chart
+          type="line"
+          [data]="stationChartData()"
+          [options]="stationChartOptions"
+          class="chart-short"
+        ></p-chart>
       } @else {
         <p>{{ 'ADMIN_CHART_EMPTY' | translate }}</p>
       }

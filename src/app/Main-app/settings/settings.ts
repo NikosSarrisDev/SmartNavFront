@@ -2,7 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MenuItem } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { MenuModule } from 'primeng/menu';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { finalize, timeout } from 'rxjs/operators';
 import { AuthenticationService } from '../../auth.service';
@@ -12,7 +15,7 @@ type SettingsAction = 'deleteHistory' | 'deleteAccount';
 
 @Component({
   selector: 'app-settings',
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, ProgressSpinnerModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, ProgressSpinnerModule, MenuModule, ButtonModule],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
 })
@@ -28,6 +31,7 @@ export class Settings implements OnInit {
   feedbackType: 'success' | 'error' = 'success';
   confirmVisible = false;
   confirmMessageKey = '';
+  languages: MenuItem[] = [];
   private pendingAction: SettingsAction | null = null;
   private currentUserId: number | null = null;
 
@@ -36,6 +40,7 @@ export class Settings implements OnInit {
     private dataService: DataService,
     private auth: AuthenticationService,
     private router: Router,
+    private translate: TranslateService,
   ) {
     this.settingsForm = this.formBuilder.group({
       aiAggressiveness: [3],
@@ -58,6 +63,8 @@ export class Settings implements OnInit {
   }
 
   ngOnInit(): void {
+    this.buildLanguageMenu();
+
     const userId = Number(this.auth.currentUser()?.data?.id);
     if (!Number.isInteger(userId) || userId <= 0) {
       this.router.navigate(['/login']);
@@ -70,6 +77,12 @@ export class Settings implements OnInit {
 
   backToUser(): void {
     this.router.navigate(['/user']);
+  }
+
+  changeLanguage(lang: string): void {
+    this.translate.use(lang).subscribe(() => {
+      this.buildLanguageMenu();
+    });
   }
 
   saveSettings(): void {
@@ -303,5 +316,28 @@ export class Settings implements OnInit {
       this.feedbackType = 'error';
       this.feedbackMessageKey = 'SETTINGS_DELETE_ACCOUNT_ERROR';
     }
+  }
+
+  private buildLanguageMenu(): void {
+    this.translate.get(['LANGUAGE_MENU_TITLE', 'LANGUAGE_OPTION_EL', 'LANGUAGE_OPTION_EN'])
+      .subscribe((t) => {
+        this.languages = [
+          {
+            label: t['LANGUAGE_MENU_TITLE'],
+            items: [
+              {
+                label: t['LANGUAGE_OPTION_EL'],
+                icon: '',
+                command: () => this.changeLanguage('el'),
+              },
+              {
+                label: t['LANGUAGE_OPTION_EN'],
+                icon: '',
+                command: () => this.changeLanguage('en'),
+              },
+            ],
+          },
+        ];
+      });
   }
 }

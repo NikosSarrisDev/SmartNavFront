@@ -4,9 +4,19 @@
       <h1>{{ 'SETTINGS_TITLE' | translate }}</h1>
       <p>{{ 'SETTINGS_SUBTITLE' | translate }}</p>
     </div>
-    <button type="button" class="back-btn" (click)="backToUser()">
-      {{ 'SETTINGS_BACK_TO_PROFILE' | translate }}
-    </button>
+    <div class="settings-header-actions">
+      <button
+        pButton
+        icon="pi pi-globe"
+        (click)="menu.toggle($event)"
+        [rounded]="true"
+        severity="secondary"
+      ></button>
+      <p-menu #menu [model]="languages" [popup]="true"></p-menu>
+      <button type="button" class="back-btn" (click)="backToUser()">
+        {{ 'SETTINGS_BACK_TO_PROFILE' | translate }}
+      </button>
+    </div>
   </header>
 
   @if (isLoading) {

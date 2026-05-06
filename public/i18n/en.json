@@ -313,6 +313,8 @@
   "ADMIN_CHART_VEHICLE_TITLE": "Trips by selected vehicle",
   "ADMIN_CHART_VEHICLE_NOTE": "Trips with empty vehicle are shown as \"Any vehicle (not selected)\".",
   "ADMIN_CHART_VEHICLE_DATASET": "Trips",
+  "ADMIN_USER_LABEL": "User",
+  "ADMIN_TRIP_SELECT": "Trip",
   "ADMIN_CHART_STATIONS_TITLE": "Trips by number of stations",
   "ADMIN_CHART_STATIONS_NOTE": "A station counts only when at least one address field is filled. Rows with all station fields null count as 0 stations.",
   "ADMIN_CHART_STATION_DATASET": "Trips",

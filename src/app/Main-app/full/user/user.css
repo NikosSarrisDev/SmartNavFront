@@ -205,7 +205,8 @@ th, td {
 .action-settings {
   background: linear-gradient(145deg, #111827 0%, #020617 100%);
   color: #f8fafc;
-  grid-column: 1 / -1;
+  grid-column: auto;
+  min-height: 94px;
 }
 
 .action-ornament {
@@ -214,10 +215,10 @@ th, td {
   top: -14px;
   width: clamp(136px, 24vw, 204px);
   height: clamp(96px, 18vw, 142px);
-  opacity: 0.88;
+  opacity: 0.92;
   pointer-events: none;
-  filter: drop-shadow(0 12px 14px rgba(15, 23, 42, 0.24));
-  transform: translateZ(0);
+  filter: drop-shadow(0 14px 16px rgba(15, 23, 42, 0.28));
+  transform: perspective(520px) rotateX(9deg) translateZ(0);
   transition: transform 220ms ease, opacity 220ms ease;
 }
 
@@ -228,8 +229,8 @@ th, td {
 }
 
 .quick-action-card:hover .action-ornament {
-  transform: translate3d(-2px, -2px, 0) scale(1.03);
-  opacity: 0.96;
+  transform: perspective(520px) rotateX(12deg) translate3d(-3px, -3px, 0) scale(1.04);
+  opacity: 0.98;
 }
 
 .action-icon {

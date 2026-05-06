@@ -34,6 +34,46 @@ export class Admin implements OnInit {
   auditLogs = signal<any[]>([]);
   vehicleChartData = signal<any>(null);
   stationChartData = signal<any>(null);
+  vehicleChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+        },
+      },
+    },
+  };
+  stationChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+        },
+      },
+    },
+  };
+  analyticsUsers = signal<Array<{ userId: number; userName: string }>>([]);
+  analyticsByUser = signal<any[]>([]);
+  currentAnalyticsUserIndex = signal(0);
+  currentAnalyticsUserId = signal(0);
+  selectedTripId = signal(0);
+  tripsForSelectedUser = signal<any[]>([]);
   search = '';
   pendingUserChanges: Record<
     number,
@@ -85,17 +125,7 @@ export class Admin implements OnInit {
       error: () => this.auditLogs.set([]),
     });
 
-    this.dataService.adminAnalytics({ adminUserId: this.adminUserId }).subscribe({
-      next: (response: any) => {
-        const data = response?.data ?? {};
-        this.bindVehicleChart(data.vehicleUsage ?? []);
-        this.bindStationChart(data.stationBuckets ?? []);
-      },
-      error: () => {
-        this.vehicleChartData.set(null);
-        this.stationChartData.set(null);
-      },
-    });
+    this.loadAnalyticsByUser();
   }
 
   onSearch(): void {
@@ -149,6 +179,10 @@ export class Admin implements OnInit {
     this.router.navigate(['/home']);
   }
 
+  backToUser(): void {
+    this.router.navigate(['/user']);
+  }
+
   changeLanguage(lang: string): void {
     this.translate.use(lang).subscribe(() => {
       this.buildLanguageMenu();
@@ -168,6 +202,58 @@ export class Admin implements OnInit {
 
   canChangeRole(user: any): boolean {
     return user?.id !== this.adminUserId;
+  }
+
+  getCurrentAnalyticsUserName(): string {
+    const currentId = this.currentAnalyticsUserId();
+    const user = this.analyticsUsers().find((u) => u.userId === currentId);
+    return user?.userName ?? '-';
+  }
+
+  previousAnalyticsUser(): void {
+    const snapshots = this.analyticsByUser();
+    if (snapshots.length <= 1) {
+      return;
+    }
+
+    const currentIndex = this.currentAnalyticsUserIndex();
+    const nextIndex = currentIndex <= 0 ? snapshots.length - 1 : currentIndex - 1;
+    this.currentAnalyticsUserIndex.set(nextIndex);
+    this.bindCurrentAnalyticsSnapshot();
+  }
+
+  nextAnalyticsUser(): void {
+    const snapshots = this.analyticsByUser();
+    if (snapshots.length <= 1) {
+      return;
+    }
+
+    const currentIndex = this.currentAnalyticsUserIndex();
+    const nextIndex = currentIndex >= snapshots.length - 1 ? 0 : currentIndex + 1;
+    this.currentAnalyticsUserIndex.set(nextIndex);
+    this.bindCurrentAnalyticsSnapshot();
+  }
+
+  onTripSelectionChange(tripIdText: number | string): void {
+    const tripId = Number(tripIdText);
+    if (!tripId || tripId === this.selectedTripId()) {
+      return;
+    }
+
+    this.selectedTripId.set(tripId);
+    this.bindStationChart(this.tripsForSelectedUser(), tripId);
+
+    const currentIndex = this.currentAnalyticsUserIndex();
+    const snapshots = [...this.analyticsByUser()];
+    if (!snapshots[currentIndex]) {
+      return;
+    }
+
+    snapshots[currentIndex] = {
+      ...snapshots[currentIndex],
+      selectedTripId: tripId,
+    };
+    this.analyticsByUser.set(snapshots);
   }
 
   resolveRoleOptionId(role: any): number {
@@ -237,30 +323,54 @@ export class Admin implements OnInit {
 
   private bindVehicleChart(vehicleUsage: any[]): void {
     this.vehicleChartData.set({
-      labels: vehicleUsage.map((x) =>
-        x.vehicleId == null ? this.translate.instant('ADMIN_VEHICLE_ANY') : x.vehicleLabel,
-      ),
+      labels: vehicleUsage.map((x) => this.resolveVehicleLabel(x)),
       datasets: [
         {
           label: this.translate.instant('ADMIN_CHART_VEHICLE_DATASET'),
           data: vehicleUsage.map((x) => x.tripCount),
           backgroundColor: ['#38bdf8', '#4ade80', '#f59e0b', '#a78bfa', '#fb7185', '#34d399'],
+          borderRadius: 8,
+          barThickness: 16,
+          maxBarThickness: 18,
         },
       ],
     });
   }
 
-  private bindStationChart(stationBuckets: any[]): void {
+  private resolveVehicleLabel(vehicle: any): string {
+    if (vehicle?.vehicleId == null) {
+      return this.translate.instant('ADMIN_VEHICLE_ANY');
+    }
+
+    const translationField = `${vehicle?.vehicleTranslationField ?? ''}`.trim();
+    if (translationField) {
+      const translated = this.translate.instant(translationField);
+      if (translated && translated !== translationField) {
+        return translated;
+      }
+    }
+
+    return `${vehicle?.vehicleLabel ?? ''}`.trim() || 'Vehicle';
+  }
+
+  private bindStationChart(trips: any[], selectedTripId: number): void {
+    const labels = trips.map((x) => x.displayLabel);
+    const data = trips.map((x) => x.stationCount);
+    const pointRadius = trips.map((x) => (x.tripId === selectedTripId ? 6 : 3));
+    const pointBackgroundColor = trips.map((x) => (x.tripId === selectedTripId ? '#0369a1' : '#0ea5e9'));
+
     this.stationChartData.set({
-      labels: stationBuckets.map((x) => `${x.stationCount}`),
+      labels,
       datasets: [
         {
           label: this.translate.instant('ADMIN_CHART_STATION_DATASET'),
-          data: stationBuckets.map((x) => x.tripCount),
+          data,
           borderColor: '#0ea5e9',
           backgroundColor: 'rgba(14, 165, 233, 0.25)',
           fill: true,
           tension: 0.25,
+          pointRadius,
+          pointBackgroundColor,
         },
       ],
     });
@@ -286,6 +396,79 @@ export class Admin implements OnInit {
         }
       },
     });
+  }
+
+  private bindCurrentAnalyticsSnapshot(): void {
+    const snapshots = this.analyticsByUser();
+    const currentIndex = this.currentAnalyticsUserIndex();
+    const snapshot = snapshots[currentIndex];
+
+    if (!snapshot) {
+      this.currentAnalyticsUserId.set(0);
+      this.tripsForSelectedUser.set([]);
+      this.selectedTripId.set(0);
+      this.vehicleChartData.set(null);
+      this.stationChartData.set(null);
+      return;
+    }
+
+    const userId = Number(snapshot.userId ?? 0);
+    this.currentAnalyticsUserId.set(userId);
+
+    const trips = snapshot.trips ?? [];
+    this.tripsForSelectedUser.set(trips);
+
+    let selectedTripId = Number(snapshot.selectedTripId ?? 0);
+    if (!trips.some((t: any) => Number(t.tripId) === selectedTripId)) {
+      selectedTripId = Number(trips[0]?.tripId ?? 0);
+    }
+    this.selectedTripId.set(selectedTripId);
+
+    this.bindVehicleChart(snapshot.vehicleUsage ?? []);
+    this.bindStationChart(trips, selectedTripId);
+  }
+
+  private loadAnalyticsByUser(): void {
+    this.loading.set(true);
+    this.dataService
+      .adminAnalyticsByUser({
+        adminUserId: this.adminUserId,
+        targetUserId: 0,
+        tripId: null,
+      })
+      .subscribe({
+        next: (response: any) => {
+          const data = response?.data ?? {};
+          const users = (data.users ?? []).map((x: any) => ({
+            userId: Number(x.userId ?? 0),
+            userName: `${x.userName ?? ''}`,
+          }));
+          const analyticsByUser = data.analyticsByUser ?? [];
+          const currentUserId = Number(data.currentUserId ?? 0);
+          let currentIndex = analyticsByUser.findIndex((x: any) => Number(x.userId) === currentUserId);
+          if (currentIndex < 0) {
+            currentIndex = 0;
+          }
+
+          this.analyticsUsers.set(users);
+          this.analyticsByUser.set(analyticsByUser);
+          this.currentAnalyticsUserIndex.set(currentIndex);
+          this.bindCurrentAnalyticsSnapshot();
+        },
+        error: () => {
+          this.analyticsUsers.set([]);
+          this.analyticsByUser.set([]);
+          this.currentAnalyticsUserIndex.set(0);
+          this.currentAnalyticsUserId.set(0);
+          this.tripsForSelectedUser.set([]);
+          this.selectedTripId.set(0);
+          this.vehicleChartData.set(null);
+          this.stationChartData.set(null);
+        },
+        complete: () => {
+          this.loading.set(false);
+        },
+      });
   }
 
   private buildLanguageMenu(): void {
