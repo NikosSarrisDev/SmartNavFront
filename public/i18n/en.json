@@ -284,6 +284,7 @@
   "ADMIN_STAT_TOTAL_TRIPS": "Total trips",
   "ADMIN_STAT_AVG_SCORE": "Average route score",
   "ADMIN_USERS_TITLE": "User Management",
+  "ADMIN_APPLY_CHANGES": "Apply Changes",
   "ADMIN_USERS_SEARCH": "Search users...",
   "ADMIN_SEARCH": "Search",
   "ADMIN_COL_USERNAME": "Username",
@@ -319,6 +320,7 @@
   "ADMIN_VEHICLE_ANY": "Any vehicle (not selected)",
   "ADMIN_ACTION_UPDATE_USER_ROLE": "User Role Updated",
   "ADMIN_ACTION_UPDATE_USER_VERIFICATION": "User Verification Updated",
-  "ADMIN_ACTION_DELETE_USER": "User Deleted"
+  "ADMIN_ACTION_DELETE_USER": "User Deleted",
+  "ADMIN_ACTION_APPLY_USER_CHANGES": "Bulk User Changes Applied"
 }
 

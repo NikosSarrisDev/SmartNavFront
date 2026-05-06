@@ -284,6 +284,7 @@
   "ADMIN_STAT_TOTAL_TRIPS": "Σύνολο διαδρομών",
   "ADMIN_STAT_AVG_SCORE": "Μέσο σκορ διαδρομών",
   "ADMIN_USERS_TITLE": "Διαχείριση Χρηστών",
+  "ADMIN_APPLY_CHANGES": "Εφαρμογή Αλλαγών",
   "ADMIN_USERS_SEARCH": "Αναζήτηση χρηστών...",
   "ADMIN_SEARCH": "Αναζήτηση",
   "ADMIN_COL_USERNAME": "Όνομα χρήστη",
@@ -319,6 +320,6 @@
   "ADMIN_VEHICLE_ANY": "Οποιοδήποτε όχημα (χωρίς επιλογή)",
   "ADMIN_ACTION_UPDATE_USER_ROLE": "Αλλαγή Ρόλου Χρήστη",
   "ADMIN_ACTION_UPDATE_USER_VERIFICATION": "Αλλαγή Επιβεβαίωσης Χρήστη",
-  "ADMIN_ACTION_DELETE_USER": "Διαγραφή Χρήστη"
+  "ADMIN_ACTION_DELETE_USER": "Διαγραφή Χρήστη",
+  "ADMIN_ACTION_APPLY_USER_CHANGES": "Εφαρμογή Μαζικών Αλλαγών Χρηστών"
 }
-

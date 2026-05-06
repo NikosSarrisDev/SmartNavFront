@@ -18,6 +18,12 @@
 
   @if (loading()) {
     <div class="loading-state">
+      <p-progress-spinner
+        strokeWidth="8"
+        fill="transparent"
+        animationDuration=".5s"
+        [style]="{ width: '52px', height: '52px' }"
+      />
       <span>{{ 'ADMIN_LOADING' | translate }}</span>
     </div>
   } @else {
@@ -43,15 +49,25 @@
     <section class="card">
       <div class="section-header">
         <h3>{{ 'ADMIN_USERS_TITLE' | translate }}</h3>
-        <div class="search-group">
-          <input
-            type="text"
-            [(ngModel)]="search"
-            [placeholder]="'ADMIN_USERS_SEARCH' | translate"
-          />
-          <button type="button" class="btn-primary" (click)="onSearch()">
-            {{ 'ADMIN_SEARCH' | translate }}
+        <div class="section-header-actions">
+          <button
+            type="button"
+            class="btn-primary"
+            [disabled]="!hasPendingChanges()"
+            (click)="applyChanges()"
+          >
+            {{ 'ADMIN_APPLY_CHANGES' | translate }}
           </button>
+          <div class="search-group">
+            <input
+              type="text"
+              [(ngModel)]="search"
+              [placeholder]="'ADMIN_USERS_SEARCH' | translate"
+            />
+            <button type="button" class="btn-primary" (click)="onSearch()">
+              {{ 'ADMIN_SEARCH' | translate }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -75,12 +91,14 @@
                 <td>{{ user.email }}</td>
                 <td>
                   <select
-                    [value]="user.roleId"
+                    [ngModel]="resolveUserRoleId(user)"
                     [disabled]="!canChangeRole(user)"
-                    (change)="updateRole(user, $any($event.target).value)"
+                    (ngModelChange)="updateRole(user, $event)"
                   >
-                    @for (role of roles(); track role.roleID) {
-                      <option [value]="role.roleID">{{ role.roleName }}</option>
+                    @for (role of roles(); track resolveRoleOptionId(role)) {
+                      <option [ngValue]="resolveRoleOptionId(role)">
+                        {{ resolveRoleOptionName(role) }}
+                      </option>
                     }
                   </select>
                 </td>
