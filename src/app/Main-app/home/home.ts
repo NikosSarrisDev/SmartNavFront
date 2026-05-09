@@ -1768,7 +1768,7 @@ export class Home implements OnInit, OnDestroy {
       return value;
     }
 
-    const lang = `${this.translate.currentLang || this.translate.getDefaultLang() || 'en'}`.trim();
+    const lang = `${this.translate.currentLang || this.translate.getDefaultLang() || 'el'}`.trim();
     return parsed.toLocaleString(lang);
   }
 
