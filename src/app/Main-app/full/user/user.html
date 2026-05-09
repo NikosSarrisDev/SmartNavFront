@@ -102,58 +102,6 @@
 
     <section class="quick-actions-grid">
       <button type="button" class="quick-action-card action-home" (click)="backToHome()">
-        <span class="action-ornament" aria-hidden="true">
-          <svg viewBox="0 0 240 160" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <filter id="homeShadow" x="-30%" y="-30%" width="160%" height="180%">
-                <feDropShadow
-                  dx="0"
-                  dy="8"
-                  stdDeviation="6"
-                  flood-color="#14532d"
-                  flood-opacity="0.35"
-                ></feDropShadow>
-              </filter>
-              <linearGradient id="homeTop" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#dcfce7"></stop>
-                <stop offset="1" stop-color="#86efac"></stop>
-              </linearGradient>
-              <linearGradient id="homeLeft" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#22c55e"></stop>
-                <stop offset="1" stop-color="#15803d"></stop>
-              </linearGradient>
-              <linearGradient id="homeRight" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#16a34a"></stop>
-                <stop offset="1" stop-color="#14532d"></stop>
-              </linearGradient>
-            </defs>
-            <ellipse cx="134" cy="118" rx="62" ry="18" fill="#052e16" opacity="0.22"></ellipse>
-            <g filter="url(#homeShadow)">
-              <polygon points="86,82 130,52 174,82 130,110" fill="url(#homeTop)"></polygon>
-              <polygon points="86,82 130,110 130,136 86,108" fill="url(#homeLeft)"></polygon>
-              <polygon points="174,82 130,110 130,136 174,108" fill="url(#homeRight)"></polygon>
-              <rect
-                x="121"
-                y="114"
-                width="18"
-                height="22"
-                rx="4"
-                fill="#14532d"
-                opacity="0.9"
-              ></rect>
-              <rect x="98" y="100" width="12" height="9" rx="2" fill="#ecfdf5" opacity="0.9"></rect>
-              <rect
-                x="148"
-                y="100"
-                width="12"
-                height="9"
-                rx="2"
-                fill="#ecfdf5"
-                opacity="0.9"
-              ></rect>
-            </g>
-          </svg>
-        </span>
         <span class="action-icon"><i class="pi pi-home"></i></span>
         <span class="action-label">{{ 'BACK_TO_HOME' | translate }}</span>
       </button>
@@ -163,228 +111,23 @@
         class="quick-action-card action-password"
         (click)="goToChangePassword()"
       >
-        <span class="action-ornament" aria-hidden="true">
-          <svg viewBox="0 0 240 160" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <filter id="pwdShadow" x="-30%" y="-30%" width="160%" height="180%">
-                <feDropShadow
-                  dx="0"
-                  dy="8"
-                  stdDeviation="6"
-                  flood-color="#713f12"
-                  flood-opacity="0.35"
-                ></feDropShadow>
-              </filter>
-              <linearGradient id="pwdTop" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#fef9c3"></stop>
-                <stop offset="1" stop-color="#fde047"></stop>
-              </linearGradient>
-              <linearGradient id="pwdLeft" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#facc15"></stop>
-                <stop offset="1" stop-color="#ca8a04"></stop>
-              </linearGradient>
-              <linearGradient id="pwdRight" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#eab308"></stop>
-                <stop offset="1" stop-color="#a16207"></stop>
-              </linearGradient>
-            </defs>
-            <ellipse cx="136" cy="120" rx="66" ry="18" fill="#713f12" opacity="0.2"></ellipse>
-            <g filter="url(#pwdShadow)">
-              <polygon points="80,76 142,58 182,78 120,96" fill="url(#pwdTop)"></polygon>
-              <polygon points="80,76 120,96 120,126 80,104" fill="url(#pwdLeft)"></polygon>
-              <polygon points="182,78 120,96 120,126 182,106" fill="url(#pwdRight)"></polygon>
-              <rect x="95" y="82" width="32" height="8" rx="4" fill="#fefce8" opacity="0.95"></rect>
-              <rect x="131" y="82" width="22" height="8" rx="4" fill="#fefce8" opacity="0.9"></rect>
-              <circle cx="100" cy="109" r="6" fill="#fef9c3" opacity="0.95"></circle>
-              <rect
-                x="97"
-                y="110"
-                width="6"
-                height="14"
-                rx="3"
-                fill="#854d0e"
-                opacity="0.85"
-              ></rect>
-            </g>
-          </svg>
-        </span>
         <span class="action-icon"><i class="pi pi-key"></i></span>
         <span class="action-label">{{ 'CHANGE_PASSWORD' | translate }}</span>
       </button>
 
       <button type="button" class="quick-action-card action-logout" (click)="logout()">
-        <span class="action-ornament" aria-hidden="true">
-          <svg viewBox="0 0 240 160" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <filter id="logoutShadow" x="-30%" y="-30%" width="160%" height="180%">
-                <feDropShadow
-                  dx="0"
-                  dy="8"
-                  stdDeviation="6"
-                  flood-color="#7f1d1d"
-                  flood-opacity="0.35"
-                ></feDropShadow>
-              </filter>
-              <linearGradient id="doorFront" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#ef4444"></stop>
-                <stop offset="1" stop-color="#b91c1c"></stop>
-              </linearGradient>
-              <linearGradient id="doorSide" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#dc2626"></stop>
-                <stop offset="1" stop-color="#7f1d1d"></stop>
-              </linearGradient>
-            </defs>
-            <ellipse cx="130" cy="120" rx="64" ry="18" fill="#7f1d1d" opacity="0.2"></ellipse>
-            <g filter="url(#logoutShadow)">
-              <polygon points="92,64 128,54 128,126 92,134" fill="url(#doorFront)"></polygon>
-              <polygon points="128,54 146,64 146,134 128,126" fill="url(#doorSide)"></polygon>
-              <circle cx="121" cy="92" r="4" fill="#fee2e2"></circle>
-              <path
-                d="M148 88 H186"
-                stroke="#fee2e2"
-                stroke-width="8"
-                stroke-linecap="round"
-                opacity="0.9"
-              ></path>
-              <path
-                d="M170 74 L186 88 L170 102"
-                fill="none"
-                stroke="#fee2e2"
-                stroke-width="8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                opacity="0.9"
-              ></path>
-            </g>
-          </svg>
-        </span>
         <span class="action-icon"><i class="pi pi-sign-out"></i></span>
         <span class="action-label">{{ 'LOGOUT' | translate }}</span>
       </button>
 
       @if (isAdmin()) {
         <button type="button" class="quick-action-card action-admin" (click)="goToAdminPanel()">
-          <span class="action-ornament" aria-hidden="true">
-            <svg viewBox="0 0 240 160" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <filter id="adminShadow" x="-30%" y="-30%" width="160%" height="180%">
-                  <feDropShadow
-                    dx="0"
-                    dy="8"
-                    stdDeviation="6"
-                    flood-color="#1e3a8a"
-                    flood-opacity="0.35"
-                  ></feDropShadow>
-                </filter>
-                <linearGradient id="adminTop" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#dbeafe"></stop>
-                  <stop offset="1" stop-color="#93c5fd"></stop>
-                </linearGradient>
-                <linearGradient id="adminLeft" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="#60a5fa"></stop>
-                  <stop offset="1" stop-color="#1d4ed8"></stop>
-                </linearGradient>
-                <linearGradient id="adminRight" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="#3b82f6"></stop>
-                  <stop offset="1" stop-color="#1e3a8a"></stop>
-                </linearGradient>
-              </defs>
-              <ellipse cx="132" cy="121" rx="68" ry="18" fill="#1e3a8a" opacity="0.2"></ellipse>
-              <g filter="url(#adminShadow)">
-                <polygon points="78,78 138,58 186,78 126,98" fill="url(#adminTop)"></polygon>
-                <polygon points="78,78 126,98 126,130 78,108" fill="url(#adminLeft)"></polygon>
-                <polygon points="186,78 126,98 126,130 186,108" fill="url(#adminRight)"></polygon>
-                <rect
-                  x="90"
-                  y="88"
-                  width="10"
-                  height="18"
-                  rx="2"
-                  fill="#eff6ff"
-                  opacity="0.92"
-                ></rect>
-                <rect
-                  x="106"
-                  y="82"
-                  width="10"
-                  height="24"
-                  rx="2"
-                  fill="#eff6ff"
-                  opacity="0.95"
-                ></rect>
-                <rect
-                  x="122"
-                  y="76"
-                  width="10"
-                  height="30"
-                  rx="2"
-                  fill="#eff6ff"
-                  opacity="0.98"
-                ></rect>
-                <rect
-                  x="138"
-                  y="84"
-                  width="10"
-                  height="22"
-                  rx="2"
-                  fill="#eff6ff"
-                  opacity="0.94"
-                ></rect>
-                <path
-                  d="M152 74 L170 66 L170 88"
-                  fill="none"
-                  stroke="#eff6ff"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  opacity="0.92"
-                ></path>
-              </g>
-            </svg>
-          </span>
-          <span class="action-icon"><i class="pi pi-chart-bar"></i></span>
+          <span class="action-icon"><i class="pi pi-users"></i></span>
           <span class="action-label">{{ 'ADMIN_PANEL_NAV' | translate }}</span>
         </button>
       }
 
       <button type="button" class="quick-action-card action-settings" (click)="goToSettings()">
-        <span class="action-ornament" aria-hidden="true">
-          <svg viewBox="0 0 240 160" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <filter id="settingsShadow" x="-40%" y="-40%" width="190%" height="220%">
-                <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#020617" flood-opacity="0.5"></feDropShadow>
-              </filter>
-              <radialGradient id="gearFace" cx="38%" cy="30%" r="72%">
-                <stop offset="0" stop-color="#f8fafc"></stop>
-                <stop offset="0.5" stop-color="#cbd5e1"></stop>
-                <stop offset="1" stop-color="#64748b"></stop>
-              </radialGradient>
-              <linearGradient id="gearDepth" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#334155"></stop>
-                <stop offset="1" stop-color="#0f172a"></stop>
-              </linearGradient>
-            </defs>
-            <ellipse cx="132" cy="124" rx="66" ry="16" fill="#020617" opacity="0.26"></ellipse>
-            <g filter="url(#settingsShadow)">
-              <g transform="translate(132 90)">
-                <circle cx="0" cy="12" r="31" fill="url(#gearDepth)" opacity="0.8"></circle>
-                <g fill="url(#gearFace)">
-                  <rect x="-4" y="-42" width="8" height="15" rx="3"></rect>
-                  <rect x="-4" y="27" width="8" height="15" rx="3"></rect>
-                  <rect x="-42" y="-4" width="15" height="8" rx="3"></rect>
-                  <rect x="27" y="-4" width="15" height="8" rx="3"></rect>
-                  <rect x="-30" y="-30" width="10" height="8" rx="3" transform="rotate(-45)"></rect>
-                  <rect x="-30" y="-30" width="10" height="8" rx="3" transform="rotate(45)"></rect>
-                  <rect x="-30" y="-30" width="10" height="8" rx="3" transform="rotate(135)"></rect>
-                  <rect x="-30" y="-30" width="10" height="8" rx="3" transform="rotate(-135)"></rect>
-                </g>
-                <circle cx="0" cy="0" r="29" fill="url(#gearFace)"></circle>
-                <circle cx="0" cy="0" r="12" fill="#0f172a" opacity="0.9"></circle>
-                <circle cx="0" cy="0" r="6" fill="#dbeafe"></circle>
-              </g>
-            </g>
-          </svg>
-        </span>
         <span class="action-icon"><i class="pi pi-cog"></i></span>
         <span class="action-label">{{ 'SETTINGS_TITLE' | translate }}</span>
       </button>

@@ -164,7 +164,8 @@ th, td {
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: flex-start;
   gap: 8px;
   text-align: left;
   box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
@@ -209,45 +210,22 @@ th, td {
   min-height: 94px;
 }
 
-.action-ornament {
-  position: absolute;
-  right: -14px;
-  top: -14px;
-  width: clamp(136px, 24vw, 204px);
-  height: clamp(96px, 18vw, 142px);
-  opacity: 0.92;
-  pointer-events: none;
-  filter: drop-shadow(0 14px 16px rgba(15, 23, 42, 0.28));
-  transform: perspective(520px) rotateX(9deg) translateZ(0);
-  transition: transform 220ms ease, opacity 220ms ease;
-}
-
-.action-ornament svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.quick-action-card:hover .action-ornament {
-  transform: perspective(520px) rotateX(12deg) translate3d(-3px, -3px, 0) scale(1.04);
-  opacity: 0.98;
-}
-
 .action-icon {
   position: relative;
   z-index: 1;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.16));
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(1px);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 6px 12px rgba(15, 23, 42, 0.2);
 }
 
 .action-password .action-icon {
-  background: rgba(255, 255, 255, 0.36);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.22));
 }
 
 .action-icon i {
@@ -264,11 +242,5 @@ th, td {
 @media (max-width: 991px) {
   .quick-action-card {
     min-height: 106px;
-  }
-
-  .action-ornament {
-    width: clamp(118px, 42vw, 186px);
-    height: clamp(84px, 26vw, 132px);
-    opacity: 0.84;
   }
 }
