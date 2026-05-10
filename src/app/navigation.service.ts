@@ -29,6 +29,8 @@ export interface HomeDraftState {
   searchText: string;
   selectedChip: string;
   selectedChipPrompt: string;
+  selectedMoodCode: string;
+  selectedMoodPrompt: string;
 }
 
 const createDefaultJourneyFilters = (): JourneyFilterStation[] => [];
@@ -45,6 +47,8 @@ const createDefaultHomeDraft = (): HomeDraftState => ({
   searchText: '',
   selectedChip: 'fastest',
   selectedChipPrompt: 'Find the fastest possible driving route.',
+  selectedMoodCode: '',
+  selectedMoodPrompt: '',
 });
 
 @Injectable({ providedIn: 'root' })
@@ -120,6 +124,8 @@ export class NavigationService {
       searchText: draft.searchText ?? current.searchText,
       selectedChip: draft.selectedChip ?? current.selectedChip,
       selectedChipPrompt: draft.selectedChipPrompt ?? current.selectedChipPrompt,
+      selectedMoodCode: draft.selectedMoodCode ?? current.selectedMoodCode,
+      selectedMoodPrompt: draft.selectedMoodPrompt ?? current.selectedMoodPrompt,
     });
   }
 

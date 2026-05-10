@@ -192,6 +192,25 @@
         </div>
       </section>
 
+      <section class="mood-card">
+        <h2>{{ 'FILTER_ROUTE_MOOD_TITLE' | translate }}</h2>
+        <p>{{ 'FILTER_ROUTE_MOOD_SUBTITLE' | translate }}</p>
+
+        <div class="preference-chip-grid">
+          @for (option of moodOptions(); track option.id) {
+            <button
+              type="button"
+              class="preference-chip"
+              [class.active]="isMoodSelected(option.code)"
+              (click)="selectMood(option.code)"
+            >
+              <span class="preference-icon">{{ option.icon }}</span>
+              <span>{{ option.translationField | translate }}</span>
+            </button>
+          }
+        </div>
+      </section>
+
       <section class="vehicle-size-card">
         <h2>{{ 'FILTER_VEHICLE_SIZE_TITLE' | translate }}</h2>
         <p>{{ 'FILTER_VEHICLE_SIZE_SUBTITLE' | translate }}</p>

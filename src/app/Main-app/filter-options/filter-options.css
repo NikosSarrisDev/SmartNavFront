@@ -317,7 +317,8 @@ button:disabled {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
-.preference-card {
+.preference-card,
+.mood-card {
   margin-top: 1rem;
   border: 1px solid #e5e7eb;
   border-radius: 18px;
@@ -325,13 +326,15 @@ button:disabled {
   background: #ffffff;
 }
 
-.preference-card h2 {
+.preference-card h2,
+.mood-card h2 {
   margin: 0;
   font-size: 1.05rem;
   color: #111827;
 }
 
-.preference-card p {
+.preference-card p,
+.mood-card p {
   margin: 0.35rem 0 0.9rem;
   color: #6b7280;
 }

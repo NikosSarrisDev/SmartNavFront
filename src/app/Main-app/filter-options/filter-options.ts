@@ -37,6 +37,13 @@ type RoutePreferenceOption = {
   translationField: string;
   prompt: string;
 };
+type RouteMoodOption = {
+  id: number;
+  code: string;
+  icon: string;
+  translationField: string;
+  prompt: string;
+};
 type UserPresetOption = {
   id: number;
   street: string;
@@ -48,6 +55,7 @@ type UserPresetOption = {
 };
 type StoredFilteredPreferenceResponse = {
   selectedPreferenceCode?: string | null;
+  selectedPreferencePrompt?: string | null;
   vehicleSize?: string | null;
   avoidTolls?: boolean;
   avoidHighways?: boolean;
@@ -83,6 +91,7 @@ export class FilterOptions implements OnInit, OnDestroy {
   readonly stationForms: FormGroup;
   languages: MenuItem[] | undefined;
   readonly preferenceOptions = signal<RoutePreferenceOption[]>([]);
+  readonly moodOptions = signal<RouteMoodOption[]>([]);
   readonly vehicleSizeOptions = signal<{ value: VehicleSize; translationField: string }[]>([]);
   readonly userPresets = signal<UserPresetOption[]>([]);
   readonly trafficTimeModeOptions: { value: TrafficTimeMode; translationField: string }[] = [
@@ -115,6 +124,7 @@ export class FilterOptions implements OnInit, OnDestroy {
           validators: [this.duplicateStationsValidator()],
         }),
         preferenceCode: ['fast'],
+        moodCode: [''],
         vehicleSize: [''],
         avoidTolls: [false],
         avoidHighways: [false],
@@ -141,6 +151,7 @@ export class FilterOptions implements OnInit, OnDestroy {
       },
     });
     this.loadPreferenceOptions();
+    this.loadMoodOptions();
     this.loadVehicleOptions();
     this.loadUserPresets();
     this.initializeAutocompleteServices();
@@ -274,20 +285,29 @@ export class FilterOptions implements OnInit, OnDestroy {
     const selectedPreferencePrompt = (
       selectedPreferenceOption?.prompt || 'Find the fastest possible driving route.'
     ).trim();
+    const moodCodeRaw = `${this.stationForms.get('moodCode')?.value ?? ''}`.trim().toLowerCase();
+    const selectedMoodCode = moodCodeRaw.length > 0 ? moodCodeRaw : '';
+    const selectedMoodOption = this.moodOptions().find((option) => option.code === selectedMoodCode);
+    const selectedMoodPrompt = `${selectedMoodOption?.prompt ?? ''}`.trim();
+    const selectedRoutePrompt = [selectedPreferencePrompt, selectedMoodPrompt]
+      .filter((value) => value.length > 0)
+      .join('. ');
 
     this.navigationService.setJourneyFilters(filters);
     this.navigationService.setVehicleSize(vehicleSize);
     this.navigationService.setJourneyRouteFilters(routeFilters);
     this.navigationService.setHomeDraft({
       selectedChip: selectedPreferenceCode,
-      selectedChipPrompt: selectedPreferencePrompt,
+      selectedChipPrompt: selectedRoutePrompt,
+      selectedMoodCode,
+      selectedMoodPrompt,
     });
     this.persistFilteredPreference(
       filters,
       routeFilters,
       vehicleSize,
       selectedPreferenceCode,
-      selectedPreferencePrompt,
+      selectedRoutePrompt,
     );
 
     if (this.inModal) {
@@ -349,6 +369,7 @@ export class FilterOptions implements OnInit, OnDestroy {
       .trim()
       .toLowerCase();
     const vehicleSizeRaw = `${this.stationForms.get('vehicleSize')?.value ?? ''}`.trim();
+    const moodCode = `${this.stationForms.get('moodCode')?.value ?? ''}`.trim().toLowerCase();
     const avoidTolls = !!this.stationForms.get('avoidTolls')?.value;
     const avoidHighways = !!this.stationForms.get('avoidHighways')?.value;
     const avoidFerries = !!this.stationForms.get('avoidFerries')?.value;
@@ -363,6 +384,7 @@ export class FilterOptions implements OnInit, OnDestroy {
 
     return (
       (preferenceCode.length > 0 && preferenceCode !== 'fast') ||
+      moodCode.length > 0 ||
       vehicleSizeRaw.length > 0 ||
       avoidTolls ||
       avoidHighways ||
@@ -383,6 +405,7 @@ export class FilterOptions implements OnInit, OnDestroy {
 
     this.stationForms.patchValue({
       preferenceCode: 'fast',
+      moodCode: '',
       vehicleSize: '',
       avoidTolls: false,
       avoidHighways: false,
@@ -408,6 +431,16 @@ export class FilterOptions implements OnInit, OnDestroy {
     const selectedCode = `${this.stationForms.get('preferenceCode')?.value ?? ''}`
       .trim()
       .toLowerCase();
+    return selectedCode === code;
+  }
+
+  selectMood(code: string): void {
+    this.stationForms.patchValue({ moodCode: code });
+    this.stationForms.markAsDirty();
+  }
+
+  isMoodSelected(code: string): boolean {
+    const selectedCode = `${this.stationForms.get('moodCode')?.value ?? ''}`.trim().toLowerCase();
     return selectedCode === code;
   }
 
@@ -862,6 +895,55 @@ export class FilterOptions implements OnInit, OnDestroy {
     });
   }
 
+  private loadMoodOptions(): void {
+    this.dataService.getMoods({}).subscribe({
+      next: (response: any) => {
+        const mappedMoods: RouteMoodOption[] = (response?.data ?? [])
+          .map((item: any) => {
+            const id = Number(item?.id ?? item?.Id);
+            const code = `${item?.code ?? item?.Code ?? ''}`.trim().toLowerCase();
+            const prompt = `${item?.prompt ?? item?.Prompt ?? ''}`.trim();
+            const icon = `${item?.icon ?? item?.Icon ?? ''}`.trim();
+            const translationField =
+              `${item?.translationField ?? item?.TranslationField ?? ''}`.trim();
+
+            if (!Number.isInteger(id) || id <= 0 || code.length === 0) {
+              return null;
+            }
+
+            return {
+              id,
+              code,
+              icon,
+              translationField,
+              prompt,
+            };
+          })
+          .filter((value: RouteMoodOption | null): value is RouteMoodOption => value != null);
+
+        this.moodOptions.set(mappedMoods);
+
+        const currentCode = `${this.stationForms.get('moodCode')?.value ?? ''}`.trim().toLowerCase();
+        const currentExists = mappedMoods.some((option: RouteMoodOption) => option.code === currentCode);
+        if (!currentExists) {
+          const storedPrompt = `${this.latestStoredPreference?.selectedPreferencePrompt ?? ''}`
+            .trim()
+            .toLowerCase();
+          const matchedFromStored = mappedMoods.find((option: RouteMoodOption) => {
+            const moodPrompt = `${option.prompt ?? ''}`.trim().toLowerCase();
+            return moodPrompt.length > 0 && storedPrompt.includes(moodPrompt);
+          });
+
+          this.stationForms.patchValue({ moodCode: `${matchedFromStored?.code ?? ''}`.trim().toLowerCase() });
+        }
+      },
+      error: () => {
+        this.moodOptions.set([]);
+        this.stationForms.patchValue({ moodCode: '' });
+      },
+    });
+  }
+
   private persistFilteredPreference(
     filters: JourneyFilterStation[],
     routeFilters: JourneyRouteFilters,
@@ -1044,6 +1126,19 @@ export class FilterOptions implements OnInit, OnDestroy {
 
   private applyStoredNonStationFilters(stored: StoredFilteredPreferenceResponse): void {
     const selectedPreferenceCode = `${stored.selectedPreferenceCode ?? ''}`.trim().toLowerCase();
+    const selectedPreferencePrompt = `${stored.selectedPreferencePrompt ?? ''}`.trim().toLowerCase();
+    const matchedMoodCode = (() => {
+      if (!selectedPreferencePrompt) {
+        return '';
+      }
+
+      const match = this.moodOptions().find((option) => {
+        const moodPrompt = `${option.prompt ?? ''}`.trim().toLowerCase();
+        return moodPrompt.length > 0 && selectedPreferencePrompt.includes(moodPrompt);
+      });
+
+      return `${match?.code ?? ''}`.trim().toLowerCase();
+    })();
     const normalizedTrafficMode = `${stored.trafficTimeMode ?? ''}`.trim().toLowerCase();
     const trafficTimeMode = this.isTrafficTimeMode(normalizedTrafficMode)
       ? normalizedTrafficMode
@@ -1051,6 +1146,7 @@ export class FilterOptions implements OnInit, OnDestroy {
 
     this.stationForms.patchValue({
       preferenceCode: selectedPreferenceCode.length > 0 ? selectedPreferenceCode : 'fast',
+      moodCode: matchedMoodCode,
       vehicleSize: this.isVehicleSize(`${stored.vehicleSize ?? ''}`.trim())
         ? `${stored.vehicleSize}`.trim()
         : '',
@@ -1094,6 +1190,7 @@ export class FilterOptions implements OnInit, OnDestroy {
     this.clearAllStationSuggestions();
     this.stationForms.patchValue({
       preferenceCode: `${existingHomeDraft.selectedChip ?? 'fast'}`.trim().toLowerCase(),
+      moodCode: `${existingHomeDraft.selectedMoodCode ?? ''}`.trim().toLowerCase(),
       vehicleSize: existingVehicleSize ?? '',
       avoidTolls: existingRouteFilters.avoidTolls,
       avoidHighways: existingRouteFilters.avoidHighways,

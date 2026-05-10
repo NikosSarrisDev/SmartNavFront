@@ -94,6 +94,8 @@ export class Home implements OnInit, OnDestroy {
   currentUserPreference!: any;
   selectedChip: string = '';
   selectedChipPrompt: string = '';
+  selectedMoodCode: string = '';
+  selectedMoodPrompt: string = '';
   currentSearchText: string = '';
   duration: string = '';
   distance: string = '';
@@ -253,6 +255,8 @@ export class Home implements OnInit, OnDestroy {
     this.currentSearchText = homeDraft.searchText;
     this.selectedChip = this.normalizePreferenceCode(homeDraft.selectedChip);
     this.selectedChipPrompt = `${homeDraft.selectedChipPrompt ?? ''}`.trim();
+    this.selectedMoodCode = `${homeDraft.selectedMoodCode ?? ''}`.trim().toLowerCase();
+    this.selectedMoodPrompt = `${homeDraft.selectedMoodPrompt ?? ''}`.trim();
 
     try {
       this.center = await this.navService.getCurrentLocation();
@@ -304,6 +308,10 @@ export class Home implements OnInit, OnDestroy {
     this.selectedChip = this.normalizePreferenceCode(latestDraft.selectedChip || this.selectedChip);
     this.selectedChipPrompt =
       `${latestDraft.selectedChipPrompt ?? this.selectedChipPrompt ?? ''}`.trim();
+    this.selectedMoodCode = `${latestDraft.selectedMoodCode ?? this.selectedMoodCode ?? ''}`
+      .trim()
+      .toLowerCase();
+    this.selectedMoodPrompt = `${latestDraft.selectedMoodPrompt ?? this.selectedMoodPrompt ?? ''}`.trim();
     if (!this.selectedChipPrompt && this.selectedChip) {
       this.selectedChipPrompt = this.getPreferencePromptByCode(this.selectedChip);
     }
@@ -356,8 +364,9 @@ export class Home implements OnInit, OnDestroy {
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
 
-    const geminiPrompt = this.selectedChipPrompt
-      ? `${this.selectedChipPrompt}. User request: "${trimmedQuery}"`
+    const navigationPrompt = this.buildNavigationPrompt();
+    const geminiPrompt = navigationPrompt
+      ? `${navigationPrompt}. User request: "${trimmedQuery}"`
       : `User request: "${trimmedQuery}"`;
 
     this.routeData$ = this.navService.getSmartRoute(geminiPrompt, latestPosition).pipe(
@@ -1788,8 +1797,32 @@ export class Home implements OnInit, OnDestroy {
       searchText: this.currentSearchText,
       selectedChip: this.selectedChip,
       selectedChipPrompt: this.selectedChipPrompt,
+      selectedMoodCode: this.selectedMoodCode,
+      selectedMoodPrompt: this.selectedMoodPrompt,
     });
     this.isPersistingHomeDraftLocally = false;
+  }
+
+  private buildNavigationPrompt(): string {
+    const preferencePrompt = `${this.selectedChipPrompt ?? ''}`.trim();
+    const moodPrompt = `${this.selectedMoodPrompt ?? ''}`.trim();
+
+    if (!moodPrompt) {
+      return preferencePrompt;
+    }
+
+    if (
+      preferencePrompt.length > 0 &&
+      preferencePrompt.toLowerCase().includes(moodPrompt.toLowerCase())
+    ) {
+      return preferencePrompt;
+    }
+
+    if (!preferencePrompt) {
+      return moodPrompt;
+    }
+
+    return `${preferencePrompt}. ${moodPrompt}`;
   }
 
   private loadVehicleLookup(): void {
