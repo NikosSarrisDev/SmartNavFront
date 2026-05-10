@@ -1,0 +1,51 @@
+trigger:
+  branches:
+    include:
+      - main
+      - master
+      - develop
+
+pr:
+  branches:
+    include:
+      - main
+      - master
+      - develop
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  nodeVersion: 20.x
+
+steps:
+  - checkout: self
+    clean: true
+
+  - task: NodeTool@0
+    displayName: Use Node.js $(nodeVersion)
+    inputs:
+      versionSpec: $(nodeVersion)
+
+  - task: Cache@2
+    displayName: Cache npm
+    inputs:
+      key: npm | "$(Agent.OS)" | package-lock.json
+      path: $(Pipeline.Workspace)/.npm
+      restoreKeys: |
+        npm | "$(Agent.OS)"
+
+  - script: npm ci
+    displayName: Install dependencies
+    env:
+      npm_config_cache: $(Pipeline.Workspace)/.npm
+
+  - script: npm run build
+    displayName: Build Angular app
+
+  - task: PublishBuildArtifacts@1
+    displayName: Publish frontend artifact
+    inputs:
+      PathtoPublish: dist/SmartNav
+      ArtifactName: frontend
+      publishLocation: Container
