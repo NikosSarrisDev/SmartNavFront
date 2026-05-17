@@ -143,6 +143,45 @@
         <span>{{ 'HOME_FAST_PRESETS_BUTTON' | translate }}</span>
       </button>
 
+      <section class="poi-panel" *ngIf="!navigationStarted && poiPlaces().length > 0">
+        <header class="poi-panel-head">
+          <strong>{{ 'HOME_POI_PANEL_TITLE' | translate }}</strong>
+          <small>{{ 'HOME_POI_PANEL_SUBTITLE' | translate }}</small>
+        </header>
+        <div class="poi-list">
+          <button
+            type="button"
+            class="poi-card"
+            *ngFor="let poi of poiPlaces(); trackBy: trackPoiCard"
+            (click)="focusPoiOnMap(poi)"
+          >
+            <div class="poi-card-media">
+              <img
+                *ngIf="poi.photoUrl; else poiImageFallback"
+                [src]="poi.photoUrl"
+                [alt]="poi.name"
+                loading="lazy"
+              />
+              <ng-template #poiImageFallback>
+                <div class="poi-image-fallback">
+                  <i class="pi pi-map-marker"></i>
+                </div>
+              </ng-template>
+            </div>
+            <div class="poi-card-body">
+              <div class="poi-card-title">{{ poi.name }}</div>
+              <div class="poi-card-meta">
+                <span class="poi-category-chip">{{ getPoiCategoryLabel(poi.category) }}</span>
+                <span *ngIf="poi.rating != null" class="poi-rating-chip"
+                  >&#9733; {{ poi.rating | number: '1.1-1' }}</span
+                >
+              </div>
+              <p class="poi-address" *ngIf="poi.address">{{ poi.address }}</p>
+            </div>
+          </button>
+        </div>
+      </section>
+
       @if (!navigationStarted && getAppliedFilterChipLabels(); as appliedFilterChips) {
         @if (appliedFilterChips.length > 0) {
           <div class="applied-filter-chip-stack">
@@ -206,6 +245,12 @@
           [options]="featureMarker.options"
           [title]="featureMarker.title"
         ></map-marker>
+        <map-marker
+          *ngFor="let poiMarker of poiMarkers(); trackBy: trackPoiMarker"
+          [position]="poiMarker.position"
+          [options]="poiMarker.options"
+          [title]="poiMarker.title"
+        ></map-marker>
       </google-map>
       <div class="map-navigation-state" *ngIf="navigationStarted">
         {{ 'NAVIGATION_IN_PROGRESS' | translate }}
@@ -238,6 +283,44 @@
             <div class="progress-fill" [style.width.%]="navigationProgress"></div>
           </div>
         </div>
+      </section>
+
+      <button
+        type="button"
+        class="navigation-rate-button"
+        *ngIf="navigationStarted && !routeRatingSubmitted"
+        (click)="toggleRouteRatingPanel()"
+      >
+        {{ 'HOME_RATE_BUTTON' | translate }}
+      </button>
+
+      <section
+        class="navigation-rate-panel"
+        *ngIf="navigationStarted && routeRatingPanelVisible && !routeRatingSubmitted"
+      >
+        <h3>{{ 'HOME_ROUTE_RATING_TITLE' | translate }}</h3>
+        <p>{{ 'HOME_ROUTE_RATING_SUBTITLE' | translate }}</p>
+        <div class="route-rating-stars">
+          <button
+            type="button"
+            class="route-rating-star"
+            *ngFor="let star of routeRatingStars"
+            [class.active]="routeRatingValue >= star"
+            [disabled]="routeRatingSaving"
+            (click)="selectRouteRating(star)"
+          >
+            &#9733;
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="route-rating-submit"
+          [disabled]="routeRatingSaving || routeRatingValue < 1"
+          (click)="submitRouteRating()"
+        >
+          {{ 'HOME_ROUTE_RATING_SUBMIT' | translate }}
+        </button>
       </section>
 
       @if (fastPresetsModalVisible) {
@@ -382,40 +465,6 @@
         </div>
       }
 
-      <div
-        class="route-rating-overlay"
-        role="dialog"
-        aria-modal="true"
-        *ngIf="routeRatingPopupVisible"
-      >
-        <section class="route-rating-card">
-          <h3>{{ 'HOME_ROUTE_RATING_TITLE' | translate }}</h3>
-          <p>{{ 'HOME_ROUTE_RATING_SUBTITLE' | translate }}</p>
-          <small>{{ 'HOME_ROUTE_RATING_REQUIRED' | translate }}</small>
-
-          <div class="route-rating-stars">
-            <button
-              type="button"
-              class="route-rating-star"
-              *ngFor="let star of routeRatingStars"
-              [class.active]="routeRatingValue >= star"
-              [disabled]="routeRatingSaving"
-              (click)="selectRouteRating(star)"
-            >
-              &#9733;
-            </button>
-          </div>
-
-          <button
-            type="button"
-            class="route-rating-submit"
-            [disabled]="routeRatingSaving || routeRatingValue < 1"
-            (click)="submitRouteRating()"
-          >
-            {{ 'HOME_ROUTE_RATING_SUBMIT' | translate }}
-          </button>
-        </section>
-      </div>
     </main>
   </div>
 }

@@ -101,6 +101,7 @@
                 (input)="onStationStreetInput($index)"
                 (focus)="onStationStreetFocus($index)"
                 (blur)="onStationStreetBlur($index)"
+                (keydown.enter)="onStationStreetEnter($index, $event)"
               />
               @if (isStationSuggestionListVisible($index)) {
                 <div class="station-address-suggestions">
@@ -161,6 +162,7 @@
         <p class="validation-error">{{ 'FILTER_DUPLICATE_STATION_ERROR' | translate }}</p>
       }
 
+      <div class="options-pair-row">
       <section class="preference-card">
         <h2>{{ 'FILTER_ROUTE_PREFERENCE_TITLE' | translate }}</h2>
         <p>{{ 'FILTER_ROUTE_PREFERENCE_SUBTITLE' | translate }}</p>
@@ -210,7 +212,9 @@
           }
         </div>
       </section>
+      </div>
 
+      <div class="options-pair-row">
       <section class="vehicle-size-card">
         <h2>{{ 'FILTER_VEHICLE_SIZE_TITLE' | translate }}</h2>
         <p>{{ 'FILTER_VEHICLE_SIZE_SUBTITLE' | translate }}</p>
@@ -249,7 +253,9 @@
           </label>
         </div>
       </section>
+      </div>
 
+      <div class="options-pair-row">
       <section class="traffic-time-card">
         <h2>{{ 'FILTER_TRAFFIC_TIME_TITLE' | translate }}</h2>
         <p>{{ 'FILTER_TRAFFIC_TIME_SUBTITLE' | translate }}</p>
@@ -311,6 +317,7 @@
           <span>{{ 'FILTER_EV_INCLUDE_CHARGERS' | translate }}</span>
         </label>
       </section>
+      </div>
     </form>
 
     <div class="footer-actions">

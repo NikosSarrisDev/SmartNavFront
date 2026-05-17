@@ -33,6 +33,18 @@ export interface HomeDraftState {
   selectedMoodPrompt: string;
 }
 
+export interface PoiIntent {
+  category: string;
+  searchTerms: string[];
+  reason: string;
+}
+
+export interface SmartRouteResult {
+  result: google.maps.DirectionsResult;
+  explanation: string;
+  poiIntents: PoiIntent[];
+}
+
 const createDefaultJourneyFilters = (): JourneyFilterStation[] => [];
 const createDefaultJourneyRouteFilters = (): JourneyRouteFilters => ({
   avoidTolls: false,
@@ -141,7 +153,10 @@ export class NavigationService {
     this.storedPreferencePromptShown = true;
   }
 
-  getSmartRoute(userNeed: string, currentPos: google.maps.LatLngLiteral): Observable<any> {
+  getSmartRoute(
+    userNeed: string,
+    currentPos: google.maps.LatLngLiteral,
+  ): Observable<SmartRouteResult> {
     this.isLoading$.next(true);
     this.errorMessage$.next(null);
 
@@ -164,8 +179,11 @@ ${filterPrompt}
 Rules:
 1. If not travel/places/navigation, return {"error":"not_navigation"}.
 2. Otherwise, return ONLY:
-{ "origin":"address or empty string", "dest":"address", "info":"Greek text" }
-3. If user need does not contain a clear departure point, set "origin" to an empty string.`,
+{ "origin":"address or empty string", "dest":"address", "info":"Greek text", "poiIntents":[{"category":"single category slug","searchTerms":["keyword1","keyword2"],"reason":"short reason from filters"}] }
+3. If user need does not contain a clear departure point, set "origin" to an empty string.
+4. Return POI intents ONLY when they come from user filters/mood/preferences and represent real venues (parks, gyms, cafes, museums, viewpoints etc).
+5. DO NOT include roads, avenues, highways, neighborhoods, or generic directions as POI (example: "Συγγρού" is NOT a POI).
+6. If no POI should be suggested from filters, return an empty array for "poiIntents".`,
             },
           ],
         },
@@ -198,12 +216,13 @@ Rules:
             dest: destination,
             origin,
             info,
+            poiIntents: this.normalizePoiIntents(parsed.poiIntents),
           };
         } catch {
           throw new Error('Failed to parse AI response.');
         }
       }),
-      switchMap((aiData: { dest: string; origin: string; info: string }) => {
+      switchMap((aiData: { dest: string; origin: string; info: string; poiIntents: PoiIntent[] }) => {
         const routeOrigin = aiData.origin.length > 0 ? aiData.origin : currentPos;
         const request: google.maps.DirectionsRequest = {
           origin: routeOrigin,
@@ -227,13 +246,14 @@ Rules:
 
         return this.directionsService.route(request).pipe(
           map((res) => {
-            if (res.status !== 'OK') {
+            if (res.status !== 'OK' || !res.result) {
               throw new Error('Google Maps could not build this route.');
             }
 
             return {
               result: res.result,
               explanation: aiData.info,
+              poiIntents: aiData.poiIntents,
             };
           }),
         );
@@ -427,5 +447,71 @@ Rules:
       station.cityArea.length > 0 ||
       station.postalCode.length > 0
     );
+  }
+
+  private normalizePoiIntents(raw: unknown): PoiIntent[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    const blockedKeywords = [
+      'road',
+      'street',
+      'avenue',
+      'highway',
+      'motorway',
+      'route',
+      'syggrou',
+      'συγγρου',
+      'συγγρού',
+      'λεωφορος',
+      'λεωφόρος',
+      'οδος',
+      'οδός',
+      'αυτοκινητοδρομος',
+      'αυτοκινητόδρομος',
+    ];
+    const normalized: PoiIntent[] = [];
+
+    raw.forEach((item) => {
+      const category = `${(item as { category?: unknown })?.category ?? ''}`.trim().toLowerCase();
+      const reason = `${(item as { reason?: unknown })?.reason ?? ''}`.trim();
+      const searchTermsRaw = (item as { searchTerms?: unknown })?.searchTerms;
+      const searchTerms = Array.isArray(searchTermsRaw)
+        ? searchTermsRaw
+            .map((term) => `${term ?? ''}`.trim().toLowerCase())
+            .filter((term) => term.length > 1 && term.length <= 48)
+        : [];
+
+      if (!category || category.length > 48) {
+        return;
+      }
+
+      const combinedText = [category, ...searchTerms, reason].join(' ').toLowerCase();
+      const hasBlockedKeyword = blockedKeywords.some((keyword) => combinedText.includes(keyword));
+      if (hasBlockedKeyword) {
+        return;
+      }
+
+      const uniqueTerms = Array.from(new Set(searchTerms)).slice(0, 3);
+      if (!uniqueTerms.length) {
+        uniqueTerms.push(category);
+      }
+
+      normalized.push({
+        category,
+        searchTerms: uniqueTerms,
+        reason: reason.length > 0 ? reason : 'inferred from filters',
+      });
+    });
+
+    const dedupedByCategory = new Map<string, PoiIntent>();
+    normalized.forEach((intent) => {
+      if (!dedupedByCategory.has(intent.category)) {
+        dedupedByCategory.set(intent.category, intent);
+      }
+    });
+
+    return Array.from(dedupedByCategory.values()).slice(0, 5);
   }
 }

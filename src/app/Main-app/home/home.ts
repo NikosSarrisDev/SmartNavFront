@@ -1,14 +1,17 @@
 import {
-  ChangeDetectorRef,
   Component,
-  NgZone,
   OnDestroy,
   OnInit,
   ViewChild,
   effect,
   signal,
 } from '@angular/core';
-import { JourneyRouteFilters, NavigationService, VehicleSize } from '../../navigation.service';
+import {
+  JourneyRouteFilters,
+  NavigationService,
+  PoiIntent,
+  VehicleSize,
+} from '../../navigation.service';
 import { AsyncPipe, DatePipe, DecimalPipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { GoogleMap, GoogleMapsModule } from '@angular/google-maps';
 import { Observable, tap } from 'rxjs';
@@ -66,6 +69,18 @@ type RoutePreferenceLookupItem = {
   code: string;
   prompt: string;
   translationField: string;
+};
+type PoiPlaceCard = {
+  id: string;
+  placeId: string;
+  name: string;
+  address: string;
+  rating: number | null;
+  userRatingsTotal: number;
+  photoUrl: string | null;
+  category: string;
+  position: google.maps.LatLngLiteral;
+  distanceFromRouteMeters: number;
 };
 
 @Component({
@@ -147,7 +162,6 @@ export class Home implements OnInit, OnDestroy {
   private navigationPathIndex = 0;
   private navigationAnimationTimer: number | null = null;
   private cameraAnimationTimer: number | null = null;
-  private routeRatingPopupDelayTimer: number | null = null;
   private antOffset = 0;
 
   activeRouteBaseOptions: google.maps.PolylineOptions = {
@@ -184,15 +198,19 @@ export class Home implements OnInit, OnDestroy {
   routeChoiceOptions: RouteChoiceOption[] = [];
   selectedRouteIndex = 0;
   activeTripId: number | null = null;
-  routeRatingPopupVisible = false;
   routeRatingValue = 0;
   routeRatingSaving = false;
+  routeRatingPanelVisible = false;
+  routeRatingSubmitted = false;
   readonly routeRatingStars = [1, 2, 3, 4, 5];
   readonly routeFeatureMarkers = signal<RouteFeatureMarker[]>([]);
+  readonly poiMarkers = signal<RouteFeatureMarker[]>([]);
+  readonly poiPlaces = signal<PoiPlaceCard[]>([]);
   private readonly vehicleIdByCode = new Map<string, number>();
   private readonly preferencePromptByCode = new Map<string, string>();
   private readonly preferenceTranslationFieldByCode = new Map<string, string>();
   private routeFeatureRequestToken = 0;
+  private selectedPoiIntents: PoiIntent[] = [];
   private hasHandledNavigationArrival = false;
   private readonly routeFeatureIconByType: Record<RouteFeatureMarkerType, string> = {
     toll: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
@@ -200,6 +218,7 @@ export class Home implements OnInit, OnDestroy {
     ferry: 'https://maps.google.com/mapfiles/ms/icons/purple-dot.png',
     ev: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
   };
+  private readonly poiMarkerIcon = 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png';
   fastPresetsModalVisible = false;
   fastPresetConfirmVisible = false;
   fastPresetSaving = false;
@@ -227,8 +246,6 @@ export class Home implements OnInit, OnDestroy {
     private translate: TranslateService,
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
-    private ngZone: NgZone,
-    private cdr: ChangeDetectorRef,
   ) {
     effect(() => {
       this.navService.homeDraft();
@@ -354,13 +371,16 @@ export class Home implements OnInit, OnDestroy {
     this.routeChoiceOptions = [];
     this.selectedRouteIndex = 0;
     this.activeTripId = null;
-    this.routeRatingPopupVisible = false;
     this.routeRatingValue = 0;
     this.routeRatingSaving = false;
+    this.routeRatingPanelVisible = false;
+    this.routeRatingSubmitted = false;
     this.hasHandledNavigationArrival = false;
     this.routeFeatureRequestToken++;
     this.routeFeatureMarkers.set([]);
-    this.clearRouteRatingPopupDelayTimer();
+    this.poiMarkers.set([]);
+    this.poiPlaces.set([]);
+    this.selectedPoiIntents = [];
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
 
@@ -374,6 +394,7 @@ export class Home implements OnInit, OnDestroy {
         if (data && data.explanation) {
           this.latestDirections = data.result;
           this.explanation = data.explanation;
+          this.selectedPoiIntents = data.poiIntents ?? [];
           this.buildRouteChoiceOptions(data.result);
           this.selectRouteChoice(0);
         }
@@ -417,7 +438,7 @@ export class Home implements OnInit, OnDestroy {
       destination: lastLeg.end_address,
       departure: firstLeg.start_address,
       distanceKM: Number(totalDistanceKm.toFixed(2)),
-      score: 0,
+      score: null,
       tripDate: new Date().toISOString(),
       vehicleID: selectedVehicleId,
       vehicleCode: selectedVehicleCode ?? null,
@@ -433,9 +454,10 @@ export class Home implements OnInit, OnDestroy {
     this.dataService.tripCreate(payload).subscribe({
       next: (response: any) => {
         this.activeTripId = this.resolveActiveTripId(response);
-        this.routeRatingPopupVisible = false;
         this.routeRatingValue = 0;
         this.routeRatingSaving = false;
+        this.routeRatingPanelVisible = false;
+        this.routeRatingSubmitted = false;
         this.hasHandledNavigationArrival = false;
         this.navigationStarted = true;
         this.navigationStartAt = new Date();
@@ -454,9 +476,6 @@ export class Home implements OnInit, OnDestroy {
         this.destinationMarker =
           destinationMarker ?? this.activeRoutePath[this.activeRoutePath.length - 1] ?? undefined;
         this.userStartMarker = startMarker ?? this.activeRoutePath[0] ?? undefined;
-        // TEMP testing flow:
-        // Open rating popup 4 seconds after navigation starts.
-        this.scheduleRouteRatingPopupOpen();
         this.enableNavigationView(selectedRoute);
         this.navService.errorMessage$.next(null);
       },
@@ -467,7 +486,7 @@ export class Home implements OnInit, OnDestroy {
   }
 
   cancelNavigation() {
-    if (this.routeRatingPopupVisible || this.routeRatingSaving) {
+    if (this.routeRatingSaving) {
       return;
     }
 
@@ -484,12 +503,15 @@ export class Home implements OnInit, OnDestroy {
     this.activeRoutePath = [];
     this.activeTripId = null;
     this.hasHandledNavigationArrival = false;
-    this.routeRatingPopupVisible = false;
     this.routeRatingValue = 0;
     this.routeRatingSaving = false;
-    this.clearRouteRatingPopupDelayTimer();
+    this.routeRatingPanelVisible = false;
+    this.routeRatingSubmitted = false;
     this.stopNavigationSimulation();
     this.resetMapToClassicView();
+    this.poiPlaces.set([]);
+    this.poiMarkers.set([]);
+    this.selectedPoiIntents = [];
   }
 
   canStartNavigation(): boolean {
@@ -524,6 +546,7 @@ export class Home implements OnInit, OnDestroy {
     this.routeFeatureRequestToken++;
     const currentToken = this.routeFeatureRequestToken;
     void this.loadRouteFeatureMarkers(selectedRoute, routeFilters, currentToken);
+    void this.loadPoiPlacesForRoute(selectedRoute, currentToken);
   }
 
   selectRouteRating(value: number): void {
@@ -532,6 +555,14 @@ export class Home implements OnInit, OnDestroy {
     }
 
     this.routeRatingValue = Math.max(1, Math.min(5, value));
+  }
+
+  toggleRouteRatingPanel(): void {
+    if (!this.navigationStarted || this.routeRatingSaving || this.routeRatingSubmitted) {
+      return;
+    }
+
+    this.routeRatingPanelVisible = !this.routeRatingPanelVisible;
   }
 
   submitRouteRating(): void {
@@ -558,13 +589,13 @@ export class Home implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.routeRatingSaving = false;
-          this.routeRatingPopupVisible = false;
+          this.routeRatingSubmitted = true;
+          this.routeRatingPanelVisible = false;
           this.messageService.add({
             severity: 'success',
             summary: this.translate.instant('HOME_ROUTE_RATING_SUCCESS_TITLE'),
             detail: this.translate.instant('HOME_ROUTE_RATING_SUCCESS_MESSAGE'),
           });
-          this.cancelNavigation();
         },
         error: () => {
           this.routeRatingSaving = false;
@@ -831,10 +862,46 @@ export class Home implements OnInit, OnDestroy {
     return marker.id;
   }
 
+  trackPoiMarker(_index: number, marker: RouteFeatureMarker): string {
+    return marker.id;
+  }
+
+  trackPoiCard(_index: number, poi: PoiPlaceCard): string {
+    return poi.id;
+  }
+
+  getPoiCategoryLabel(category: string): string {
+    const normalized = `${category ?? ''}`.trim().toLowerCase();
+    if (!normalized) {
+      return this.translate.instant('HOME_POI_CATEGORY_GENERAL');
+    }
+
+    const key = `HOME_POI_CATEGORY_${normalized.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
+    const translated = this.translate.instant(key);
+    if (translated && translated !== key) {
+      return translated;
+    }
+
+    return normalized;
+  }
+
+  focusPoiOnMap(poi: PoiPlaceCard): void {
+    if (!poi?.position) {
+      return;
+    }
+
+    this.center = { ...poi.position };
+    this.mapZoom = Math.max(this.mapZoom, 16);
+    const map = this.mapRef?.googleMap;
+    if (map) {
+      map.panTo(this.center);
+      map.setZoom(this.mapZoom);
+    }
+  }
+
   ngOnDestroy(): void {
     this.persistHomeDraft();
     this.stopCameraAnimation();
-    this.clearRouteRatingPopupDelayTimer();
     this.stopNavigationSimulation();
     this.clearFastPresetHideSuggestionsTimeout();
   }
@@ -922,33 +989,7 @@ export class Home implements OnInit, OnDestroy {
 
     this.hasHandledNavigationArrival = true;
     this.navigationPanelVisible = true;
-
     this.routeRatingValue = 0;
-    // Rating popup is intentionally not opened on arrival.
-    // It is scheduled after startNavigation() for testing.
-  }
-
-  private scheduleRouteRatingPopupOpen(): void {
-    this.clearRouteRatingPopupDelayTimer();
-    this.routeRatingPopupDelayTimer = window.setTimeout(() => {
-      this.routeRatingPopupDelayTimer = null;
-      this.ngZone.run(() => {
-        if (!this.navigationStarted || this.routeRatingSaving) {
-          return;
-        }
-
-        this.routeRatingValue = 0;
-        this.routeRatingPopupVisible = true;
-        this.cdr.detectChanges();
-      });
-    }, 4000);
-  }
-
-  private clearRouteRatingPopupDelayTimer(): void {
-    if (this.routeRatingPopupDelayTimer != null) {
-      window.clearTimeout(this.routeRatingPopupDelayTimer);
-      this.routeRatingPopupDelayTimer = null;
-    }
   }
 
   private stopNavigationSimulation(): void {
@@ -1322,6 +1363,178 @@ export class Home implements OnInit, OnDestroy {
     }
 
     this.routeFeatureMarkers.set([...roadFeatureMarkers, ...evMarkers]);
+  }
+
+  private async loadPoiPlacesForRoute(
+    route: google.maps.DirectionsRoute,
+    requestToken: number,
+  ): Promise<void> {
+    if (!this.selectedPoiIntents.length) {
+      this.poiPlaces.set([]);
+      this.poiMarkers.set([]);
+      return;
+    }
+
+    const poiPlaces = await this.findPoiPlacesForRoute(route, requestToken, this.selectedPoiIntents);
+    if (requestToken !== this.routeFeatureRequestToken) {
+      return;
+    }
+
+    this.poiPlaces.set(poiPlaces);
+    this.poiMarkers.set(
+      poiPlaces.map((poi) => ({
+        id: `poi-marker-${poi.id}`,
+        position: poi.position,
+        title: poi.name,
+        options: {
+          icon: this.poiMarkerIcon,
+          zIndex: 986,
+        },
+      })),
+    );
+  }
+
+  private async findPoiPlacesForRoute(
+    route: google.maps.DirectionsRoute,
+    requestToken: number,
+    intents: PoiIntent[],
+  ): Promise<PoiPlaceCard[]> {
+    if (
+      typeof google === 'undefined' ||
+      !google.maps?.places?.PlacesService ||
+      !google.maps?.places?.PlacesServiceStatus
+    ) {
+      return [];
+    }
+
+    const sampledPoints = this.sampleRoutePoints(route.overview_path ?? [], 7);
+    if (sampledPoints.length === 0) {
+      return [];
+    }
+
+    const queries = intents.flatMap((intent) =>
+      intent.searchTerms
+        .map((term) => `${term ?? ''}`.trim())
+        .filter((term) => term.length > 0)
+        .map((term) => ({
+          category: intent.category,
+          keyword: term,
+        })),
+    );
+    if (!queries.length) {
+      return [];
+    }
+
+    const placesService = new google.maps.places.PlacesService(
+      this.mapRef?.googleMap ?? document.createElement('div'),
+    );
+    const searchResults = await Promise.all(
+      sampledPoints.flatMap((point) =>
+        queries.map((query) =>
+          this.searchNearbyPoiByKeyword(placesService, point, query.keyword).then((results) => ({
+            category: query.category,
+            anchor: point,
+            results,
+          })),
+        ),
+      ),
+    );
+
+    if (requestToken !== this.routeFeatureRequestToken) {
+      return [];
+    }
+
+    const uniquePlaces = new Map<string, PoiPlaceCard>();
+
+    searchResults.forEach((entry, bucketIndex) => {
+      entry.results.forEach((place, placeIndex) => {
+        const location = place.geometry?.location;
+        if (!location) {
+          return;
+        }
+
+        const lat = location.lat();
+        const lng = location.lng();
+        const placeId = `${place.place_id ?? ''}`.trim();
+        const fallbackKey = `${lat.toFixed(5)}|${lng.toFixed(5)}|${bucketIndex}|${placeIndex}`;
+        const uniqueKey = placeId || fallbackKey;
+        if (uniquePlaces.has(uniqueKey)) {
+          return;
+        }
+
+        const name = `${place.name ?? ''}`.trim();
+        if (!name) {
+          return;
+        }
+
+        const card: PoiPlaceCard = {
+          id: uniqueKey,
+          placeId,
+          name,
+          address: `${place.vicinity ?? place.formatted_address ?? ''}`.trim(),
+          rating: Number.isFinite(place.rating as number) ? Number(place.rating) : null,
+          userRatingsTotal: Number(place.user_ratings_total ?? 0),
+          photoUrl: this.extractPlacePhotoUrl(place),
+          category: `${entry.category ?? ''}`.trim().toLowerCase(),
+          position: { lat, lng },
+          distanceFromRouteMeters: this.getApproxDistanceMeters(entry.anchor, { lat, lng }),
+        };
+
+        uniquePlaces.set(uniqueKey, card);
+      });
+    });
+
+    return Array.from(uniquePlaces.values())
+      .sort((a, b) => {
+        const aRating = a.rating ?? 0;
+        const bRating = b.rating ?? 0;
+        if (aRating !== bRating) {
+          return bRating - aRating;
+        }
+
+        if (a.userRatingsTotal !== b.userRatingsTotal) {
+          return b.userRatingsTotal - a.userRatingsTotal;
+        }
+
+        return a.distanceFromRouteMeters - b.distanceFromRouteMeters;
+      })
+      .slice(0, 10);
+  }
+
+  private searchNearbyPoiByKeyword(
+    placesService: google.maps.places.PlacesService,
+    point: google.maps.LatLngLiteral,
+    keyword: string,
+  ): Promise<google.maps.places.PlaceResult[]> {
+    const request: google.maps.places.PlaceSearchRequest = {
+      location: point,
+      radius: 1800,
+      keyword,
+    };
+
+    return new Promise((resolve) => {
+      placesService.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          resolve(results ?? []);
+          return;
+        }
+
+        resolve([]);
+      });
+    });
+  }
+
+  private extractPlacePhotoUrl(place: google.maps.places.PlaceResult): string | null {
+    const photo = place.photos?.[0];
+    if (!photo) {
+      return null;
+    }
+
+    try {
+      return photo.getUrl({ maxWidth: 320, maxHeight: 220 });
+    } catch {
+      return null;
+    }
   }
 
   private buildRoadFeatureMarkers(

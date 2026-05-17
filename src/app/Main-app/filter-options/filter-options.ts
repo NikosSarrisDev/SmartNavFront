@@ -513,6 +513,9 @@ export class FilterOptions implements OnInit, OnDestroy {
       input: this.buildAutocompleteQuery(stationGroup),
       sessionToken: this.getAutocompleteSessionToken(),
       types: ['address'],
+      componentRestrictions: { country: 'gr' },
+      language: 'el',
+      region: 'gr',
     };
 
     this.autocompleteService.getPlacePredictions(request, (predictions, status) => {
@@ -563,6 +566,21 @@ export class FilterOptions implements OnInit, OnDestroy {
     }, 120);
   }
 
+  onStationStreetEnter(index: number, event: Event): void {
+    const keyEvent = event as KeyboardEvent;
+    if (keyEvent.key !== 'Enter') {
+      return;
+    }
+
+    const suggestions = this.getStationSuggestions(index);
+    if (!suggestions.length) {
+      return;
+    }
+
+    keyEvent.preventDefault();
+    this.selectStationSuggestion(index, suggestions[0], keyEvent);
+  }
+
   getStationSuggestions(index: number): StationAddressSuggestion[] {
     return this.stationSuggestions()[index] ?? [];
   }
@@ -574,9 +592,9 @@ export class FilterOptions implements OnInit, OnDestroy {
   selectStationSuggestion(
     index: number,
     suggestion: StationAddressSuggestion,
-    event: MouseEvent,
+    event?: MouseEvent | KeyboardEvent,
   ): void {
-    event.preventDefault();
+    event?.preventDefault();
     this.clearHideSuggestionsTimeout();
 
     const stationGroup = this.getStationGroup(index);
@@ -589,6 +607,8 @@ export class FilterOptions implements OnInit, OnDestroy {
       placeId: suggestion.placeId,
       fields: ['address_components', 'formatted_address', 'name'],
       sessionToken: this.autocompleteSessionToken ?? undefined,
+      language: 'el',
+      region: 'gr',
     };
 
     this.placeDetailsService.getDetails(request, (place, status) => {
