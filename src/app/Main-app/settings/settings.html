@@ -56,10 +56,6 @@
           <option [ngValue]="3">3</option>
         </select>
       </div>
-      <div class="field inline">
-        <label for="history-personal">{{ 'SETTINGS_AI_PERSONALIZATION' | translate }}</label>
-        <input id="history-personal" type="checkbox" formControlName="useHistoryPersonalization" />
-      </div>
     </section>
 
     <section class="settings-card">
@@ -110,43 +106,6 @@
         <input id="high-contrast" type="checkbox" formControlName="highContrast" />
       </div>
     </section>
-
-    <section class="settings-card settings-card-wide">
-      <h2>{{ 'SETTINGS_PRIVACY_TITLE' | translate }}</h2>
-      <p>{{ 'SETTINGS_PRIVACY_WHAT_STORED' | translate }}</p>
-      <div class="field inline">
-        <label for="store-trips">{{ 'SETTINGS_STORE_TRIPS' | translate }}</label>
-        <input id="store-trips" type="checkbox" formControlName="storeTrips" />
-      </div>
-      <div class="field inline">
-        <label for="store-ratings">{{ 'SETTINGS_STORE_RATINGS' | translate }}</label>
-        <input id="store-ratings" type="checkbox" formControlName="storeRatings" />
-      </div>
-      <div class="field inline">
-        <label for="store-stations">{{ 'SETTINGS_STORE_STATIONS' | translate }}</label>
-        <input id="store-stations" type="checkbox" formControlName="storeStations" />
-      </div>
-      <div class="field inline">
-        <label for="consent-location">{{ 'SETTINGS_CONSENT_LOCATION' | translate }}</label>
-        <input id="consent-location" type="checkbox" formControlName="consentLocationHistory" />
-      </div>
-      <div class="field inline">
-        <label for="consent-ai">{{ 'SETTINGS_CONSENT_AI' | translate }}</label>
-        <input id="consent-ai" type="checkbox" formControlName="consentAiTraining" />
-      </div>
-
-      <div class="privacy-actions">
-        <button type="button" class="secondary" (click)="exportData()" [disabled]="isExporting">
-          {{ 'SETTINGS_EXPORT_DATA' | translate }}
-        </button>
-        <button type="button" class="danger" (click)="requestDeleteHistory()" [disabled]="isDeletingHistory">
-          {{ 'SETTINGS_DELETE_HISTORY' | translate }}
-        </button>
-        <button type="button" class="danger solid" (click)="requestDeleteAccount()" [disabled]="isDeletingAccount">
-          {{ 'SETTINGS_DELETE_ACCOUNT' | translate }}
-        </button>
-      </div>
-    </section>
   </form>
 
   <footer class="settings-footer">
@@ -155,20 +114,3 @@
     </button>
   </footer>
 </div>
-
-@if (confirmVisible) {
-  <div class="confirm-overlay" role="dialog" aria-modal="true">
-    <section class="confirm-card">
-      <h3>{{ 'SETTINGS_CONFIRM_TITLE' | translate }}</h3>
-      <p>{{ confirmMessageKey | translate }}</p>
-      <div class="confirm-actions">
-        <button type="button" class="confirm-yes" (click)="onConfirm(true)">
-          {{ 'SETTINGS_CONFIRM_YES' | translate }}
-        </button>
-        <button type="button" class="confirm-no" (click)="onConfirm(false)">
-          {{ 'SETTINGS_CONFIRM_NO' | translate }}
-        </button>
-      </div>
-    </section>
-  </div>
-}

@@ -9,6 +9,7 @@ import { MenuItem } from 'primeng/api';
 import { IsLoaderFullCompEnabled } from '../../is-loader-full-comp-enabled';
 import { NgIf } from '@angular/common';
 import { FilterOptions } from '../filter-options/filter-options';
+import { UiSettingsService } from '../../ui-settings.service';
 
 @Component({
   selector: 'app-full',
@@ -23,10 +24,12 @@ export class Full implements OnInit {
   constructor(
     private translate: TranslateService,
     private isLoaderFullCompEnabled: IsLoaderFullCompEnabled,
+    private uiSettings: UiSettingsService,
   ) {}
 
   ngOnInit() {
     this.translate.use('el');
+    this.uiSettings.bootstrapFromCurrentUser();
     this.languages = [
       {
         label: 'Γλώσσα - Language',

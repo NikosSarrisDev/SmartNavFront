@@ -32,8 +32,23 @@ export class Admin implements OnInit {
   users = signal<any[]>([]);
   roles = signal<any[]>([]);
   auditLogs = signal<any[]>([]);
+  distanceByVehicleChartData = signal<any>(null);
   vehicleChartData = signal<any>(null);
   stationChartData = signal<any>(null);
+  distanceByVehicleChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
   vehicleChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -337,6 +352,22 @@ export class Admin implements OnInit {
     });
   }
 
+  private bindDistanceByVehicleChart(distanceByVehicle: any[]): void {
+    this.distanceByVehicleChartData.set({
+      labels: distanceByVehicle.map((x) => this.resolveVehicleLabel(x)),
+      datasets: [
+        {
+          label: this.translate.instant('ADMIN_CHART_DISTANCE_BY_VEHICLE_DATASET'),
+          data: distanceByVehicle.map((x) => Number(x.totalDistanceKm ?? 0)),
+          backgroundColor: ['#0369a1', '#0ea5e9', '#34d399', '#f59e0b', '#a78bfa', '#f43f5e'],
+          borderRadius: 8,
+          barThickness: 16,
+          maxBarThickness: 18,
+        },
+      ],
+    });
+  }
+
   private resolveVehicleLabel(vehicle: any): string {
     if (vehicle?.vehicleId == null) {
       return this.translate.instant('ADMIN_VEHICLE_ANY');
@@ -407,6 +438,7 @@ export class Admin implements OnInit {
       this.currentAnalyticsUserId.set(0);
       this.tripsForSelectedUser.set([]);
       this.selectedTripId.set(0);
+      this.distanceByVehicleChartData.set(null);
       this.vehicleChartData.set(null);
       this.stationChartData.set(null);
       return;
@@ -424,6 +456,7 @@ export class Admin implements OnInit {
     }
     this.selectedTripId.set(selectedTripId);
 
+    this.bindDistanceByVehicleChart(snapshot.distanceByVehicle ?? []);
     this.bindVehicleChart(snapshot.vehicleUsage ?? []);
     this.bindStationChart(trips, selectedTripId);
   }
@@ -462,6 +495,7 @@ export class Admin implements OnInit {
           this.currentAnalyticsUserId.set(0);
           this.tripsForSelectedUser.set([]);
           this.selectedTripId.set(0);
+          this.distanceByVehicleChartData.set(null);
           this.vehicleChartData.set(null);
           this.stationChartData.set(null);
         },

@@ -56,6 +56,7 @@ type UserPresetOption = {
 type StoredFilteredPreferenceResponse = {
   selectedPreferenceCode?: string | null;
   selectedPreferencePrompt?: string | null;
+  moodCode?: string | null;
   vehicleSize?: string | null;
   avoidTolls?: boolean;
   avoidHighways?: boolean;
@@ -307,6 +308,7 @@ export class FilterOptions implements OnInit, OnDestroy {
       routeFilters,
       vehicleSize,
       selectedPreferenceCode,
+      selectedMoodCode,
       selectedRoutePrompt,
     );
 
@@ -969,6 +971,7 @@ export class FilterOptions implements OnInit, OnDestroy {
     routeFilters: JourneyRouteFilters,
     vehicleSize: VehicleSize | null,
     selectedPreferenceCode: string,
+    selectedMoodCode: string,
     selectedPreferencePrompt: string,
   ): void {
     const userId = Number(this.auth.currentUser()?.data?.id);
@@ -980,6 +983,7 @@ export class FilterOptions implements OnInit, OnDestroy {
       userID: userId,
       selectedPreferenceCode,
       selectedPreferencePrompt,
+      moodCode: selectedMoodCode || null,
       vehicleSize: vehicleSize ?? null,
       avoidTolls: routeFilters.avoidTolls,
       avoidHighways: routeFilters.avoidHighways,
@@ -1147,7 +1151,12 @@ export class FilterOptions implements OnInit, OnDestroy {
   private applyStoredNonStationFilters(stored: StoredFilteredPreferenceResponse): void {
     const selectedPreferenceCode = `${stored.selectedPreferenceCode ?? ''}`.trim().toLowerCase();
     const selectedPreferencePrompt = `${stored.selectedPreferencePrompt ?? ''}`.trim().toLowerCase();
+    const storedMoodCode = `${stored.moodCode ?? ''}`.trim().toLowerCase();
     const matchedMoodCode = (() => {
+      if (storedMoodCode.length > 0) {
+        return storedMoodCode;
+      }
+
       if (!selectedPreferencePrompt) {
         return '';
       }

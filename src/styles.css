@@ -40,3 +40,44 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+body.sn-theme-dark {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+body.sn-theme-light {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+body.sn-large-text {
+  font-size: 18px;
+}
+
+body.sn-large-text input,
+body.sn-large-text select,
+body.sn-large-text button,
+body.sn-large-text label,
+body.sn-large-text p,
+body.sn-large-text span,
+body.sn-large-text td,
+body.sn-large-text th,
+body.sn-large-text h1,
+body.sn-large-text h2,
+body.sn-large-text h3,
+body.sn-large-text h4 {
+  font-size: 1.04em;
+}
+
+body.sn-high-contrast {
+  filter: contrast(1.15) saturate(1.05);
+}
+
+body.sn-chip-compact .applied-filter-chip,
+body.sn-chip-compact .preference-chip,
+body.sn-chip-compact .vehicle-size-option,
+body.sn-chip-compact .toggle-option {
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+}

@@ -26,6 +26,7 @@ import { Toast } from 'primeng/toast';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { UiSettingsService } from '../../ui-settings.service';
 
 type RouteFeatureMarkerType = 'toll' | 'highway' | 'ferry' | 'ev';
 type RouteFeatureMarker = {
@@ -81,6 +82,12 @@ type PoiPlaceCard = {
   category: string;
   position: google.maps.LatLngLiteral;
   distanceFromRouteMeters: number;
+};
+type UserPresetMapMarker = {
+  id: string;
+  position: google.maps.LatLngLiteral;
+  title: string;
+  options: google.maps.MarkerOptions;
 };
 
 @Component({
@@ -206,9 +213,11 @@ export class Home implements OnInit, OnDestroy {
   readonly routeFeatureMarkers = signal<RouteFeatureMarker[]>([]);
   readonly poiMarkers = signal<RouteFeatureMarker[]>([]);
   readonly poiPlaces = signal<PoiPlaceCard[]>([]);
+  readonly userPresetMarkers = signal<UserPresetMapMarker[]>([]);
   private readonly vehicleIdByCode = new Map<string, number>();
   private readonly preferencePromptByCode = new Map<string, string>();
   private readonly preferenceTranslationFieldByCode = new Map<string, string>();
+  private readonly moodTranslationFieldByCode = new Map<string, string>();
   private routeFeatureRequestToken = 0;
   private selectedPoiIntents: PoiIntent[] = [];
   private hasHandledNavigationArrival = false;
@@ -246,6 +255,7 @@ export class Home implements OnInit, OnDestroy {
     private translate: TranslateService,
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
+    private uiSettings: UiSettingsService,
   ) {
     effect(() => {
       this.navService.homeDraft();
@@ -260,6 +270,11 @@ export class Home implements OnInit, OnDestroy {
       }
 
       this.shouldShowAppliedPreferenceChip = true;
+    });
+
+    effect(() => {
+      const currentSettings = this.uiSettings.settings();
+      this.applyMapSettings(currentSettings.mapStyle, currentSettings.theme);
     });
   }
 
@@ -284,6 +299,8 @@ export class Home implements OnInit, OnDestroy {
     this.getActivePreference(this.currentUserId);
     this.loadVehicleLookup();
     this.loadPreferenceLookup();
+    this.loadMoodLookup();
+    this.loadUserPresetMarkers();
     this.initializeFastPresetAutocompleteServices();
   }
 
@@ -393,7 +410,8 @@ export class Home implements OnInit, OnDestroy {
       tap((data) => {
         if (data && data.explanation) {
           this.latestDirections = data.result;
-          this.explanation = data.explanation;
+          const showReason = this.uiSettings.settings().alwaysShowRouteExplanation;
+          this.explanation = showReason ? data.explanation : '';
           this.selectedPoiIntents = data.poiIntents ?? [];
           this.buildRouteChoiceOptions(data.result);
           this.selectRouteChoice(0);
@@ -651,6 +669,9 @@ export class Home implements OnInit, OnDestroy {
       input: this.buildFastPresetAutocompleteQuery(),
       sessionToken: this.getFastPresetAutocompleteSessionToken(),
       types: ['address'],
+      componentRestrictions: { country: 'gr' },
+      language: 'el',
+      region: 'gr',
     };
 
     this.fastPresetAutocompleteService.getPlacePredictions(request, (predictions, status) => {
@@ -715,6 +736,8 @@ export class Home implements OnInit, OnDestroy {
       placeId: suggestion.placeId,
       fields: ['address_components', 'formatted_address', 'name'],
       sessionToken: this.fastPresetAutocompleteSessionToken ?? undefined,
+      language: 'el',
+      region: 'gr',
     };
 
     this.fastPresetPlaceDetailsService.getDetails(request, (place, status) => {
@@ -797,6 +820,15 @@ export class Home implements OnInit, OnDestroy {
         chips.push(preferenceLabel);
       }
     }
+    const moodCode = `${this.navService.getHomeDraftSnapshot().selectedMoodCode ?? this.selectedMoodCode ?? ''}`
+      .trim()
+      .toLowerCase();
+    if (moodCode) {
+      const moodChipLabel = this.getMoodChipLabel(moodCode);
+      if (moodChipLabel) {
+        chips.push(moodChipLabel);
+      }
+    }
 
     const stations = this.navService.getJourneyFiltersSnapshot();
     if (stations.length > 0) {
@@ -863,6 +895,10 @@ export class Home implements OnInit, OnDestroy {
   }
 
   trackPoiMarker(_index: number, marker: RouteFeatureMarker): string {
+    return marker.id;
+  }
+
+  trackUserPresetMarker(_index: number, marker: UserPresetMapMarker): string {
     return marker.id;
   }
 
@@ -1282,7 +1318,11 @@ export class Home implements OnInit, OnDestroy {
 
   private buildRouteChoiceOptions(directions: google.maps.DirectionsResult): void {
     const routes = directions.routes ?? [];
-    const limitedRoutes = routes.slice(0, 3);
+    const settingsRoutesCount = Number(this.uiSettings.settings().alternativeRoutesCount ?? 3);
+    const maxRoutes = Number.isInteger(settingsRoutesCount)
+      ? Math.max(1, Math.min(3, settingsRoutesCount))
+      : 3;
+    const limitedRoutes = routes.slice(0, maxRoutes);
 
     this.routeChoiceOptions = limitedRoutes
       .map((route, index) => {
@@ -1947,6 +1987,7 @@ export class Home implements OnInit, OnDestroy {
           summary: this.translate.instant('HOME_FAST_PRESETS_SUCCESS_TITLE'),
           detail: this.translate.instant('HOME_FAST_PRESETS_SUCCESS_MESSAGE'),
         });
+        void this.loadUserPresetMarkers();
         this.closeFastPresetsModal();
       },
       error: () => {
@@ -2097,6 +2138,191 @@ export class Home implements OnInit, OnDestroy {
         this.preferenceTranslationFieldByCode.clear();
       },
     });
+  }
+
+  private loadMoodLookup(): void {
+    this.dataService.getMoods({}).subscribe({
+      next: (response: any) => {
+        this.moodTranslationFieldByCode.clear();
+
+        const moods = (response?.data ?? [])
+          .map((item: any) => ({
+            code: `${item?.code ?? item?.Code ?? ''}`.trim().toLowerCase(),
+            translationField: `${item?.translationField ?? item?.TranslationField ?? ''}`.trim(),
+          }))
+          .filter((item: { code: string }) => item.code.length > 0);
+
+        moods.forEach((item: { code: string; translationField: string }) => {
+          if (item.translationField.length > 0) {
+            this.moodTranslationFieldByCode.set(item.code, item.translationField);
+          }
+        });
+      },
+      error: () => {
+        this.moodTranslationFieldByCode.clear();
+      },
+    });
+  }
+
+  private async loadUserPresetMarkers(): Promise<void> {
+    const userId = Number(this.currentUserId);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      this.userPresetMarkers.set([]);
+      return;
+    }
+
+    this.dataService.getPresetsByUser({ userId }).subscribe({
+      next: async (response: any) => {
+        const presets = (response?.data ?? []) as any[];
+        const markers = await this.resolvePresetMarkers(presets);
+        this.userPresetMarkers.set(markers);
+      },
+      error: () => {
+        this.userPresetMarkers.set([]);
+      },
+    });
+  }
+
+  private async resolvePresetMarkers(rawPresets: any[]): Promise<UserPresetMapMarker[]> {
+    if (!Array.isArray(rawPresets) || rawPresets.length === 0) {
+      return [];
+    }
+
+    const tasks = rawPresets.map(async (preset: any, index: number) => {
+      const address = this.buildPresetAddress(preset);
+      if (!address) {
+        return null;
+      }
+
+      const position = await this.geocodePresetAddress(address);
+      if (!position) {
+        return null;
+      }
+
+      const iconData = `${preset?.iconData ?? preset?.IconData ?? ''}`.trim();
+      const iconUrl = this.toPresetIconDataUrl(iconData);
+      if (!iconUrl) {
+        return null;
+      }
+      const translationField = `${preset?.translationField ?? preset?.TranslationField ?? ''}`.trim();
+      const translated = translationField ? this.translate.instant(translationField) : '';
+      const baseLabel =
+        translated && translated !== translationField
+          ? translated
+          : `${preset?.street ?? ''}`.trim() || this.translate.instant('HOME_FAST_PRESETS_BUTTON');
+
+      const marker: UserPresetMapMarker = {
+        id: `preset-${preset?.id ?? preset?.Id ?? index}`,
+        position,
+        title: `${baseLabel}: ${address}`,
+        options: {
+          zIndex: 980,
+          icon: {
+            url: iconUrl,
+            scaledSize: new google.maps.Size(34, 34),
+            anchor: new google.maps.Point(17, 17),
+          },
+        },
+      };
+      return marker;
+    });
+
+    const resolved = await Promise.all(tasks);
+    return resolved.filter((item: UserPresetMapMarker | null): item is UserPresetMapMarker => item != null);
+  }
+
+  private buildPresetAddress(preset: any): string {
+    const street = `${preset?.street ?? preset?.Street ?? ''}`.trim();
+    const number = `${preset?.number ?? preset?.Number ?? ''}`.trim();
+    const cityArea = `${preset?.cityArea ?? preset?.CityArea ?? ''}`.trim();
+    const postalCode = `${preset?.postalCode ?? preset?.PostalCode ?? ''}`.trim();
+    const address = [street, number, cityArea, postalCode].filter((value) => value.length > 0).join(', ');
+    return address.length > 0 ? `${address}, Greece` : '';
+  }
+
+  private geocodePresetAddress(address: string): Promise<google.maps.LatLngLiteral | null> {
+    if (typeof google === 'undefined' || !google.maps?.Geocoder) {
+      return Promise.resolve(null);
+    }
+
+    const geocoder = new google.maps.Geocoder();
+    return new Promise((resolve) => {
+      geocoder.geocode({ address, region: 'gr' }, (results, status) => {
+        if (status !== google.maps.GeocoderStatus.OK || !results || results.length === 0) {
+          resolve(null);
+          return;
+        }
+
+        const location = results[0].geometry?.location;
+        if (!location) {
+          resolve(null);
+          return;
+        }
+
+        resolve({ lat: location.lat(), lng: location.lng() });
+      });
+    });
+  }
+
+  private toPresetIconDataUrl(iconData: string): string | null {
+    if (!iconData) {
+      return null;
+    }
+
+    const normalizedSvg = iconData
+      .replace(/fill="currentColor"/g, 'fill="#0ea5e9"')
+      .replace(/stroke="currentColor"/g, 'stroke="#0ea5e9"')
+      .trim();
+
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(normalizedSvg)}`;
+  }
+
+  private getMoodChipLabel(code: string): string {
+    const normalized = `${code ?? ''}`.trim().toLowerCase();
+    if (!normalized) {
+      return '';
+    }
+
+    const translationField = `${this.moodTranslationFieldByCode.get(normalized) ?? ''}`.trim();
+    if (translationField.length > 0) {
+      const translated = this.translate.instant(translationField);
+      if (translated && translated !== translationField) {
+        return translated;
+      }
+      return translationField;
+    }
+
+    return normalized;
+  }
+
+  private applyMapSettings(mapStyle: string, theme: string): void {
+    const normalizedStyle = `${mapStyle ?? 'standard'}`.trim().toLowerCase();
+    const normalizedTheme = `${theme ?? 'system'}`.trim().toLowerCase();
+
+    const mapTypeId =
+      normalizedStyle === 'satellite'
+        ? google.maps.MapTypeId.SATELLITE
+        : normalizedStyle === 'terrain'
+          ? google.maps.MapTypeId.TERRAIN
+          : google.maps.MapTypeId.ROADMAP;
+
+    const darkMapStyles: google.maps.MapTypeStyle[] = [
+      { elementType: 'geometry', stylers: [{ color: '#0f172a' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#cbd5e1' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#1e293b' }] },
+      { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#334155' }] },
+      { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0c4a6e' }] },
+      { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#1e293b' }] },
+    ];
+
+    const styles =
+      normalizedStyle === 'standard' && normalizedTheme === 'dark' ? darkMapStyles : undefined;
+
+    this.mapOptions = {
+      ...this.mapOptions,
+      mapTypeId,
+      styles,
+    };
   }
 
   private getSelectedPreferenceCode(): string {

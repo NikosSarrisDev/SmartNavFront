@@ -47,11 +47,11 @@
         </form>
         <div class="stats-grid">
           <div class="stat-item">
-            <span class="value">{{ totalTrips }}</span>
+            <span class="value">{{ totalTrips > 0 ? totalTrips : '-' }}</span>
             <span class="label">{{ 'STATS_TRIPS' | translate }}</span>
           </div>
           <div class="stat-item">
-            <span class="value">{{ totalDistance }}km</span>
+            <span class="value">{{ totalDistance > 0 ? totalDistance + 'km' : '-' }}</span>
             <span class="label">{{ 'STATS_DISTANCE' | translate }}</span>
           </div>
         </div>

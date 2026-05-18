@@ -1,4 +1,4 @@
-<div class="admin-page">
+﻿<div class="admin-page">
   <div class="admin-header">
     <h2>{{ 'ADMIN_PANEL_TITLE' | translate }}</h2>
     <div class="admin-header-actions">
@@ -168,21 +168,46 @@
     <section class="card">
       <div class="chart-header">
         <div>
+          <h3>{{ 'ADMIN_CHART_DISTANCE_BY_VEHICLE_TITLE' | translate }}</h3>
+          <p class="chart-user-label">
+            {{ 'ADMIN_USER_LABEL' | translate }}: {{ getCurrentAnalyticsUserName() }}
+          </p>
+        </div>
+        <div class="carousel-actions">
+          <button type="button" class="btn-secondary carousel-btn" (click)="previousAnalyticsUser()">
+            <span class="carousel-arrow" aria-hidden="true">&#9664;</span>
+          </button>
+          <button type="button" class="btn-secondary carousel-btn" (click)="nextAnalyticsUser()">
+            <span class="carousel-arrow" aria-hidden="true">&#9654;</span>
+          </button>
+        </div>
+      </div>
+      @if (distanceByVehicleChartData()) {
+        <p-chart
+          type="bar"
+          [data]="distanceByVehicleChartData()"
+          [options]="distanceByVehicleChartOptions"
+          class="chart-short"
+        ></p-chart>
+      } @else {
+        <p>{{ 'ADMIN_CHART_EMPTY' | translate }}</p>
+      }
+    </section>
+
+    <section class="card">
+      <div class="chart-header">
+        <div>
           <h3>{{ 'ADMIN_CHART_VEHICLE_TITLE' | translate }}</h3>
           <p class="chart-user-label">
             {{ 'ADMIN_USER_LABEL' | translate }}: {{ getCurrentAnalyticsUserName() }}
           </p>
         </div>
         <div class="carousel-actions">
-          <button
-            type="button"
-            class="btn-secondary carousel-btn"
-            (click)="previousAnalyticsUser()"
-          >
-            <span class="carousel-arrow" aria-hidden="true">‹</span>
+          <button type="button" class="btn-secondary carousel-btn" (click)="previousAnalyticsUser()">
+            <span class="carousel-arrow" aria-hidden="true">&#9664;</span>
           </button>
           <button type="button" class="btn-secondary carousel-btn" (click)="nextAnalyticsUser()">
-            <span class="carousel-arrow" aria-hidden="true">›</span>
+            <span class="carousel-arrow" aria-hidden="true">&#9654;</span>
           </button>
         </div>
       </div>
@@ -208,15 +233,11 @@
           </p>
         </div>
         <div class="carousel-actions">
-          <button
-            type="button"
-            class="btn-secondary carousel-btn"
-            (click)="previousAnalyticsUser()"
-          >
-            <span class="carousel-arrow" aria-hidden="true">‹</span>
+          <button type="button" class="btn-secondary carousel-btn" (click)="previousAnalyticsUser()">
+            <span class="carousel-arrow" aria-hidden="true">&#9664;</span>
           </button>
           <button type="button" class="btn-secondary carousel-btn" (click)="nextAnalyticsUser()">
-            <span class="carousel-arrow" aria-hidden="true">›</span>
+            <span class="carousel-arrow" aria-hidden="true">&#9654;</span>
           </button>
         </div>
       </div>
@@ -265,3 +286,5 @@
     }
   }
 </div>
+
+

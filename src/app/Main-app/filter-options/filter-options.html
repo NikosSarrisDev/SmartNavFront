@@ -1,4 +1,4 @@
-<div class="filter-page" [class.modal-embedded]="inModal">
+﻿<div class="filter-page" [class.modal-embedded]="inModal">
   <section class="filter-card">
     @if (!inModal) {
       <div class="filter-topbar">
@@ -25,7 +25,7 @@
       </div>
       <div class="station-actions">
         <button type="button" class="apply-saved-button" (click)="reopenStoredPreferencePrompts()">
-          <span class="ai-stars-icon" aria-hidden="true">✦</span>
+          <span class="ai-stars-icon" aria-hidden="true"><i class="pi pi-star-fill"></i></span>
           <span>{{ 'FILTER_APPLY_SAVED_PREFERENCES' | translate }}</span>
         </button>
         @if (stations.length > 0) {
@@ -175,7 +175,7 @@
               [class.active]="isPreferenceSelected('fastest')"
               (click)="selectPreference('fastest')"
             >
-              <span class="preference-icon">⚡</span>
+              <span class="preference-icon"><i class="pi pi-bolt"></i></span>
               <span>{{ 'NAV_CHIP_FASTEST' | translate }}</span>
             </button>
           } @else {
@@ -360,3 +360,4 @@
     </div>
   }
 </div>
+

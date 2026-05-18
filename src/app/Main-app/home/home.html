@@ -143,7 +143,7 @@
         <span>{{ 'HOME_FAST_PRESETS_BUTTON' | translate }}</span>
       </button>
 
-      <section class="poi-panel" *ngIf="!navigationStarted && poiPlaces().length > 0">
+      <section class="poi-panel" *ngIf="poiPlaces().length > 0">
         <header class="poi-panel-head">
           <strong>{{ 'HOME_POI_PANEL_TITLE' | translate }}</strong>
           <small>{{ 'HOME_POI_PANEL_SUBTITLE' | translate }}</small>
@@ -238,6 +238,12 @@
           *ngIf="navigationStarted && navigationArrow"
           [position]="navigationArrow"
           [options]="navigationArrowOptions"
+        ></map-marker>
+        <map-marker
+          *ngFor="let presetMarker of userPresetMarkers(); trackBy: trackUserPresetMarker"
+          [position]="presetMarker.position"
+          [options]="presetMarker.options"
+          [title]="presetMarker.title"
         ></map-marker>
         <map-marker
           *ngFor="let featureMarker of routeFeatureMarkers(); trackBy: trackRouteFeatureMarker"
