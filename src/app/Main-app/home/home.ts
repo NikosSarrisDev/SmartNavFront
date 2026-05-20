@@ -236,6 +236,7 @@ export class Home implements OnInit, OnDestroy {
   fastPresetForm: FastPresetFormState = this.createInitialFastPresetForm();
   private fastPresetAutocompleteService: google.maps.places.AutocompleteService | null = null;
   private fastPresetPlaceDetailsService: google.maps.places.PlacesService | null = null;
+  private presetPlacesService: google.maps.places.PlacesService | null = null;
   private fastPresetAutocompleteSessionToken: google.maps.places.AutocompleteSessionToken | null =
     null;
   private fastPresetAutocompleteRequestVersion = 0;
@@ -245,6 +246,8 @@ export class Home implements OnInit, OnDestroy {
   private hasSeenHomeDraftEffectInitialRun = false;
   private isPersistingHomeDraftLocally = false;
   private shouldShowAppliedPreferenceChip = false;
+  private isMapInitialized = false;
+  private presetMarkersLoading = false;
 
   constructor(
     public navService: NavigationService,
@@ -319,6 +322,12 @@ export class Home implements OnInit, OnDestroy {
 
   navigateToUserDashboard() {
     this.router.navigate(['/user']);
+  }
+
+  onMapInitialized(_map: google.maps.Map): void {
+    this.isMapInitialized = true;
+    this.presetPlacesService = new google.maps.places.PlacesService(_map);
+    void this.loadUserPresetMarkers();
   }
 
   onSearchTextChange(value: string): void {
@@ -2165,20 +2174,35 @@ export class Home implements OnInit, OnDestroy {
   }
 
   private async loadUserPresetMarkers(): Promise<void> {
+    if (this.presetMarkersLoading) {
+      return;
+    }
+
+    // Wait until map/google API is ready, otherwise geocoding returns empty.
+    if (!this.isMapInitialized && (typeof google === 'undefined' || !google.maps?.Geocoder)) {
+      return;
+    }
+
     const userId = Number(this.currentUserId);
     if (!Number.isInteger(userId) || userId <= 0) {
       this.userPresetMarkers.set([]);
       return;
     }
 
+    this.presetMarkersLoading = true;
     this.dataService.getPresetsByUser({ userId }).subscribe({
       next: async (response: any) => {
-        const presets = (response?.data ?? []) as any[];
-        const markers = await this.resolvePresetMarkers(presets);
-        this.userPresetMarkers.set(markers);
+        try {
+          const presets = (response?.data ?? []) as any[];
+          const markers = await this.resolvePresetMarkers(presets);
+          this.userPresetMarkers.set(markers);
+        } finally {
+          this.presetMarkersLoading = false;
+        }
       },
       error: () => {
         this.userPresetMarkers.set([]);
+        this.presetMarkersLoading = false;
       },
     });
   }
@@ -2200,8 +2224,8 @@ export class Home implements OnInit, OnDestroy {
       }
 
       const iconData = `${preset?.iconData ?? preset?.IconData ?? ''}`.trim();
-      const iconUrl = this.toPresetIconDataUrl(iconData);
-      if (!iconUrl) {
+      const markerIcon = this.toPresetMarkerIcon(iconData);
+      if (!markerIcon) {
         return null;
       }
       const translationField = `${preset?.translationField ?? preset?.TranslationField ?? ''}`.trim();
@@ -2217,11 +2241,7 @@ export class Home implements OnInit, OnDestroy {
         title: `${baseLabel}: ${address}`,
         options: {
           zIndex: 980,
-          icon: {
-            url: iconUrl,
-            scaledSize: new google.maps.Size(34, 34),
-            anchor: new google.maps.Point(17, 17),
-          },
+          icon: markerIcon,
         },
       };
       return marker;
@@ -2248,33 +2268,82 @@ export class Home implements OnInit, OnDestroy {
     const geocoder = new google.maps.Geocoder();
     return new Promise((resolve) => {
       geocoder.geocode({ address, region: 'gr' }, (results, status) => {
-        if (status !== google.maps.GeocoderStatus.OK || !results || results.length === 0) {
+        if (status === google.maps.GeocoderStatus.OK && results && results.length > 0) {
+          const location = results[0].geometry?.location;
+          if (location) {
+            resolve({ lat: location.lat(), lng: location.lng() });
+            return;
+          }
+        }
+
+        const placesService = this.presetPlacesService;
+        if (!placesService || !google.maps?.places?.PlacesServiceStatus) {
           resolve(null);
           return;
         }
 
-        const location = results[0].geometry?.location;
-        if (!location) {
-          resolve(null);
-          return;
-        }
+        const request: google.maps.places.FindPlaceFromQueryRequest = {
+          query: address,
+          fields: ['name', 'geometry'],
+          language: 'el',
+        };
 
-        resolve({ lat: location.lat(), lng: location.lng() });
+        placesService.findPlaceFromQuery(request, (placeResults, placeStatus) => {
+          if (
+            placeStatus !== google.maps.places.PlacesServiceStatus.OK ||
+            !placeResults ||
+            placeResults.length === 0
+          ) {
+            resolve(null);
+            return;
+          }
+
+          const location = placeResults[0].geometry?.location;
+          if (!location) {
+            resolve(null);
+            return;
+          }
+
+          resolve({ lat: location.lat(), lng: location.lng() });
+        });
       });
     });
   }
 
-  private toPresetIconDataUrl(iconData: string): string | null {
+  private toPresetMarkerIcon(iconData: string): google.maps.Icon | google.maps.Symbol | null {
     if (!iconData) {
       return null;
     }
 
+    const pathMatch =
+      iconData.match(/<path[^>]*\sd="([^"]+)"/i) ?? iconData.match(/<path[^>]*\sd='([^']+)'/i);
+    const svgPath = `${pathMatch?.[1] ?? ''}`.trim();
+    if (svgPath.length > 0) {
+      return {
+        path: svgPath,
+        fillColor: '#0ea5e9',
+        fillOpacity: 1,
+        strokeColor: '#0369a1',
+        strokeWeight: 1,
+        scale: 1.35,
+        anchor: new google.maps.Point(12, 12),
+      };
+    }
+
     const normalizedSvg = iconData
       .replace(/fill="currentColor"/g, 'fill="#0ea5e9"')
-      .replace(/stroke="currentColor"/g, 'stroke="#0ea5e9"')
+      .replace(/stroke="currentColor"/g, 'stroke="#0369a1"')
       .trim();
 
-    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(normalizedSvg)}`;
+    if (!normalizedSvg) {
+      return null;
+    }
+
+    return {
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(normalizedSvg)}`,
+      scaledSize: new google.maps.Size(34, 34),
+      anchor: new google.maps.Point(17, 17),
+    };
   }
 
   private getMoodChipLabel(code: string): string {
