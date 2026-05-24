@@ -8,7 +8,7 @@ trigger:
       - develop
   paths:
     include:
-      - '**'
+      - SmartNavFront/**
       - azure-pipelines-frontend.yml
 
 pr:
@@ -19,7 +19,7 @@ pr:
       - develop
   paths:
     include:
-      - '**'
+      - SmartNavFront/**
       - azure-pipelines-frontend.yml
 
 pool:
@@ -27,53 +27,65 @@ pool:
 
 variables:
   nodeVersion: '20.x'
-  # Αν το package.json είναι στο root του repo, άφησέ το '.'
-  # Αν είναι σε υποφάκελο (π.χ. SmartNav), άλλαξέ το.
-  frontendRoot: '.'
+  frontendRoot: 'SmartNavFront/SmartNav'
   buildConfiguration: 'development'
 
 steps:
-  - checkout: self
-    clean: true
-    fetchDepth: 1
+- checkout: self
+  clean: true
+  fetchDepth: 1
 
-  # Debug για να βλέπεις paths στον agent
-  - script: |
-      echo "PWD:"
-      pwd
-      echo "Repo root files:"
-      ls -la
-      echo "Find package-lock.json (maxdepth 4):"
-      find . -maxdepth 4 -name package-lock.json
-    displayName: 'Debug repo paths'
+- script: |
+    echo "PWD:"
+    pwd
+    echo "Repo root:"
+    ls -la
+    echo "Check frontendRoot:"
+    ls -la $(frontendRoot)
+    echo "Find package-lock.json:"
+    find . -maxdepth 4 -name package-lock.json
+  displayName: 'Debug paths'
 
-  - task: NodeTool@0
-    displayName: 'Use Node.js $(nodeVersion)'
-    inputs:
-      versionSpec: $(nodeVersion)
+- task: NodeTool@0
+  displayName: 'Use Node.js $(nodeVersion)'
+  inputs:
+    versionSpec: $(nodeVersion)
 
-  - task: Cache@2
-    displayName: 'Cache npm'
-    inputs:
-      key: 'npm | "$(Agent.OS)" | $(frontendRoot)/package-lock.json'
-      restoreKeys: |
-        npm | "$(Agent.OS)"
-      path: '$(Pipeline.Workspace)/.npm'
+- task: Cache@2
+  displayName: 'Cache npm'
+  inputs:
+    key: 'npm | "$(Agent.OS)" | $(frontendRoot)/package-lock.json'
+    restoreKeys: |
+      npm | "$(Agent.OS)"
+    path: '$(Pipeline.Workspace)/.npm'
 
-  - script: npm ci
-    displayName: 'Install dependencies'
-    workingDirectory: $(frontendRoot)
-    env:
-      npm_config_cache: $(Pipeline.Workspace)/.npm
+- script: npm ci
+  displayName: 'Install dependencies'
+  workingDirectory: $(frontendRoot)
+  env:
+    npm_config_cache: $(Pipeline.Workspace)/.npm
 
-  - script: npm run build -- --configuration $(buildConfiguration)
-    displayName: 'Build Angular'
-    workingDirectory: $(frontendRoot)
+# environment.ts είναι ignored στο git, άρα το δημιουργούμε στο CI
+- script: |
+    mkdir -p src/environments
+    cat > src/environments/environment.ts << 'EOF'
+    export const environment = {
+      production: false,
+      googleMapsApiKey: '$(GOOGLE_MAPS_API_KEY)',
+      geminiApiKey: '$(GEMINI_API_KEY)'
+    };
+    EOF
+    echo "Generated src/environments/environment.ts"
+  displayName: 'Create environment.ts from pipeline secrets'
+  workingDirectory: $(frontendRoot)
 
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish frontend artifact'
-    inputs:
-      # Για Angular application builder το output είναι συνήθως dist/<app>/browser
-      PathtoPublish: '$(Build.SourcesDirectory)/$(frontendRoot)/dist/SmartNav'
-      ArtifactName: 'frontend'
-      publishLocation: 'Container'
+- script: npm run build -- --configuration $(buildConfiguration)
+  displayName: 'Build Angular'
+  workingDirectory: $(frontendRoot)
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish frontend artifact'
+  inputs:
+    PathtoPublish: '$(Build.SourcesDirectory)/$(frontendRoot)/dist/SmartNav'
+    ArtifactName: 'frontend'
+    publishLocation: 'Container'
