@@ -8,7 +8,7 @@ trigger:
       - develop
   paths:
     include:
-      - SmartNavFront/**
+      - '**'
       - azure-pipelines-frontend.yml
 
 pr:
@@ -19,7 +19,7 @@ pr:
       - develop
   paths:
     include:
-      - SmartNavFront/**
+      - '**'
       - azure-pipelines-frontend.yml
 
 pool:
@@ -27,7 +27,7 @@ pool:
 
 variables:
   nodeVersion: '20.x'
-  frontendRoot: 'SmartNavFront/SmartNav'
+  frontendRoot: '.'
   buildConfiguration: 'development'
 
 steps:
@@ -38,12 +38,10 @@ steps:
 - script: |
     echo "PWD:"
     pwd
-    echo "Repo root:"
+    echo "Repo root files:"
     ls -la
-    echo "Check frontendRoot:"
-    ls -la $(frontendRoot)
     echo "Find package-lock.json:"
-    find . -maxdepth 4 -name package-lock.json
+    find . -maxdepth 3 -name package-lock.json
   displayName: 'Debug paths'
 
 - task: NodeTool@0
@@ -54,7 +52,7 @@ steps:
 - task: Cache@2
   displayName: 'Cache npm'
   inputs:
-    key: 'npm | "$(Agent.OS)" | $(frontendRoot)/package-lock.json'
+    key: 'npm | "$(Agent.OS)" | package-lock.json'
     restoreKeys: |
       npm | "$(Agent.OS)"
     path: '$(Pipeline.Workspace)/.npm'
@@ -86,6 +84,6 @@ steps:
 - task: PublishBuildArtifacts@1
   displayName: 'Publish frontend artifact'
   inputs:
-    PathtoPublish: '$(Build.SourcesDirectory)/$(frontendRoot)/dist/SmartNav'
+    PathtoPublish: '$(Build.SourcesDirectory)/dist/SmartNav'
     ArtifactName: 'frontend'
     publishLocation: 'Container'
