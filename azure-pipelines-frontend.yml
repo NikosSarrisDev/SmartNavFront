@@ -27,8 +27,6 @@ pool:
 
 variables:
   nodeVersion: '20.x'
-  # Αν το package.json είναι στο root του repo, άφησέ το '.'
-  # Αν είναι σε υποφάκελο (π.χ. SmartNav), άλλαξέ το.
   frontendRoot: '.'
   buildConfiguration: 'development'
 
@@ -37,15 +35,14 @@ steps:
     clean: true
     fetchDepth: 1
 
-  # Debug για να βλέπεις paths στον agent
   - script: |
       echo "PWD:"
       pwd
       echo "Repo root files:"
       ls -la
-      echo "Find package-lock.json (maxdepth 4):"
-      find . -maxdepth 4 -name package-lock.json
-    displayName: 'Debug repo paths'
+      echo "Find package-lock.json:"
+      find . -maxdepth 3 -name package-lock.json
+    displayName: 'Debug paths'
 
   - task: NodeTool@0
     displayName: 'Use Node.js $(nodeVersion)'
@@ -55,7 +52,7 @@ steps:
   - task: Cache@2
     displayName: 'Cache npm'
     inputs:
-      key: 'npm | "$(Agent.OS)" | $(frontendRoot)/package-lock.json'
+      key: 'npm | "$(Agent.OS)" | package-lock.json'
       restoreKeys: |
         npm | "$(Agent.OS)"
       path: '$(Pipeline.Workspace)/.npm'
@@ -66,6 +63,20 @@ steps:
     env:
       npm_config_cache: $(Pipeline.Workspace)/.npm
 
+  # environment.ts είναι ignored στο git, άρα το δημιουργούμε στο CI
+  - script: |
+      mkdir -p src/environments
+      cat > src/environments/environment.ts << 'EOF'
+      export const environment = {
+        production: false,
+        googleMapsApiKey: '$(GOOGLE_MAPS_API_KEY)',
+        geminiApiKey: '$(GEMINI_API_KEY)'
+      };
+      EOF
+      echo "Generated src/environments/environment.ts"
+    displayName: 'Create environment.ts from pipeline secrets'
+    workingDirectory: $(frontendRoot)
+
   - script: npm run build -- --configuration $(buildConfiguration)
     displayName: 'Build Angular'
     workingDirectory: $(frontendRoot)
@@ -73,7 +84,6 @@ steps:
   - task: PublishBuildArtifacts@1
     displayName: 'Publish frontend artifact'
     inputs:
-      # Για Angular application builder το output είναι συνήθως dist/<app>/browser
-      PathtoPublish: '$(Build.SourcesDirectory)/$(frontendRoot)/dist/SmartNav'
+      PathtoPublish: '$(Build.SourcesDirectory)/dist/SmartNav'
       ArtifactName: 'frontend'
       publishLocation: 'Container'
